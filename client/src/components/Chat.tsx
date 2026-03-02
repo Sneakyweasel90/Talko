@@ -18,7 +18,14 @@ import type { OnlineUser } from "../types";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();
-  const { resolve, load } = useLocalNicknames();
+  const { resolve, load, nicknames } = useLocalNicknames();
+
+  // Wrap resolve to handle own nickname (local nicknames can't be set for yourself,
+  // so we fall back to user.nickname from AuthContext for the current user)
+  const resolveNickname = useCallback((userId: number, serverDisplayName: string): string => {
+    if (userId === user!.id) return userRef.current?.nickname || serverDisplayName;
+    return resolve(userId, serverDisplayName);
+  }, [resolve, nicknames]); // eslint-disable-line react-hooks/exhaustive-deps
   const { theme } = useTheme();
 
   const userRef = useRef(user);
@@ -196,7 +203,7 @@ export default function Chat() {
                 onDelete={handleDelete}
                 currentUserId={user!.id}
                 onUsernameClick={(userId, username, el) => setPopover({ userId, username, el })}
-                resolveNickname={resolve}
+                resolveNickname={resolveNickname}
               />
             ))}
             <div ref={bottomRef} />

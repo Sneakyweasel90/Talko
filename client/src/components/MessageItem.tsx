@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { RoleBadge } from "./AccountSettings";
+import { RoleBadge } from "./RoleBadge";
 import type { GroupedMessage, Reaction } from "../types";
 import { useTheme } from "../context/ThemeContext";
 import Avatar from "./Avatar";

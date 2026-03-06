@@ -2,27 +2,12 @@ stages:
   - build
   - release
 
-build-windows:
-  stage: build
-  tags:
-    - windows
-  rules:
-    - if: $CI_COMMIT_TAG =~ /^v.*/
-  script:
-    - cd client
-    - npm install
-    - npm run build
-    - npx electron-builder --win
-  artifacts:
-    paths:
-      - client/dist_electron/YakkSetup.exe
-    expire_in: 1 hour
-
 build-linux:
   stage: build
   image: node:20
   rules:
     - if: $CI_COMMIT_TAG =~ /^v.*/
+    - if: $CI_COMMIT_BRANCH == "master"
   script:
     - cd client
     - npm install
@@ -32,24 +17,3 @@ build-linux:
     paths:
       - client/dist_electron/*.AppImage
     expire_in: 1 hour
-
-release:
-  stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  needs:
-    - build-windows
-    - build-linux
-  rules:
-    - if: $CI_COMMIT_TAG =~ /^v.*/
-  script:
-    - echo "Creating release $CI_COMMIT_TAG"
-  release:
-    tag_name: $CI_COMMIT_TAG
-    name: "Yakk $CI_COMMIT_TAG"
-    description: "Release $CI_COMMIT_TAG"
-    assets:
-      links:
-        - name: "YakkSetup.exe"
-          url: "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/raw/client/dist_electron/YakkSetup.exe?job=build-windows"
-        - name: "Yakk.AppImage"
-          url: "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/raw/client/dist_electron/Yakk.AppImage?job=build-linux"

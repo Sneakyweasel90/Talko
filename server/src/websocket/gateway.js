@@ -5,14 +5,39 @@ import redis from "../redis/redisClient.js";
 
 const channels = new Map();
 
-const msgCounts = new Map();
-function isRateLimited(userId) {
-  const now = Date.now();
-  const entry = msgCounts.get(userId) || { count: 0, reset: now + 10000 };
-  if (now > entry.reset) { entry.count = 0; entry.reset = now + 10000; }
-  entry.count++;
-  msgCounts.set(userId, entry);
-  return entry.count > 20;
+// ── Rate limiting via Redis ────────────────────────────────────────────────
+// Uses a fixed window counter per user per action stored in Redis.
+// Keys are auto-expired so there's no cleanup needed.
+//
+// Limits (per 10-second window):
+//   message  — 20  (chat messages)
+//   react    — 30  (reactions, slightly more lenient)
+//   edit     — 10  (edits, low limit to prevent spam)
+//   typing   — 15  (typing indicators)
+//   default  — 20  (anything else that calls through)
+
+const RATE_LIMITS = {
+  message: { max: 20, windowSec: 10 },
+  react:   { max: 30, windowSec: 10 },
+  edit:    { max: 10, windowSec: 10 },
+  typing:  { max: 15, windowSec: 10 },
+  default: { max: 20, windowSec: 10 },
+};
+
+async function isRateLimited(userId, action = "default") {
+  const { max, windowSec } = RATE_LIMITS[action] || RATE_LIMITS.default;
+  const key = `rl:ws:${action}:${userId}`;
+  try {
+    const count = await redis.incr(key);
+    if (count === 1) {
+      // First hit — set the expiry so the key auto-cleans
+      await redis.expire(key, windowSec);
+    }
+    return count > max;
+  } catch {
+    // If Redis is down, fail open (don't block users)
+    return false;
+  }
 }
 
 function broadcast(channelId, data, excludeWs = null) {
@@ -115,6 +140,16 @@ async function attachReactions(messages) {
   return messages.map(m => ({ ...m, reactions: byMsg[m.id] || [] }));
 }
 
+// Broadcast to all participants of a DM channel
+function broadcastDM(channelId, data, wss) {
+  const payload = JSON.stringify(data);
+  for (const client of wss.clients) {
+    if (client.readyState === WebSocket.OPEN && !client._yakk_closed) {
+      client.send(payload);
+    }
+  }
+}
+
 export async function initWebSocket(server) {
   await redis.del("online_users");
 
@@ -143,6 +178,7 @@ export async function initWebSocket(server) {
         channels.get(channelId).add(ws);
         ws.channels.add(channelId);
 
+        // Cursor-based pagination: fetch latest 50 by descending ID
         const { rows } = await db.query(
           `SELECT m.*, u.username AS raw_username, u.role AS user_role, u.custom_role_name AS user_custom_role_name,
              rm.username AS reply_to_username, rm.content AS reply_to_content
@@ -168,7 +204,7 @@ export async function initWebSocket(server) {
         }
       }
 
-      // LOAD MORE
+      // LOAD MORE — cursor-based: fetch 50 messages before a given ID (no OFFSET)
       if (msg.type === "load_more") {
         const { channelId, beforeId } = msg;
         if (!channelId || !beforeId) return;
@@ -193,8 +229,8 @@ export async function initWebSocket(server) {
 
       // SEND message
       if (msg.type === "message") {
-        if (isRateLimited(user.id)) {
-          ws.send(JSON.stringify({ type: "error", message: "Rate limited" }));
+        if (await isRateLimited(user.id, "message")) {
+          ws.send(JSON.stringify({ type: "error", message: "Rate limited — slow down" }));
           return;
         }
         const { channelId, content, replyToId } = msg;
@@ -210,7 +246,6 @@ export async function initWebSocket(server) {
           [channelId, user.id, displayName, content.trim(), replyToId || null]
         );
         const { rows: uRaw } = await db.query(`SELECT username, custom_role_name FROM users WHERE id = $1`, [user.id]);
-        // Fetch reply preview if this is a reply
         let reply_to_username = null, reply_to_content = null;
         if (replyToId) {
           const { rows: replyRows } = await db.query(`SELECT username, content FROM messages WHERE id = $1`, [replyToId]);
@@ -223,6 +258,8 @@ export async function initWebSocket(server) {
 
       // REACT
       if (msg.type === "react") {
+        if (await isRateLimited(user.id, "react")) return;
+
         const { messageId, emoji } = msg;
         if (!messageId || !emoji) return;
 
@@ -256,6 +293,8 @@ export async function initWebSocket(server) {
 
       // EDIT message — only allowed by the original author
       if (msg.type === "edit_message") {
+        if (await isRateLimited(user.id, "edit")) return;
+
         const { messageId, content } = msg;
         if (!messageId || !content?.trim()) return;
         const { rows } = await db.query(
@@ -264,7 +303,7 @@ export async function initWebSocket(server) {
            RETURNING channel_id`,
           [content.trim(), messageId, user.id]
         );
-        if (!rows[0]) return; // not found or not owner
+        if (!rows[0]) return;
         broadcast(rows[0].channel_id, { type: "message_edited", messageId, content: content.trim() });
       }
 
@@ -272,7 +311,6 @@ export async function initWebSocket(server) {
       if (msg.type === "delete_message") {
         const { messageId } = msg;
         if (!messageId) return;
-        // Admin can delete any message; regular users only their own
         const query = user.role === "admin"
           ? `DELETE FROM messages WHERE id = $1 RETURNING channel_id`
           : `DELETE FROM messages WHERE id = $1 AND user_id = $2 RETURNING channel_id`;
@@ -284,6 +322,7 @@ export async function initWebSocket(server) {
 
       // TYPING
       if (msg.type === "typing") {
+        if (await isRateLimited(user.id, "typing")) return;
         broadcast(msg.channelId, { type: "typing", userId: user.id, username: user.username }, ws);
       }
 
@@ -294,14 +333,12 @@ export async function initWebSocket(server) {
         if (!channels.has(`voice:${channelId}`)) channels.set(`voice:${channelId}`, new Set());
         const voiceClients = channels.get(`voice:${channelId}`);
 
-        // Tell the joining user who's already there (for WebRTC)
         ws.send(JSON.stringify({
           type: "voice_participants",
           usernames: [...voiceClients].map(c => c.user.username),
           userIds: [...voiceClients].map(c => c.user.id),
         }));
 
-        // Tell existing channel members a new user joined (for WebRTC)
         for (const client of voiceClients) {
           if (client.readyState === WebSocket.OPEN)
             client.send(JSON.stringify({ type: "voice_user_joined", userId: user.id, username: user.username, channelId }));
@@ -313,13 +350,13 @@ export async function initWebSocket(server) {
         broadcastAll(wss, { type: "voice_presence_update", channelId, username: user.username, action: "join" });
       }
 
-      // PING
-      // AVATAR UPDATE — client tells server their avatar changed; server broadcasts to all
+      // AVATAR UPDATE
       if (msg.type === "avatar_update") {
         const { avatar } = msg;
         broadcastAll(wss, { type: "avatar_update", userId: user.id, avatar: avatar || null });
       }
 
+      // PING
       if (msg.type === "ping") {
         ws.send(JSON.stringify({ type: "pong" }));
       }
@@ -331,15 +368,12 @@ export async function initWebSocket(server) {
           const voiceClients = channels.get(`voice:${channelId}`);
           voiceClients?.delete(ws);
 
-          // Tell people still in channel (for WebRTC cleanup)
           for (const client of voiceClients || []) {
             if (client.readyState === WebSocket.OPEN)
               client.send(JSON.stringify({ type: "voice_user_left", userId: user.id, username: user.username }));
           }
 
-          // Broadcast to ALL clients INCLUDING sender so their own sidebar clears
           broadcastAll(wss, { type: "voice_presence_update", channelId, username: user.username, action: "leave" });
-
           ws.voiceChannel = null;
         }
       }
@@ -366,7 +400,6 @@ export async function initWebSocket(server) {
           if (client.readyState === WebSocket.OPEN)
             client.send(JSON.stringify({ type: "voice_user_left", userId: user.id, username: user.username }));
         }
-        // Broadcast to all remaining clients (sender is gone so no point excluding)
         broadcastAll(wss, { type: "voice_presence_update", channelId, username: user.username, action: "leave" });
       }
       await redis.sRem("online_users", String(user.id));

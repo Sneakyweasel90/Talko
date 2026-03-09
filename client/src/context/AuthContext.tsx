@@ -46,9 +46,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [scheduleRefresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (user) scheduleRefresh(user);
-    return () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current); };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      if (!user) return;
+
+      // If the token was issued more than 13 minutes ago it may already be expired.
+      const doInitialRefresh = async () => {
+        try {
+          const { data } = await axios.post(`${config.HTTP}/api/auth/refresh`, {
+            refreshToken: user.refreshToken,
+          });
+          const updated: User = { ...user, token: data.token, refreshToken: data.refreshToken };
+          localStorage.setItem("yakk_user", JSON.stringify(updated));
+          setUser(updated);
+          scheduleRefresh(updated);
+        } catch {
+          await logout();
+        }
+      };
+
+      doInitialRefresh();
+
+      return () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current); };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = useCallback(async (userData: User, password: string) => {
     // Load or generate the ECDH key pair, persisted in IndexedDB encrypted with the password.

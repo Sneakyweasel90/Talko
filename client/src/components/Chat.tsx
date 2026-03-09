@@ -145,6 +145,7 @@ export default function Chat() {
         // If it's a DM message, update DM conversation list
         if (data.type === "message" && typeof data.message?.channel_id === "string" && data.message.channel_id.startsWith("dm:")) {
           onDMMessage(data.message.channel_id, data.message.content, data.message.user_id, data.message.created_at);
+          return;
         }
         handleMessage(data);
       }

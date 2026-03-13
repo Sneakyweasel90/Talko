@@ -94,9 +94,13 @@ export type ServerMessage =
   | { type: "avatar_update"; userId: number; avatar: string | null }
   | { type: "mention"; channelId: string; senderName: string; content: string }
   | { type: "channel_unread_counts"; counts: Record<string, number> }
-  | { type: "channel_unread_increment"; channelName: string };
+  | { type: "channel_unread_increment"; channelName: string }
+  | { type: "message_pinned"; messageId: number; channelId: string; pinnedBy: string }
+  | { type: "message_unpinned"; messageId: number; channelId: string };
 
 export type ClientMessage =
+  | { type: "pin_message"; messageId: number; channelId: string }
+  | { type: "unpin_message"; messageId: number; channelId: string }
   | { type: "join"; channelId: string }
   | { type: "load_more"; channelId: string; beforeId: number }
   | { type: "message"; channelId: string; content: string; replyToId?: number | null }
@@ -135,4 +139,14 @@ export interface DMConversation {
   last_message: string | null;
   last_message_at: string | null;
   unread_count: number;
+}
+
+export interface PinnedMessage {
+  id: number;
+  content: string;
+  username: string;
+  created_at: string;
+  user_id: number;
+  pinned_by_username: string | null;
+  pinned_at: string;
 }

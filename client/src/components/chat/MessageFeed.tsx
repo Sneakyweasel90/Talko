@@ -4,6 +4,8 @@ import MessageItem from "../messages/MessageItem";
 import type { GroupedMessage, DMConversation, OnlineUser } from "../../types";
 
 interface Props {
+  isAdmin: boolean;
+  onPin: (messageId: number) => void;
   messagesContainerRef: RefObject<HTMLDivElement>;
   bottomRef: RefObject<HTMLDivElement>;
   onScroll: () => void;
@@ -32,7 +34,7 @@ export default function MessageFeed({
   messagesContainerRef, bottomRef, onScroll,
   groupedMessages, loadingMore, hasMore,
   activeTab, activeDMConv, channel,
-  hoveredMsgId, pickerMsgId,
+  hoveredMsgId, pickerMsgId, isAdmin, onPin,
   currentUsername, currentUserId, avatarMap,
   onHover, onPickerToggle, onReact, onReply, onEdit, onDelete,
   onUsernameClick, resolveNickname,
@@ -62,6 +64,8 @@ export default function MessageFeed({
 
       {groupedMessages.map((msg) => (
         <MessageItem
+          isAdmin={isAdmin}
+          onPin={onPin}
           key={msg.id}
           msg={msg}
           hoveredMsgId={hoveredMsgId}

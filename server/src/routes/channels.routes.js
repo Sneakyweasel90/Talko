@@ -26,6 +26,48 @@ router.post("/read", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// GET /api/channels/:name/pins — fetch pinned messages for a channel
+router.get("/:name/pins", requireAuth, async (req, res) => {
+  const { rows } = await db.query(
+    `SELECT m.id, m.content, m.username, m.created_at, m.user_id,
+            u.username AS pinned_by_username, pm.pinned_at
+     FROM pinned_messages pm
+     JOIN messages m ON m.id = pm.message_id
+     LEFT JOIN users u ON u.id = pm.pinned_by
+     WHERE pm.channel_name = $1
+     ORDER BY pm.pinned_at DESC`,
+    [req.params.name]
+  );
+  res.json(rows);
+});
+
+// POST /api/channels/:name/pins — pin a message (admin only)
+router.post("/:name/pins", requireAuth, async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Admins only" });
+  const { messageId } = req.body;
+  if (!messageId) return res.status(400).json({ error: "Missing messageId" });
+  try {
+    await db.query(
+      `INSERT INTO pinned_messages (channel_name, message_id, pinned_by)
+       VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+      [req.params.name, messageId, req.user.id]
+    );
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// DELETE /api/channels/:name/pins/:messageId — unpin (admin only)
+router.delete("/:name/pins/:messageId", requireAuth, async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Admins only" });
+  await db.query(
+    `DELETE FROM pinned_messages WHERE channel_name = $1 AND message_id = $2`,
+    [req.params.name, req.params.messageId]
+  );
+  res.json({ ok: true });
+});
+
 // POST create a new channel
 router.post("/", requireAuth, async (req, res) => {
   const { name, type = "text" } = req.body;

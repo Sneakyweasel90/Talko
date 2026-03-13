@@ -232,6 +232,10 @@ export default function Chat() {
         </ResizableSidebar>
 
         <ChatMain
+          token={user!.token}
+          isAdmin={user!.role === "admin"}
+          onPin={(messageId) => send({ type: "pin_message", messageId, channelId: channel })}
+          onUnpin={(messageId) => send({ type: "unpin_message", messageId, channelId: channel })}
           channel={channel}
           activeTab={activeTab}
           activeDMConv={activeDMConv}

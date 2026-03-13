@@ -117,6 +117,18 @@ export async function initDB() {
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_invite_tokens_token ON invite_tokens(token);`);
 
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS pinned_messages (
+    id SERIAL PRIMARY KEY,
+    channel_name VARCHAR(100) NOT NULL,
+    message_id INT REFERENCES messages(id) ON DELETE CASCADE NOT NULL,
+    pinned_by INT REFERENCES users(id) ON DELETE SET NULL,
+    pinned_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(channel_name, message_id)
+  );
+`);
+await pool.query(`CREATE INDEX IF NOT EXISTS idx_pinned_messages_channel ON pinned_messages(channel_name);`);
+
   // Promote the oldest account to admin (safe to re-run)
   await pool.query(`
     UPDATE users SET role = 'admin'

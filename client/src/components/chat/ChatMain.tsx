@@ -15,6 +15,11 @@ interface Props {
   activeDMConv: DMConversation | null;
   onlineUsers: OnlineUser[];
 
+  token: string;
+  isAdmin: boolean;
+  onPin: (messageId: number) => void;
+  onUnpin: (messageId: number) => void;
+
   // Message feed
   messagesContainerRef: RefObject<HTMLDivElement>;
   bottomRef: RefObject<HTMLDivElement>;
@@ -58,6 +63,7 @@ interface Props {
 
 export default function ChatMain({
   channel, activeTab, activeDMConv, onlineUsers,
+  token, isAdmin, onPin, onUnpin,
   messagesContainerRef, bottomRef, groupedMessages,
   loadingMore, hasMore,
   hoveredMsgId, pickerMsgId, currentUsername, currentUserId, avatarMap,
@@ -72,7 +78,13 @@ export default function ChatMain({
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
       {activeTab === "dms" && activeDMConv
         ? <DMHeader conversation={activeDMConv} onlineUsers={onlineUsers} />
-        : <ChannelHeader channel={channel} onlineCount={onlineUsers.length} />
+        : <ChannelHeader
+            channel={channel}
+            onlineCount={onlineUsers.length}
+            token={token}
+            isAdmin={isAdmin}
+            onUnpin={onUnpin}
+          />
       }
 
       <MessageFeed
@@ -98,6 +110,8 @@ export default function ChatMain({
         onDelete={onDelete}
         onUsernameClick={onUsernameClick}
         resolveNickname={resolveNickname}
+        isAdmin={isAdmin}
+        onPin={onPin}
       />
 
       <TypingIndicator typers={Object.values(typers)} />

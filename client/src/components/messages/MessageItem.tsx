@@ -163,6 +163,8 @@ function ReactionPills({ reactions, messageId, currentUsername, onReact }: React
 // ── MessageItem ────────────────────────────────────────────────────────────────
 
 interface MessageItemProps {
+  isAdmin: boolean;
+  onPin: (messageId: number) => void;
   msg: GroupedMessage & { user_role?: string; user_custom_role_name?: string | null };
   hoveredMsgId: number | null;
   pickerMsgId: number | null;
@@ -180,6 +182,8 @@ interface MessageItemProps {
 }
 
 export default function MessageItem({
+  isAdmin, 
+  onPin, 
   msg,
   hoveredMsgId,
   pickerMsgId,
@@ -338,6 +342,19 @@ export default function MessageItem({
               >
                 ↩ REPLY
               </button>
+
+              {/* Pin button — admins only, not for image messages */}
+              {isAdmin && !msg.content.startsWith("[img]") && (
+                <button
+                  style={{ border: `1px solid ${theme.border}`, background: "transparent", cursor: "pointer", fontSize: "0.7rem", padding: "1px 6px", borderRadius: "10px", fontFamily: "'Share Tech Mono', monospace", letterSpacing: "0.05em", transition: "all 0.15s", lineHeight: "1.6", color: theme.textDim } as React.CSSProperties}
+                  onClick={() => onPin(msg.id)}
+                  onMouseEnter={e => { e.currentTarget.style.color = theme.primary; e.currentTarget.style.borderColor = theme.primaryDim; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = theme.textDim; e.currentTarget.style.borderColor = theme.border; }}
+                  title="Pin message"
+                >
+                  📌 PIN
+                </button>
+              )}
 
               {/* Edit + Delete — only for own messages */}
               {isOwnMessage && !editing && (

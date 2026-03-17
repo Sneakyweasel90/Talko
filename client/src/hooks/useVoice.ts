@@ -256,6 +256,13 @@ export function useVoice(
     [send],
   );
 
+  const setAllParticipantsDeafened = useCallback((deafened: boolean) => {
+    Object.entries(participantAudio.current).forEach(([userId, { gainNode }]) => {
+      const username = userIdToName.current[Number(userId)];
+      gainNode.gain.value = deafened ? 0 : (username ? loadVolume(username) : 1);
+    });
+  }, []);
+
   const cleanup = useCallback(() => {
     localStream.current?.getTracks().forEach((t) => t.stop());
     localStream.current = null;
@@ -441,5 +448,6 @@ export function useVoice(
     localStream,
     setParticipantVolume,
     setSelfVolume,
+    setAllParticipantsDeafened,
   };
 }

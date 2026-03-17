@@ -149,7 +149,7 @@ export default function Chat() {
   const {
     inVoice, voiceChannel, participants, participantVolumes, selfVolume,
     joinVoice, leaveVoice, rejoinVoice, handleVoiceMessage, localStream,
-    setParticipantVolume, setSelfVolume,
+    setParticipantVolume, setSelfVolume, setAllParticipantsDeafened,
   } = useVoice(send, user!.id);
 
   useEffect(() => { rejoinVoiceRef.current = rejoinVoice; }, [rejoinVoice]);
@@ -278,6 +278,7 @@ export default function Chat() {
           send={send}
           replyTo={replyTo}
           onCancelReply={() => setReplyTo(null)}
+          setAllParticipantsDeafened={setAllParticipantsDeafened}
         />
 
         <MemberList

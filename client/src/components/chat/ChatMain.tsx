@@ -49,6 +49,7 @@ interface Props {
   send: (data: object) => void;
   replyTo: GroupedMessage | null;
   onCancelReply: () => void;
+  setAllParticipantsDeafened: (deafened: boolean) => void;
 }
 
 export default function ChatMain({
@@ -59,7 +60,7 @@ export default function ChatMain({
   hoveredMsgId, pickerMsgId, currentUsername, currentUserId, avatarMap,
   onScroll, onHover, onPickerToggle, onReact, onReply, onEdit, onDelete,
   onUsernameClick, resolveNickname,
-  typers,
+  typers, setAllParticipantsDeafened,
   inVoice, voiceChannel, participants, participantVolumes, selfVolume,
   leaveVoice, localStream, setParticipantVolume, setSelfVolume,
   send, replyTo, onCancelReply,
@@ -117,6 +118,7 @@ export default function ChatMain({
           localStream={localStream}
           setParticipantVolume={setParticipantVolume}
           setSelfVolume={setSelfVolume}
+          setAllParticipantsDeafened={setAllParticipantsDeafened}
         />
       )}
 

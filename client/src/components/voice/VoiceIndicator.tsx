@@ -13,6 +13,7 @@ interface Props {
   localStream: MutableRefObject<MediaStream | null>;
   setParticipantVolume: (username: string, volume: number) => void;
   setSelfVolume: (volume: number) => void;
+  setAllParticipantsDeafened: (deafened: boolean) => void;
 }
 
 function VolumeSlider({ label, value, onChange, color }: {
@@ -46,7 +47,7 @@ export default function VoiceIndicator({
   inVoice, voiceChannel, participants,
   participantVolumes, selfVolume,
   leaveVoice, localStream,
-  setParticipantVolume, setSelfVolume,
+  setParticipantVolume, setSelfVolume, setAllParticipantsDeafened
 }: Props) {
   const { theme } = useTheme();
   const {
@@ -59,6 +60,12 @@ export default function VoiceIndicator({
   if (!inVoice) return null;
 
   const handleLeave = () => { resetControls(); leaveVoice(); };
+
+  const handleToggleDeafen = () => {
+    const next = !isDeafened;
+    toggleDeafen();
+    setAllParticipantsDeafened(next);
+  };
 
   return (
     <div className={styles.root}>
@@ -87,7 +94,7 @@ export default function VoiceIndicator({
 
         {/* Deafen */}
         <button
-          onClick={toggleDeafen}
+          onClick={handleToggleDeafen}
           title={isDeafened ? "Undeafen" : "Deafen (mutes mic + all incoming audio)"}
           className={`${styles.btn} ${isDeafened ? styles.btnDeafened : styles.btnDefault}`}
         >

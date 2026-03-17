@@ -410,9 +410,15 @@ ipcMain.handle("read-file", async (event, filename) => {
 });
 
 ipcMain.handle("get-sources", async () => {
-  return await desktopCapturer.getSources({
+  const sources = await desktopCapturer.getSources({
     types: ["screen", "window"],
+    thumbnailSize: { width: 320, height: 180 },
   });
+  return sources.map(s => ({
+    id: s.id,
+    name: s.name,
+    thumbnailDataURL: s.thumbnail.toDataURL(),
+  }));
 });
 
 ipcMain.on("minimize", () => win?.minimize());

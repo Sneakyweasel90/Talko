@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback } from "react";
-import { Room, RoomEvent, Track  } from "livekit-client";
+import { Room, RoomEvent, Track } from "livekit-client";
 import axios from "axios";
 import config from "../config";
-
 
 function loadVolume(key: string): number {
   const val = localStorage.getItem(`talko_vol_${key}`);
@@ -15,26 +14,37 @@ function saveVolume(key: string, vol: number) {
 
 export function useVoice(token: string, send: (data: object) => void) {
   const [inVoice, setInVoice] = useState(false);
-  const [voiceChannel, setVoiceChannel] = useState<string | null>(null);  
+  const [voiceChannel, setVoiceChannel] = useState<string | null>(null);
   const [participants, setParticipants] = useState<string[]>([]);
-  const [participantVolumes, setParticipantVolumes] = useState<Record<string, number>>({});
-  const [selfVolume, setSelfVolumeState] = useState<number>(() => loadVolume("__self__"));
+  const [participantVolumes, setParticipantVolumes] = useState<
+    Record<string, number>
+  >({});
+  const [selfVolume, setSelfVolumeState] = useState<number>(() =>
+    loadVolume("__self__"),
+  );
   const voiceChannelRef = useRef<string | null>(null);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [screenShareTrack, setScreenShareTrack] = useState<MediaStreamTrack | null>(null);
-  const [screenShareParticipant, setScreenShareParticipant] = useState<string | null>(null);
-  const [localScreenShareTrack, setLocalScreenShareTrack] = useState<MediaStreamTrack | null>(null);
-
+  const [screenShareTrack, setScreenShareTrack] =
+    useState<MediaStreamTrack | null>(null);
+  const [screenShareParticipant, setScreenShareParticipant] = useState<
+    string | null
+  >(null);
+  const [localScreenShareTrack, setLocalScreenShareTrack] =
+    useState<MediaStreamTrack | null>(null);
 
   const roomRef = useRef<Room | null>(null);
   const isDeafenedRef = useRef(false);
 
   const refreshParticipants = useCallback((room: Room) => {
-    const names = Array.from(room.remoteParticipants.values()).map(p => p.name ?? p.identity);
+    const names = Array.from(room.remoteParticipants.values()).map(
+      (p) => p.name ?? p.identity,
+    );
     setParticipants(names);
-    setParticipantVolumes(prev => {
+    setParticipantVolumes((prev) => {
       const next: Record<string, number> = {};
-      names.forEach(name => { next[name] = prev[name] ?? loadVolume(name); });
+      names.forEach((name) => {
+        next[name] = prev[name] ?? loadVolume(name);
+      });
       return next;
     });
   }, []);
@@ -44,63 +54,74 @@ export function useVoice(token: string, send: (data: object) => void) {
     setVoiceChannel(ch);
   }, []);
 
-  const joinVoice = useCallback(async (channelId: string) => {
-    if (roomRef.current || voiceChannelRef.current) {
-      send({ type: "voice_leave" });
-    }
-    if (roomRef.current) {
-      await roomRef.current.disconnect();
-      roomRef.current = null;
-    }
-
-    const { data } = await axios.post(
-      `${config.HTTP}/api/voice/token`,
-      { channelId },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    const room = new Room();
-    roomRef.current = room;
-
-    room.on(RoomEvent.ParticipantConnected, () => refreshParticipants(room));
-    room.on(RoomEvent.ParticipantDisconnected, () => refreshParticipants(room));
-    room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
-      if (track.kind === Track.Kind.Audio) {
-        const el = track.attach();
-        el.volume = isDeafenedRef.current ? 0 : (loadVolume(participant.name ?? participant.identity));
-        document.body.appendChild(el);
+  const joinVoice = useCallback(
+    async (channelId: string) => {
+      if (roomRef.current || voiceChannelRef.current) {
+        send({ type: "voice_leave" });
       }
-      if (track.source === Track.Source.ScreenShare) {
-        setScreenShareTrack(track.mediaStreamTrack);
-        setScreenShareParticipant(participant.name ?? participant.identity);
+      if (roomRef.current) {
+        await roomRef.current.disconnect();
+        roomRef.current = null;
       }
-    });
-    room.on(RoomEvent.TrackUnsubscribed, (track) => {
-      track.detach().forEach(el => el.remove());
-      if (track.source === Track.Source.ScreenShare) {
+
+      const { data } = await axios.post(
+        `${config.HTTP}/api/voice/token`,
+        { channelId },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      const room = new Room();
+      roomRef.current = room;
+
+      room.on(RoomEvent.ParticipantConnected, () => refreshParticipants(room));
+      room.on(RoomEvent.ParticipantDisconnected, () =>
+        refreshParticipants(room),
+      );
+      room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
+        if (track.kind === Track.Kind.Audio) {
+          const el = track.attach();
+          el.volume = isDeafenedRef.current
+            ? 0
+            : loadVolume(participant.name ?? participant.identity);
+          document.body.appendChild(el);
+        }
+        if (track.source === Track.Source.ScreenShare) {
+          setScreenShareTrack(track.mediaStreamTrack);
+          setScreenShareParticipant(participant.name ?? participant.identity);
+        }
+      });
+      room.on(RoomEvent.TrackUnsubscribed, (track) => {
+        track.detach().forEach((el) => el.remove());
+        if (track.source === Track.Source.ScreenShare) {
+          setScreenShareTrack(null);
+          setScreenShareParticipant(null);
+        }
+      });
+      room.on(RoomEvent.Disconnected, () => {
+        setInVoice(false);
+        updateVoiceChannel(null);
+        setParticipants([]);
+        setParticipantVolumes({});
+        roomRef.current = null;
+        setIsScreenSharing(false);
+        setLocalScreenShareTrack(null);
         setScreenShareTrack(null);
         setScreenShareParticipant(null);
-      }
-    });
-    room.on(RoomEvent.Disconnected, () => {
-      setInVoice(false);
-      updateVoiceChannel(null);
-      setParticipants([]);
-      setParticipantVolumes({});
-      roomRef.current = null;
-    });
+      });
 
-    await room.connect(data.url, data.token);
-    send({ type: "voice_join", channelId });
-    await room.localParticipant.setMicrophoneEnabled(true);
-    room.localParticipant.audioTrackPublications.forEach(pub => {
-      if (pub.track) pub.track.mediaStreamTrack.enabled = true;
-    });
+      await room.connect(data.url, data.token);
+      send({ type: "voice_join", channelId });
+      await room.localParticipant.setMicrophoneEnabled(true);
+      room.localParticipant.audioTrackPublications.forEach((pub) => {
+        if (pub.track) pub.track.mediaStreamTrack.enabled = true;
+      });
 
-    setInVoice(true);
-    updateVoiceChannel(channelId);
-    refreshParticipants(room);
-  }, [token, refreshParticipants, send, updateVoiceChannel]);
+      setInVoice(true);
+      updateVoiceChannel(channelId);
+      refreshParticipants(room);
+    },
+    [token, refreshParticipants, send, updateVoiceChannel],
+  );
 
   const leaveVoice = useCallback(async () => {
     send({ type: "voice_leave" });
@@ -115,26 +136,33 @@ export function useVoice(token: string, send: (data: object) => void) {
   const setMuted = useCallback((muted: boolean) => {
     const room = roomRef.current;
     if (!room) return;
-    room.localParticipant.audioTrackPublications.forEach(pub => {
+    room.localParticipant.audioTrackPublications.forEach((pub) => {
       if (pub.track) pub.track.mediaStreamTrack.enabled = !muted;
     });
   }, []);
 
   const setAllParticipantsDeafened = useCallback((deafened: boolean) => {
     isDeafenedRef.current = deafened;
-    document.querySelectorAll<HTMLAudioElement>("audio").forEach(el => {
+    document.querySelectorAll<HTMLAudioElement>("audio").forEach((el) => {
       el.volume = deafened ? 0 : 1;
     });
   }, []);
 
-  const setParticipantVolume = useCallback((username: string, volume: number) => {
-    const clamped = Math.max(0, Math.min(2, volume));
-    saveVolume(username, clamped);
-    setParticipantVolumes(prev => ({ ...prev, [username]: clamped }));
-    document.querySelectorAll<HTMLAudioElement>("audio").forEach(el => {
-      el.volume = Math.min(1, clamped);
-    });
-  }, []);
+  const setParticipantVolume = useCallback(
+    (username: string, volume: number) => {
+      const clamped = Math.max(0, Math.min(2, volume));
+      saveVolume(username, clamped);
+      setParticipantVolumes((prev) => ({ ...prev, [username]: clamped }));
+      document.querySelectorAll<HTMLAudioElement>("audio").forEach((el) => {
+        el.volume = Math.min(1, clamped);
+      });
+    },
+    [],
+  );
+
+  const [pickerSources, setPickerSources] = useState<
+    { id: string; name: string; thumbnailDataURL: string }[] | null
+  >(null);
 
   const stopScreenShare = useCallback(async () => {
     const room = roomRef.current;
@@ -142,8 +170,8 @@ export function useVoice(token: string, send: (data: object) => void) {
 
     // find the screen share publication
     const pub = Array.from(
-      room.localParticipant.videoTrackPublications.values()
-    ).find(p => p.source === Track.Source.ScreenShare);
+      room.localParticipant.videoTrackPublications.values(),
+    ).find((p) => p.source === Track.Source.ScreenShare);
 
     if (pub) {
       await room.localParticipant.unpublishTrack(pub.track!);
@@ -157,39 +185,44 @@ export function useVoice(token: string, send: (data: object) => void) {
   const startScreenShare = useCallback(async () => {
     const room = roomRef.current;
     if (!room) return;
-
     try {
       const sources = await (window as any).electronAPI.getSources();
-
-      const source = sources[0];
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: {
-          mandatory: {
-            chromeMediaSource: "desktop",
-            chromeMediaSourceId: source.id,
-          },
-        } as any,
-      });
-
-      const track = stream.getVideoTracks()[0];
-
-      await room.localParticipant.publishTrack(track, {
-        source: Track.Source.ScreenShare,
-      });
-
-      setIsScreenSharing(true);
-      setLocalScreenShareTrack(track);
-
-      track.addEventListener("ended", () => {
-        stopScreenShare();
-      });
-
+      setPickerSources(sources);
     } catch (e) {
-      console.warn("Screen share failed or cancelled:", e);
+      console.warn("Failed to get sources:", e);
     }
-  }, [stopScreenShare]);
+  }, []);
+
+  const selectSource = useCallback(
+    async (sourceId: string) => {
+      const room = roomRef.current;
+      if (!room) return;
+      setPickerSources(null);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            mandatory: {
+              chromeMediaSource: "desktop",
+              chromeMediaSourceId: sourceId,
+            },
+          } as any,
+        });
+        const track = stream.getVideoTracks()[0];
+        await room.localParticipant.publishTrack(track, {
+          source: Track.Source.ScreenShare,
+        });
+        setIsScreenSharing(true);
+        setLocalScreenShareTrack(track);
+        track.addEventListener("ended", () => stopScreenShare());
+      } catch (e) {
+        console.warn("Screen share failed:", e);
+      }
+    },
+    [stopScreenShare],
+  );
+
+  const cancelPicker = useCallback(() => setPickerSources(null), []);
 
   const setSelfVolume = useCallback((volume: number) => {
     const clamped = Math.max(0, Math.min(2, volume));
@@ -231,5 +264,8 @@ export function useVoice(token: string, send: (data: object) => void) {
     startScreenShare,
     stopScreenShare,
     localScreenShareTrack,
+    pickerSources,
+    selectSource,
+    cancelPicker,
   };
 }

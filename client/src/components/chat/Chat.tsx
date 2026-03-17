@@ -7,7 +7,6 @@ import { useMessages } from "../../hooks/useMessages";
 import { useDMs } from "../../hooks/useDMs";
 import axios from "axios";
 import config from "../../config";
-
 import TitleBar from "../ui/TitleBar";
 import ResizableSidebar from "../sidebar/ResizableSidebar";
 import Sidebar from "../sidebar/Sidebar";
@@ -15,12 +14,12 @@ import ChatMain from "./ChatMain";
 import MemberList from "../ui/MemberList";
 import SearchOverlay from "../overlays/SearchOverlay";
 import UserPopover from "../overlays/UserPopover";
-
 import type { OnlineUser, DMConversation, GroupedMessage, UserStatus } from "../../types";
 import { useUnreadChannels } from "../../hooks/useUnreadChannels";
 import styles from "./Chat.module.css";
 import { useAfkDetector } from "../../hooks/useAfkDetector";
 import ScreenShareViewer from "../voice/ScreenShareViewer";
+import ScreenPickerModal from "../voice/ScreenPickerModal";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();
@@ -151,6 +150,7 @@ export default function Chat() {
     setMuted, setAllParticipantsDeafened, joinAfk, localScreenShareTrack,
     isScreenSharing, screenShareTrack, screenShareParticipant,
     startScreenShare, stopScreenShare,  
+    pickerSources, selectSource, cancelPicker,
   } = useVoice(user!.token, send);
 
   useAfkDetector(inVoice, voiceChannel, joinAfk);
@@ -303,6 +303,14 @@ export default function Chat() {
           participantName={isScreenSharing ? user!.username : (screenShareParticipant ?? "")}
           isLocal={isScreenSharing}
           onClose={stopScreenShare}
+        />
+      )}
+
+      {pickerSources && (
+        <ScreenPickerModal
+          sources={pickerSources}
+          onSelect={selectSource}
+          onCancel={cancelPicker}
         />
       )}
 

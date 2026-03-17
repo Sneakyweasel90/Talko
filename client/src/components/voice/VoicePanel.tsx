@@ -7,6 +7,9 @@ interface Props {
   leaveVoice: () => void;
   setMuted: (muted: boolean) => void;
   setAllParticipantsDeafened: (deafened: boolean) => void;
+  isScreenSharing: boolean;
+  onStartScreenShare: () => void;
+  onStopScreenShare: () => void;
 }
 
 export default function VoicePanel({
@@ -15,6 +18,7 @@ export default function VoicePanel({
   leaveVoice,
   setMuted,
   setAllParticipantsDeafened,
+  isScreenSharing, onStartScreenShare, onStopScreenShare,
 }: Props) {
   const {
     isMuted,
@@ -139,6 +143,18 @@ export default function VoicePanel({
                 ) : (
                   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 5H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 5H5v-2h2v2zm10 0H9v-2h8v2zm0-3h-2v-2h2v2zm0-3h-2V8h2v2z"/></svg>
                 )}
+              </button>
+            )}
+
+            {inVoice && (
+              <button
+                onClick={isScreenSharing ? onStopScreenShare : onStartScreenShare}
+                title={isScreenSharing ? "Stop sharing" : "Share screen"}
+                className={`${styles.iconBtn} ${isScreenSharing ? styles.iconBtnActive : ""}`}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h6v2H8v2h8v-2h-2v-2h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 13H4V5h16v11z"/>
+                </svg>
               </button>
             )}
 

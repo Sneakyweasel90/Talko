@@ -20,6 +20,7 @@ import type { OnlineUser, DMConversation, GroupedMessage, UserStatus } from "../
 import { useUnreadChannels } from "../../hooks/useUnreadChannels";
 import styles from "./Chat.module.css";
 import { useAfkDetector } from "../../hooks/useAfkDetector";
+import ScreenShareViewer from "../voice/ScreenShareViewer";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();
@@ -147,7 +148,9 @@ export default function Chat() {
   const {
     inVoice, voiceChannel, participants, participantVolumes, selfVolume,
     joinVoice, leaveVoice, setParticipantVolume, setSelfVolume,
-    setMuted, setAllParticipantsDeafened, joinAfk,
+    setMuted, setAllParticipantsDeafened, joinAfk, localScreenShareTrack,
+    isScreenSharing, screenShareTrack, screenShareParticipant,
+    startScreenShare, stopScreenShare,  
   } = useVoice(user!.token, send);
 
   useAfkDetector(inVoice, voiceChannel, joinAfk);
@@ -181,6 +184,9 @@ export default function Chat() {
       <div className={styles.body}>
         <ResizableSidebar>
           <Sidebar
+            isScreenSharing={isScreenSharing}
+            onStartScreenShare={startScreenShare}
+            onStopScreenShare={stopScreenShare}
             joinAfk={joinAfk}
             inVoice={inVoice}
             setMuted={setMuted}
@@ -288,6 +294,15 @@ export default function Chat() {
           anchorEl={popover.el}
           onClose={() => setPopover(null)}
           onOpenDM={(userId) => { setPopover(null); handleOpenDM(userId); }}
+        />
+      )}
+
+      {(localScreenShareTrack || screenShareTrack) && (
+        <ScreenShareViewer
+          track={(localScreenShareTrack || screenShareTrack)!}
+          participantName={isScreenSharing ? user!.username : (screenShareParticipant ?? "")}
+          isLocal={isScreenSharing}
+          onClose={stopScreenShare}
         />
       )}
 

@@ -42,6 +42,9 @@ interface Props {
   setMuted: (muted: boolean) => void;
   setAllParticipantsDeafened: (deafened: boolean) => void;
   joinAfk: () => void;
+  isScreenSharing: boolean;
+  onStartScreenShare: () => void;
+  onStopScreenShare: () => void;
 }
 
 export default function Sidebar({
@@ -53,6 +56,7 @@ export default function Sidebar({
   activeTab, onTabChange, onSelectDM,
   onTextChannelNamesChange, inVoice, setMuted, setAllParticipantsDeafened,
   currentStatus, currentStatusText, onStatusChange, joinAfk,
+  isScreenSharing, onStartScreenShare, onStopScreenShare,
 }: Props) {
   const { theme } = useTheme();
   const {
@@ -117,6 +121,9 @@ export default function Sidebar({
       )}
 
       <SidebarFooter
+        isScreenSharing={isScreenSharing}
+        onStartScreenShare={onStartScreenShare}
+        onStopScreenShare={onStopScreenShare}
         username={username}
         nickname={nickname}
         avatar={avatar}

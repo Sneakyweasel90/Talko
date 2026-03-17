@@ -38,6 +38,9 @@ interface SidebarFooterProps {
   leaveVoice: () => void;
   setMuted: (muted: boolean) => void;
   setAllParticipantsDeafened: (deafened: boolean) => void;
+  isScreenSharing: boolean;
+  onStartScreenShare: () => void;
+  onStopScreenShare: () => void;
 }
 
 function UserRow({ nickname, username, avatar, currentStatus, currentStatusText, onClick }: {
@@ -79,6 +82,7 @@ export default function SidebarFooter({
   activeTab, onTabChange, onSelectDM,
   currentStatus, currentStatusText, onStatusChange,
   inVoice, voiceChannel, leaveVoice, setMuted, setAllParticipantsDeafened,
+  isScreenSharing, onStartScreenShare, onStopScreenShare,
 }: SidebarFooterProps) {
   const { theme } = useTheme();
   const [showThemes, setShowThemes] = useState(false);
@@ -137,6 +141,9 @@ export default function SidebarFooter({
         leaveVoice={leaveVoice}
         setMuted={setMuted}
         setAllParticipantsDeafened={setAllParticipantsDeafened}
+        isScreenSharing={isScreenSharing}
+        onStartScreenShare={onStartScreenShare}
+        onStopScreenShare={onStopScreenShare}
       />
 
       {/* Theme row */}

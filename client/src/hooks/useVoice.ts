@@ -20,6 +20,10 @@ export function useVoice(token: string, send: (data: object) => void) {
   const [participantVolumes, setParticipantVolumes] = useState<Record<string, number>>({});
   const [selfVolume, setSelfVolumeState] = useState<number>(() => loadVolume("__self__"));
   const voiceChannelRef = useRef<string | null>(null);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [screenShareTrack, setScreenShareTrack] = useState<MediaStreamTrack | null>(null);
+  const [screenShareParticipant, setScreenShareParticipant] = useState<string | null>(null);
+  const [localScreenShareTrack, setLocalScreenShareTrack] = useState<MediaStreamTrack | null>(null);
 
 
   const roomRef = useRef<Room | null>(null);
@@ -66,9 +70,17 @@ export function useVoice(token: string, send: (data: object) => void) {
         el.volume = isDeafenedRef.current ? 0 : (loadVolume(participant.name ?? participant.identity));
         document.body.appendChild(el);
       }
+      if (track.source === Track.Source.ScreenShare) {
+        setScreenShareTrack(track.mediaStreamTrack);
+        setScreenShareParticipant(participant.name ?? participant.identity);
+      }
     });
     room.on(RoomEvent.TrackUnsubscribed, (track) => {
       track.detach().forEach(el => el.remove());
+      if (track.source === Track.Source.ScreenShare) {
+        setScreenShareTrack(null);
+        setScreenShareParticipant(null);
+      }
     });
     room.on(RoomEvent.Disconnected, () => {
       setInVoice(false);
@@ -124,6 +136,33 @@ export function useVoice(token: string, send: (data: object) => void) {
     });
   }, []);
 
+  const stopScreenShare = useCallback(async () => {
+      const room = roomRef.current;
+      if (!room) return;
+      await room.localParticipant.setScreenShareEnabled(false);
+      setIsScreenSharing(false);
+      setLocalScreenShareTrack(null);
+    }, []);
+
+  const startScreenShare = useCallback(async () => {
+    const room = roomRef.current;
+    if (!room) return;
+    try {
+      await room.localParticipant.setScreenShareEnabled(true);
+      setIsScreenSharing(true);
+      const pub = Array.from(room.localParticipant.screenShareTrackPublications.values())[0];
+      if (pub?.track) {
+        setLocalScreenShareTrack(pub.track.mediaStreamTrack);
+        pub.track.mediaStreamTrack.addEventListener("ended", () => {
+          setIsScreenSharing(false);
+          setLocalScreenShareTrack(null);
+        });
+      }
+    } catch (e) {
+      console.warn("Screen share failed or cancelled:", e);
+    }
+  }, [stopScreenShare]);
+
   const setSelfVolume = useCallback((volume: number) => {
     const clamped = Math.max(0, Math.min(2, volume));
     saveVolume("__self__", clamped);
@@ -158,5 +197,11 @@ export function useVoice(token: string, send: (data: object) => void) {
     setMuted,
     setAllParticipantsDeafened,
     joinAfk,
+    isScreenSharing,
+    screenShareTrack,
+    screenShareParticipant,
+    startScreenShare,
+    stopScreenShare,
+    localScreenShareTrack,
   };
 }

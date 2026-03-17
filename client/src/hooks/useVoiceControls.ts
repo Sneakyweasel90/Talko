@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 type VoiceMode = "open" | "ptt";
 
@@ -6,7 +6,7 @@ const STORAGE_KEY_MUTE = "yakk_mute_key";
 const STORAGE_KEY_PTT = "yakk_ptt_key";
 const STORAGE_KEY_MODE = "yakk_voice_mode";
 
-export function useVoiceControls(localStream: React.MutableRefObject<MediaStream | null>) {
+export function useVoiceControls(setMuted: (muted: boolean) => void) {
   const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
   const [mode, setMode] = useState<VoiceMode>(
@@ -21,66 +21,37 @@ export function useVoiceControls(localStream: React.MutableRefObject<MediaStream
   const [assigningKey, setAssigningKey] = useState<"mute" | "ptt" | null>(null);
   const [isPttActive, setIsPttActive] = useState(false);
 
-  // Ref to hold all remote audio elements so deafen can silence them
-  const remoteAudioElementsRef = useRef<Set<HTMLAudioElement>>(new Set());
-
-  const registerRemoteAudio = useCallback((el: HTMLAudioElement) => {
-    remoteAudioElementsRef.current.add(el);
-    return () => { remoteAudioElementsRef.current.delete(el); };
-  }, []);
-
-  // Apply mute state to the actual audio tracks
-  const applyMute = useCallback((muted: boolean) => {
-    if (!localStream.current) return;
-    localStream.current.getAudioTracks().forEach((track) => {
-      track.enabled = !muted;
-    });
-  }, [localStream]);
-
-  // Apply deafen to all remote audio elements
-  const applyDeafen = useCallback((deafened: boolean) => {
-    remoteAudioElementsRef.current.forEach((el) => {
-      el.muted = deafened;
-    });
-  }, []);
-
-  // In PTT mode the mic is muted unless the PTT key is held
+  // Derive the effective mute state
   const effectiveMuted = isDeafened || (mode === "ptt" ? !isPttActive : isMuted);
 
   useEffect(() => {
-    applyMute(effectiveMuted);
-  }, [effectiveMuted, applyMute]);
+    setMuted(effectiveMuted);
+  }, [effectiveMuted, setMuted]);
 
+  // Mute immediately when switching to PTT mode
   useEffect(() => {
-    applyDeafen(isDeafened);
-  }, [isDeafened, applyDeafen]);
-
-  // Mute all tracks when first joining in PTT mode
-  useEffect(() => {
-    if (mode === "ptt") applyMute(true);
-  }, [mode, applyMute]);
+    if (mode === "ptt") setMuted(true);
+  }, [mode, setMuted]);
 
   const toggleMute = useCallback(() => {
-    // Unmuting also un-deafens
     if (isDeafened) {
       setIsDeafened(false);
       setIsMuted(false);
     } else {
-      setIsMuted((prev) => !prev);
+      setIsMuted(prev => !prev);
     }
   }, [isDeafened]);
 
   const toggleDeafen = useCallback(() => {
-    setIsDeafened((prev) => {
+    setIsDeafened(prev => {
       const next = !prev;
-      // Deafening also mutes mic
       if (next) setIsMuted(true);
       return next;
     });
   }, []);
 
   const toggleMode = useCallback(() => {
-    setMode((prev) => {
+    setMode(prev => {
       const next = prev === "open" ? "ptt" : "open";
       localStorage.setItem(STORAGE_KEY_MODE, next);
       return next;
@@ -98,10 +69,8 @@ export function useVoiceControls(localStream: React.MutableRefObject<MediaStream
     setAssigningKey(null);
   }, []);
 
-  // Global keydown/keyup handlers for mute shortcut and PTT
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      // Capture mode — waiting for user to press a key to assign
       if (assigningKey) {
         e.preventDefault();
         const key = e.code === "Space" ? "Space" : e.key.toUpperCase();
@@ -111,7 +80,6 @@ export function useVoiceControls(localStream: React.MutableRefObject<MediaStream
 
       const pressed = e.code === "Space" ? "Space" : e.key.toUpperCase();
 
-      // Mute shortcut (open mic mode only)
       if (mode === "open" && pressed === muteKey) {
         const tag = (e.target as HTMLElement).tagName;
         if (tag !== "INPUT" && tag !== "TEXTAREA") {
@@ -120,7 +88,6 @@ export function useVoiceControls(localStream: React.MutableRefObject<MediaStream
         }
       }
 
-      // PTT: activate when key held
       if (mode === "ptt" && pressed === pttKey) {
         setIsPttActive(true);
       }
@@ -161,6 +128,5 @@ export function useVoiceControls(localStream: React.MutableRefObject<MediaStream
     toggleMode,
     setAssigningKey,
     resetControls,
-    registerRemoteAudio,
   };
 }

@@ -1,7 +1,7 @@
 {
   "name": "talko",
   "private": true,
-  "version": "1.12.6",
+  "version": "1.13.0",
   "type": "module",
   "main": "electron.cjs",
   "scripts": {
@@ -31,7 +31,9 @@
       "artifactName": "TalkoSetup.exe"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "icon": "public/icon.png",
       "category": "Network",
       "artifactName": "Talko.AppImage"
@@ -43,8 +45,10 @@
     ]
   },
   "dependencies": {
+    "@livekit/components-react": "^2.9.20",
     "@sapphi-red/web-noise-suppressor": "^0.3.5",
     "axios": "^1.13.5",
+    "livekit-client": "^2.17.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.1"

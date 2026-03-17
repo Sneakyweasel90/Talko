@@ -1,6 +1,5 @@
 import { useTheme } from "../../context/ThemeContext";
 import { useVoiceControls } from "../../hooks/useVoiceControls";
-import type { MutableRefObject } from "react";
 import styles from "./VoiceIndicator.module.css";
 
 interface Props {
@@ -10,10 +9,10 @@ interface Props {
   participantVolumes: Record<string, number>;
   selfVolume: number;
   leaveVoice: () => void;
-  localStream: MutableRefObject<MediaStream | null>;
   setParticipantVolume: (username: string, volume: number) => void;
   setSelfVolume: (volume: number) => void;
   setAllParticipantsDeafened: (deafened: boolean) => void;
+  setMuted: (muted: boolean) => void;
 }
 
 function VolumeSlider({ label, value, onChange, color }: {
@@ -46,7 +45,7 @@ function VolumeSlider({ label, value, onChange, color }: {
 export default function VoiceIndicator({
   inVoice, voiceChannel, participants,
   participantVolumes, selfVolume,
-  leaveVoice, localStream,
+  leaveVoice, setMuted,
   setParticipantVolume, setSelfVolume, setAllParticipantsDeafened
 }: Props) {
   const { theme } = useTheme();
@@ -55,7 +54,7 @@ export default function VoiceIndicator({
     muteKey, pttKey, assigningKey,
     toggleMute, toggleDeafen, toggleMode,
     setAssigningKey, resetControls,
-  } = useVoiceControls(localStream);
+  } = useVoiceControls(setMuted);
 
   if (!inVoice) return null;
 

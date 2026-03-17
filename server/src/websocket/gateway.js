@@ -239,6 +239,25 @@ export async function initWebSocket(server) {
         }));
       }
 
+      // VOICE join — presence only, no signalling
+      if (msg.type === "voice_join") {
+        const { channelId } = msg;
+        ws.voiceChannel = channelId;
+        if (!channels.has(`voice:${channelId}`)) channels.set(`voice:${channelId}`, new Set());
+        channels.get(`voice:${channelId}`).add(ws);
+        broadcastAll(wss, { type: "voice_presence_update", channelId, username: user.username, action: "join" });
+      }
+
+      // VOICE leave — presence only, no signalling
+      if (msg.type === "voice_leave") {
+        if (ws.voiceChannel) {
+          const channelId = ws.voiceChannel;
+          channels.get(`voice:${channelId}`)?.delete(ws);
+          broadcastAll(wss, { type: "voice_presence_update", channelId, username: user.username, action: "leave" });
+          ws.voiceChannel = null;
+        }
+      }
+
       // SEND message
       if (msg.type === "message") {
         if (await isRateLimited(user.id, "message")) {
@@ -412,70 +431,23 @@ export async function initWebSocket(server) {
       if (msg.type === "ping") {
         ws.send(JSON.stringify({ type: "pong" }));
       }
-
-      // VOICE join
-      if (msg.type === "voice_join") {
-        const { channelId } = msg;
-        ws.voiceChannel = channelId;
-        if (!channels.has(`voice:${channelId}`)) channels.set(`voice:${channelId}`, new Set());
-        const voiceClients = channels.get(`voice:${channelId}`);
-        ws.send(JSON.stringify({
-          type: "voice_participants",
-          usernames: [...voiceClients].map(c => c.user.username),
-          userIds: [...voiceClients].map(c => c.user.id),
-        }));
-        for (const client of voiceClients) {
-          if (client.readyState === WebSocket.OPEN)
-            client.send(JSON.stringify({ type: "voice_user_joined", userId: user.id, username: user.username, channelId }));
-        }
-        voiceClients.add(ws);
-        broadcastAll(wss, { type: "voice_presence_update", channelId, username: user.username, action: "join" });
-      }
-
-      // VOICE leave
-      if (msg.type === "voice_leave") {
-        if (ws.voiceChannel) {
-          const channelId = ws.voiceChannel;
-          const voiceClients = channels.get(`voice:${channelId}`);
-          voiceClients?.delete(ws);
-          for (const client of voiceClients || []) {
-            if (client.readyState === WebSocket.OPEN)
-              client.send(JSON.stringify({ type: "voice_user_left", userId: user.id, username: user.username }));
-          }
-          broadcastAll(wss, { type: "voice_presence_update", channelId, username: user.username, action: "leave" });
-          ws.voiceChannel = null;
-        }
-      }
-
-      // VOICE signaling
-      if (["voice_offer", "voice_answer", "voice_ice"].includes(msg.type)) {
-        for (const client of wss.clients) {
-          if (client.user?.id === msg.targetUserId && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ ...msg, userId: user.id }));
-            break;
-          }
-        }
-      }
     });
 
     ws.on("close", async () => {
       ws._yakk_closed = true;
       for (const channelId of ws.channels) channels.get(channelId)?.delete(ws);
+
       if (ws.voiceChannel) {
         const channelId = ws.voiceChannel;
-        const vc = channels.get(`voice:${channelId}`);
-        vc?.delete(ws);
-        for (const client of vc || []) {
-          if (client.readyState === WebSocket.OPEN)
-            client.send(JSON.stringify({ type: "voice_user_left", userId: user.id, username: user.username }));
-        }
+        channels.get(`voice:${channelId}`)?.delete(ws);
         broadcastAll(wss, { type: "voice_presence_update", channelId, username: user.username, action: "leave" });
       }
+      
       await redis.sRem("online_users", String(user.id));
       await broadcastPresence(wss);
       setTimeout(() => broadcastPresence(wss), 500);
     });
   });
 
-  console.log("✅ WebSocket gateway ready");
+  console.log("WebSocket gateway ready");
 }

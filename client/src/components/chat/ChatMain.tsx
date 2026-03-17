@@ -4,7 +4,7 @@ import DMHeader from "../dm/DMHeader";
 import TypingIndicator from "../messages/TypingIndicator";
 import VoiceIndicator from "../voice/VoiceIndicator";
 import MessageInput from "../messages/MessageInput";
-import type { RefObject, MutableRefObject } from "react";
+import type { RefObject } from "react";
 import type { GroupedMessage, DMConversation, OnlineUser } from "../../types";
 import styles from "./ChatMain.module.css";
 
@@ -43,13 +43,13 @@ interface Props {
   participantVolumes: Record<string, number>;
   selfVolume: number;
   leaveVoice: () => void;
-  localStream: MutableRefObject<MediaStream | null>;
   setParticipantVolume: (username: string, volume: number) => void;
   setSelfVolume: (volume: number) => void;
   send: (data: object) => void;
   replyTo: GroupedMessage | null;
   onCancelReply: () => void;
   setAllParticipantsDeafened: (deafened: boolean) => void;
+  setMuted: (muted: boolean) => void;
 }
 
 export default function ChatMain({
@@ -61,9 +61,9 @@ export default function ChatMain({
   onScroll, onHover, onPickerToggle, onReact, onReply, onEdit, onDelete,
   onUsernameClick, resolveNickname,
   typers, setAllParticipantsDeafened,
-  inVoice, voiceChannel, participants, participantVolumes, selfVolume,
-  leaveVoice, localStream, setParticipantVolume, setSelfVolume,
+  inVoice, voiceChannel, participants, participantVolumes, selfVolume, setSelfVolume,
   send, replyTo, onCancelReply,
+  leaveVoice, setMuted, setParticipantVolume,
 }: Props) {
   return (
     <div className={styles.root}>
@@ -115,10 +115,10 @@ export default function ChatMain({
           participantVolumes={participantVolumes}
           selfVolume={selfVolume}
           leaveVoice={leaveVoice}
-          localStream={localStream}
           setParticipantVolume={setParticipantVolume}
           setSelfVolume={setSelfVolume}
           setAllParticipantsDeafened={setAllParticipantsDeafened}
+          setMuted={setMuted}
         />
       )}
 

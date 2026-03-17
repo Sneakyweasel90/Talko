@@ -83,12 +83,6 @@ export type ServerMessage =
   | { type: "error"; message: string }
   | { type: "presence"; users: OnlineUser[] }
   | { type: "reaction_update"; messageId: number; reactions: Reaction[] }
-  | { type: "voice_participants"; usernames: string[]; userIds: number[] }
-  | { type: "voice_user_joined"; userId: number; username: string }
-  | { type: "voice_user_left"; userId: number; username: string }
-  | { type: "voice_offer"; userId: number; offer: RTCSessionDescriptionInit; targetUserId: number }
-  | { type: "voice_answer"; userId: number; answer: RTCSessionDescriptionInit; targetUserId: number }
-  | { type: "voice_ice"; userId: number; candidate: RTCIceCandidateInit; targetUserId: number }
   | { type: "voice_presence_update"; channelId: string; username: string; action: "join" | "leave" }
   | { type: "voice_state"; channels: Record<string, string[]> }
   | { type: "message_edited"; messageId: number; content: string }
@@ -107,11 +101,6 @@ export type ClientMessage =
   | { type: "message"; channelId: string; content: string; replyToId?: number | null }
   | { type: "typing"; channelId: string }
   | { type: "react"; messageId: number; emoji: string }
-  | { type: "voice_join"; channelId: string }
-  | { type: "voice_leave" }
-  | { type: "voice_offer"; targetUserId: number; offer: RTCSessionDescriptionInit }
-  | { type: "voice_answer"; targetUserId: number; answer: RTCSessionDescriptionInit }
-  | { type: "voice_ice"; targetUserId: number; candidate: RTCIceCandidateInit }
   | { type: "edit_message"; messageId: number; content: string }
   | { type: "delete_message"; messageId: number }
   | { type: "pin_message"; messageId: number; channelId: string }

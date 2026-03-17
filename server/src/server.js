@@ -13,6 +13,7 @@ import adminRoutes from "./routes/admin.routes.js";
 import dmRoutes from "./routes/dm.routes.js";
 import { initWebSocket } from "./websocket/gateway.js";
 import { apiLimiter } from "./middleware/rateLimit.js";
+import voiceRoutes from "./routes/voice.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,6 +45,7 @@ app.use("/api/channels", channelsRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/dm", dmRoutes);
+app.use("/api/voice", voiceRoutes); 
 
 app.get("/api/health", (_, res) => res.json({ ok: true }));
 

@@ -57,7 +57,6 @@ export default function Chat() {
   const textChannelNamesRef = useRef<string[]>([]);
   const currentChannelRef = useRef(channel);
   useEffect(() => { currentChannelRef.current = channel; }, [channel]);
-  const rejoinVoiceRef = useRef<() => void>(() => {});
 
   useEffect(() => { if (user?.token) load(user.token); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -117,7 +116,6 @@ export default function Chat() {
           });
           return;
         }
-        handleVoiceMessage(data);
       } else if (data.type === "presence") {
         setOnlineUsers(data.users);
       } else if (data.type === "channel_unread_counts" || data.type === "channel_unread_increment") {
@@ -132,7 +130,6 @@ export default function Chat() {
         handleMessage(data);
       }
     },
-    () => rejoinVoiceRef.current(),
   );
 
   const handleStatusChange = useCallback((status: UserStatus, statusText?: string | null) => {
@@ -148,11 +145,9 @@ export default function Chat() {
 
   const {
     inVoice, voiceChannel, participants, participantVolumes, selfVolume,
-    joinVoice, leaveVoice, rejoinVoice, handleVoiceMessage, localStream,
-    setParticipantVolume, setSelfVolume, setAllParticipantsDeafened,
-  } = useVoice(send, user!.id);
-
-  useEffect(() => { rejoinVoiceRef.current = rejoinVoice; }, [rejoinVoice]);
+    joinVoice, leaveVoice, setParticipantVolume, setSelfVolume,
+    setMuted, setAllParticipantsDeafened,
+  } = useVoice(user!.token, send);
 
   const handleLogout = useCallback(async () => {
     disconnect();
@@ -272,13 +267,13 @@ export default function Chat() {
           participantVolumes={participantVolumes}
           selfVolume={selfVolume}
           leaveVoice={leaveVoice}
-          localStream={localStream}
           setParticipantVolume={setParticipantVolume}
           setSelfVolume={setSelfVolume}
           send={send}
           replyTo={replyTo}
           onCancelReply={() => setReplyTo(null)}
           setAllParticipantsDeafened={setAllParticipantsDeafened}
+          setMuted={setMuted}
         />
 
         <MemberList

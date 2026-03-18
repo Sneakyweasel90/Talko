@@ -27,12 +27,21 @@ export function useMessages({
   const typingTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const prevScrollHeightRef = useRef(0);
   const jumpToBottomRef = useRef(true);
+  const [mentionedChannels, setMentionedChannels] = useState<Set<string>>(new Set());
 
   const scrollToBottom = useCallback((instant = false) => {
     const el = messagesContainerRef.current;
     if (!el) return;
     if (instant) el.scrollTop = el.scrollHeight;
     else bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  const clearMention = useCallback((channelId: string) => {
+    setMentionedChannels(prev => {
+      const next = new Set(prev);
+      next.delete(channelId);
+      return next;
+    });
   }, []);
 
   const handleMessage = useCallback((data: ServerMessage) => {
@@ -56,6 +65,7 @@ export function useMessages({
     }
 
     if (data.type === "mention") {
+      setMentionedChannels(prev => new Set([...prev, data.channelId]));
       const isDM = data.channelId.startsWith("dm:");
       const title = isDM
         ? `${data.senderName} mentioned you in a DM`
@@ -111,7 +121,7 @@ export function useMessages({
         });
       }, 3000);
     }
-  }, [currentChannelRef, currentUserId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentChannelRef, currentUserId ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset and rejoin when channel changes
   useEffect(() => {
@@ -197,5 +207,7 @@ export function useMessages({
     handleDelete,
     bottomRef,
     messagesContainerRef,
+    mentionedChannels,
+    clearMention,
   };
 }

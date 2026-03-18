@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { RoleBadge } from "../ui/RoleBadge";
 import type { GroupedMessage, Reaction } from "../../types";
 import Avatar from "../ui/Avatar";
@@ -7,11 +7,16 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import EmojiPickerLib from "emoji-picker-react";
 
-const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
+interface EmojiPickerProps {
+  messageId: number;
+  onReact: (messageId: number, emoji: string) => void;
+  onClose: () => void;
+}
 
-function renderContent(text: string): React.ReactNode {
-  if (text.startsWith("[img]")) {
+function renderContent(text: string, currentUsername: string): React.ReactNode {
+    if (text.startsWith("[img]")) {
     const src = text.slice(5);
     return (
       <img
@@ -59,7 +64,30 @@ function renderContent(text: string): React.ReactNode {
           );
         },
         p({ children }: any) {
-          return <span className={styles.mdParagraph}>{children}</span>;
+          const highlightMentions = (child: React.ReactNode): React.ReactNode => {
+            if (typeof child !== "string") return child;
+            const parts = child.split(/(@\S+)/g);
+            return parts.map((part, i) => {
+              if (part.startsWith("@")) {
+                const name = part.slice(1);
+                const isMe = name.toLowerCase() === currentUsername.toLowerCase();
+                return (
+                  <span
+                    key={i}
+                    className={isMe ? styles.mentionMe : styles.mention}
+                  >
+                    {part}
+                  </span>
+                );
+              }
+              return part;
+            });
+          };
+          return (
+            <span className={styles.mdParagraph}>
+              {React.Children.map(children, highlightMentions)}
+            </span>
+          );
         },
       }}
     >
@@ -69,12 +97,6 @@ function renderContent(text: string): React.ReactNode {
 }
 
 // ── EmojiPicker ────────────────────────────────────────────────────────────────
-
-interface EmojiPickerProps {
-  messageId: number;
-  onReact: (messageId: number, emoji: string) => void;
-  onClose: () => void;
-}
 
 function EmojiPicker({ messageId, onReact, onClose }: EmojiPickerProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -88,16 +110,18 @@ function EmojiPicker({ messageId, onReact, onClose }: EmojiPickerProps) {
   }, [onClose]);
 
   return (
-    <div ref={ref} className={styles.emojiPicker}>
-      {QUICK_EMOJIS.map((emoji) => (
-        <button
-          key={emoji}
-          className={styles.emojiBtn}
-          onClick={() => { onReact(messageId, emoji); onClose(); }}
-        >
-          {emoji}
-        </button>
-      ))}
+    <div ref={ref} className={styles.emojiPickerWrap2}>
+      <EmojiPickerLib
+        onEmojiClick={(emojiData) => {
+          onReact(messageId, emojiData.emoji);
+          onClose();
+        }}
+        width={320}
+        height={400}
+        theme={"dark" as any}
+        searchPlaceholder="Search emoji..."
+        lazyLoadEmojis
+      />
     </div>
   );
 }
@@ -111,7 +135,12 @@ interface ReactionPillsProps {
   onReact: (messageId: number, emoji: string) => void;
 }
 
-function ReactionPills({ reactions, messageId, currentUsername, onReact }: ReactionPillsProps) {
+function ReactionPills({
+  reactions,
+  messageId,
+  currentUsername,
+  onReact,
+}: ReactionPillsProps) {
   if (reactions.length === 0) return null;
 
   return (
@@ -139,7 +168,10 @@ function ReactionPills({ reactions, messageId, currentUsername, onReact }: React
 interface MessageItemProps {
   isAdmin: boolean;
   onPin: (messageId: number) => void;
-  msg: GroupedMessage & { user_role?: string; user_custom_role_name?: string | null };
+  msg: GroupedMessage & {
+    user_role?: string;
+    user_custom_role_name?: string | null;
+  };
   hoveredMsgId: number | null;
   pickerMsgId: number | null;
   currentUsername: string;
@@ -153,6 +185,7 @@ interface MessageItemProps {
   onUsernameClick: (userId: number, username: string, el: HTMLElement) => void;
   resolveNickname: (userId: number, username: string) => string;
   avatarMap: Record<number, string | null>;
+  onJumpToMessage: (id: number) => void;
 }
 
 export default function MessageItem({
@@ -172,6 +205,7 @@ export default function MessageItem({
   onUsernameClick,
   resolveNickname,
   avatarMap,
+  onJumpToMessage,
 }: MessageItemProps) {
   const isHovered = hoveredMsgId === msg.id;
   const isPickerOpen = pickerMsgId === msg.id;
@@ -181,42 +215,64 @@ export default function MessageItem({
 
   return (
     <div
+      id={`msg-${msg.id}`}
       className={`${styles.messageRow} ${msg.isGrouped ? styles.grouped : ""}`}
       onMouseEnter={() => onHover(msg.id)}
-      onMouseLeave={() => { if (!isPickerOpen && !editing) onHover(null); }}
+      onMouseLeave={() => {
+        if (!isPickerOpen && !editing) onHover(null);
+      }}
     >
       {/* Avatar column */}
       <div className={styles.avatarCol}>
         {!msg.isGrouped && (
-          <Avatar username={msg.username} avatar={avatarMap[msg.user_id] ?? null} size={34} />
+          <Avatar
+            username={msg.username}
+            avatar={avatarMap[msg.user_id] ?? null}
+            size={34}
+          />
         )}
       </div>
 
       {/* Message body */}
       <div className={styles.messageBody}>
-
         {/* Header row */}
         {!msg.isGrouped && (
           <div className={styles.headerRow}>
             <span
               className={styles.username}
-              onClick={(e) => onUsernameClick(msg.user_id, msg.raw_username || msg.username, e.currentTarget as HTMLElement)}
+              onClick={(e) =>
+                onUsernameClick(
+                  msg.user_id,
+                  msg.raw_username || msg.username,
+                  e.currentTarget as HTMLElement,
+                )
+              }
               title="Click to set local nickname"
             >
               {resolveNickname(msg.user_id, msg.raw_username || msg.username)}
             </span>
             {msg.user_role && msg.user_role !== "user" && (
-              <RoleBadge role={msg.user_role as "admin" | "user" | "custom"} customRoleName={msg.user_custom_role_name} />
+              <RoleBadge
+                role={msg.user_role as "admin" | "user" | "custom"}
+                customRoleName={msg.user_custom_role_name}
+              />
             )}
             <span className={styles.timestamp}>
-              {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              {new Date(msg.created_at).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </span>
           </div>
         )}
 
         {/* Reply quote block */}
         {msg.reply_to_username && msg.reply_to_content && (
-          <div className={styles.replyQuote}>
+          <div
+            className={styles.replyQuote}
+            onClick={() => msg.reply_to_id && onJumpToMessage(msg.reply_to_id)}
+            style={{ cursor: "pointer" }}
+          >
             <span className={styles.replyAuthor}>{msg.reply_to_username}</span>
             <span className={styles.replyContent}>
               {msg.reply_to_content.startsWith("[img]")
@@ -234,7 +290,8 @@ export default function MessageItem({
             className={styles.editForm}
             onSubmit={(e) => {
               e.preventDefault();
-              if (editText.trim() && editText.trim() !== msg.content) onEdit(msg.id, editText.trim());
+              if (editText.trim() && editText.trim() !== msg.content)
+                onEdit(msg.id, editText.trim());
               setEditing(false);
             }}
             onMouseEnter={(e) => e.stopPropagation()}
@@ -248,25 +305,34 @@ export default function MessageItem({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  if (editText.trim() && editText.trim() !== msg.content) onEdit(msg.id, editText.trim());
+                  if (editText.trim() && editText.trim() !== msg.content)
+                    onEdit(msg.id, editText.trim());
                   setEditing(false);
                 }
-                if (e.key === "Escape") { setEditing(false); setEditText(msg.content); }
+                if (e.key === "Escape") {
+                  setEditing(false);
+                  setEditText(msg.content);
+                }
               }}
               rows={1}
             />
-            <button type="submit" className={styles.editSaveBtn}>SAVE</button>
+            <button type="submit" className={styles.editSaveBtn}>
+              SAVE
+            </button>
             <button
               type="button"
               className={styles.editCancelBtn}
-              onClick={() => { setEditing(false); setEditText(msg.content); }}
+              onClick={() => {
+                setEditing(false);
+                setEditText(msg.content);
+              }}
             >
               CANCEL
             </button>
           </form>
         ) : (
           <div className={styles.messageContent}>
-            {renderContent(msg.content)}
+            {renderContent(msg.content, currentUsername)}
             {msg.edited_at && (
               <span className={styles.editedLabel}>(edited)</span>
             )}
@@ -284,15 +350,22 @@ export default function MessageItem({
         {/* Action bar */}
         {(isHovered || isPickerOpen || editing) && (
           <div className={styles.actionBar}>
-
             {/* Reply */}
-            <button className={styles.actionBtn} onClick={() => onReply(msg)} title="Reply">
+            <button
+              className={styles.actionBtn}
+              onClick={() => onReply(msg)}
+              title="Reply"
+            >
               ↩ REPLY
             </button>
 
             {/* Pin — admins only, not for images */}
             {isAdmin && !msg.content.startsWith("[img]") && (
-              <button className={styles.actionBtn} onClick={() => onPin(msg.id)} title="Pin message">
+              <button
+                className={styles.actionBtn}
+                onClick={() => onPin(msg.id)}
+                title="Pin message"
+              >
                 📌 PIN
               </button>
             )}
@@ -301,7 +374,10 @@ export default function MessageItem({
             {isOwnMessage && !editing && !msg.content.startsWith("[img]") && (
               <button
                 className={styles.actionBtn}
-                onClick={() => { setEditing(true); setEditText(msg.content); }}
+                onClick={() => {
+                  setEditing(true);
+                  setEditText(msg.content);
+                }}
                 title="Edit"
               >
                 ✎ EDIT
@@ -310,7 +386,9 @@ export default function MessageItem({
             {isOwnMessage && !editing && (
               <button
                 className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                onClick={() => { if (window.confirm("Delete this message?")) onDelete(msg.id); }}
+                onClick={() => {
+                  if (window.confirm("Delete this message?")) onDelete(msg.id);
+                }}
                 title="Delete"
               >
                 ✕ DEL
@@ -330,7 +408,10 @@ export default function MessageItem({
                 <EmojiPicker
                   messageId={msg.id}
                   onReact={onReact}
-                  onClose={() => { onPickerToggle(null); onHover(null); }}
+                  onClose={() => {
+                    onPickerToggle(null);
+                    onHover(null);
+                  }}
                 />
               )}
             </div>

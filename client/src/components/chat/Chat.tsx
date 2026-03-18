@@ -35,11 +35,6 @@ export default function Chat() {
   }, [resolve, nicknames]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [channel, setChannel] = useState("general");
-  const handleSelectChannel = useCallback((name: string) => {
-    setChannel(name);
-    markChannelRead(name);
-  }, [markChannelRead]);
-
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [voiceOccupancy, setVoiceOccupancy] = useState<Record<string, string[]>>({});
   const [showSearch, setShowSearch] = useState(false);
@@ -53,52 +48,11 @@ export default function Chat() {
   const [myStatus, setMyStatus] = useState<UserStatus>("online");
   const [myStatusText, setMyStatusText] = useState<string | null>(null);
   const [allUsers, setAllUsers] = useState<{ id: number; username: string }[]>([]);
-
   const { conversations: dmConversations, dmLoading, openDM, markRead, onDMMessage, totalUnread } = useDMs(user!.token, user!.id);
-
   const textChannelNamesRef = useRef<string[]>([]);
   const currentChannelRef = useRef(channel);
-  useEffect(() => { currentChannelRef.current = channel; }, [channel]);
 
-  useEffect(() => { if (user?.token) load(user.token); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!user?.token) return;
-    axios.get(`${config.HTTP}/api/users/avatars`, { headers: { Authorization: `Bearer ${user.token}` } })
-      .then(({ data }) => {
-        const map: Record<number, string | null> = {};
-        for (const u of data) map[u.id] = u.avatar;
-        setAvatarMap(map);
-      }).catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        setShowSearch((s) => !s);
-        return;
-      }
-      if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-        const tag = (e.target as HTMLElement).tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return;
-        if (activeTab !== "channels") return;
-        const names = textChannelNamesRef.current;
-        if (names.length === 0) return;
-        e.preventDefault();
-        const cur = currentChannelRef.current;
-        const idx = names.indexOf(cur);
-        const next = e.key === "ArrowDown"
-          ? names[(idx + 1) % names.length]
-          : names[(idx - 1 + names.length) % names.length];
-        handleSelectChannel(next);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [activeTab, handleSelectChannel]);
-
-  const { send, disconnect } = useWebSocket(
+    const { send, disconnect } = useWebSocket(
     user!.token,
     (data) => {
       if (data.type?.startsWith("voice_")) {
@@ -140,9 +94,25 @@ export default function Chat() {
     send({ type: "set_status", status, statusText: statusText ?? null });
   }, [send]);
 
+  useEffect(() => { currentChannelRef.current = channel; }, [channel]);
+
+  useEffect(() => { if (user?.token) load(user.token); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!user?.token) return;
+    axios.get(`${config.HTTP}/api/users/avatars`, { headers: { Authorization: `Bearer ${user.token}` } })
+      .then(({ data }) => {
+        const map: Record<number, string | null> = {};
+        for (const u of data) map[u.id] = u.avatar;
+        setAvatarMap(map);
+      }).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const {
     groupedMessages, typers, hasMore, loadingMore,
-    handleMessage, handleScroll, handleReact, handleEdit, handleDelete, bottomRef, messagesContainerRef,
+    handleMessage, handleScroll, handleReact, handleEdit, handleDelete,
+    bottomRef, messagesContainerRef,
+    mentionedChannels, clearMention,
   } = useMessages({ channel, send, currentUserId: user!.id, currentChannelRef, userRef });
 
   const {
@@ -153,6 +123,38 @@ export default function Chat() {
     startScreenShare, stopScreenShare,  
     pickerSources, selectSource, cancelPicker,
   } = useVoice(user!.token, send);
+
+  const handleSelectChannel = useCallback((name: string) => {
+    setChannel(name);
+    markChannelRead(name);
+    clearMention(name);
+  }, [markChannelRead, clearMention]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setShowSearch((s) => !s);
+        return;
+      }
+      if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+        const tag = (e.target as HTMLElement).tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+        if (activeTab !== "channels") return;
+        const names = textChannelNamesRef.current;
+        if (names.length === 0) return;
+        e.preventDefault();
+        const cur = currentChannelRef.current;
+        const idx = names.indexOf(cur);
+        const next = e.key === "ArrowDown"
+          ? names[(idx + 1) % names.length]
+          : names[(idx - 1 + names.length) % names.length];
+        handleSelectChannel(next);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [activeTab, handleSelectChannel]);
 
   useAfkDetector(inVoice, voiceChannel, joinAfk);
 
@@ -192,6 +194,7 @@ export default function Chat() {
       <div className={styles.body}>
         <ResizableSidebar>
           <Sidebar
+            mentionedChannels={mentionedChannels}
             isScreenSharing={isScreenSharing}
             onStartScreenShare={startScreenShare}
             onStopScreenShare={stopScreenShare}
@@ -285,6 +288,7 @@ export default function Chat() {
           send={send}
           replyTo={replyTo}
           onCancelReply={() => setReplyTo(null)}
+          allUsers={allUsers}
         />
 
         <MemberList

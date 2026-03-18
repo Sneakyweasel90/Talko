@@ -45,6 +45,7 @@ interface Props {
   isScreenSharing: boolean;
   onStartScreenShare: () => void;
   onStopScreenShare: () => void;
+  mentionedChannels: Set<string>;
 }
 
 export default function Sidebar({
@@ -56,7 +57,7 @@ export default function Sidebar({
   activeTab, onTabChange, onSelectDM,
   onTextChannelNamesChange, inVoice, setMuted, setAllParticipantsDeafened,
   currentStatus, currentStatusText, onStatusChange, joinAfk,
-  isScreenSharing, onStartScreenShare, onStopScreenShare,
+  isScreenSharing, onStartScreenShare, onStopScreenShare, mentionedChannels,
 }: Props) {
   const { theme } = useTheme();
   const {
@@ -93,6 +94,7 @@ export default function Sidebar({
       {activeTab === "channels" && (
         <div className={styles.channelListWrap}>
           <ChannelList
+            mentionedChannels={mentionedChannels}
             textChannels={textChannels}
             voiceChannels={voiceChannels}
             activeChannel={channel}

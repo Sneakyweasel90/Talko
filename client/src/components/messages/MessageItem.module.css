@@ -35,7 +35,7 @@
 }
 
 .username {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 700;
   font-size: 0.9rem;
   color: var(--primary);
@@ -48,7 +48,7 @@
 
 .timestamp {
   font-size: 0.65rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
 }
 
@@ -59,7 +59,7 @@
   margin-bottom: 4px;
   opacity: 0.7;
   font-size: 0.8rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
 }
 
 .replyAuthor {
@@ -70,6 +70,20 @@
 
 .replyContent {
   color: var(--text-dim);
+}
+
+@keyframes highlight {
+  0% {
+    background: var(--primary-glow);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.highlighted {
+  animation: highlight 1.5s ease-out;
+  border-radius: 3px;
 }
 
 /* ── Edit Form ───────────────────────────────────────────────────────────── */
@@ -88,7 +102,7 @@
   color: var(--text);
   font-size: 0.9rem;
   padding: 3px 8px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   outline: none;
 }
 
@@ -100,7 +114,7 @@
   font-size: 0.7rem;
   padding: 2px 8px;
   cursor: pointer;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   transition: all 0.15s;
 }
 
@@ -116,7 +130,7 @@
   font-size: 0.7rem;
   padding: 2px 8px;
   cursor: pointer;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   transition: all 0.15s;
 }
 
@@ -137,7 +151,7 @@
   font-size: 0.65rem;
   color: var(--text-dim);
   margin-left: 6px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   opacity: 0.6;
 }
 
@@ -192,7 +206,7 @@
 
 .reactionCount {
   font-size: 0.7rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
 }
 
@@ -223,7 +237,7 @@
   font-size: 0.7rem;
   padding: 1px 6px;
   border-radius: 10px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.05em;
   transition: all 0.15s;
   line-height: 1.6;
@@ -279,13 +293,20 @@
   background: var(--primary-glow);
 }
 
+.emojiPickerWrap2 {
+  position: absolute;
+  bottom: 28px;
+  right: 0;
+  z-index: 200;
+}
+
 /* ── Markdown ────────────────────────────────────────────────────────────── */
 .inlineCode {
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: 1px 5px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.85em;
   color: var(--primary);
 }
@@ -310,8 +331,25 @@
   color: var(--text);
   font-size: 0.9rem;
   padding: 3px 8px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   outline: none;
   resize: none;
   line-height: 1.4;
+}
+
+/* ── Mention ────────────────────────────────────────────────────────────── */
+.mention {
+  color: var(--primary);
+  background: var(--primary-glow);
+  border-radius: 3px;
+  padding: 0 3px;
+  font-weight: 600;
+}
+
+.mentionMe {
+  color: #fff;
+  background: var(--primary-dim);
+  border-radius: 3px;
+  padding: 0 3px;
+  font-weight: 700;
 }

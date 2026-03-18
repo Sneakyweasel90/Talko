@@ -209,3 +209,22 @@
   font-size: 0.55rem;
   color: #4ade80;
 }
+
+/* ── Mention ─────────────────────────────────────────────────────── */
+.mentionBadge {
+  background: #f87171;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0 5px;
+  font-size: 0.6rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: 700;
+  min-width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.hasMention {
+  color: var(--text);
+  font-weight: 700;
+}

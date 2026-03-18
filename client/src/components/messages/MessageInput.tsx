@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import type { GroupedMessage, OnlineUser } from "../../types";
+import type { GroupedMessage } from "../../types";
 import styles from "./MessageInput.module.css";
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   channel: string;
   replyTo: GroupedMessage | null;
   onCancelReply: () => void;
-  onlineUsers?: OnlineUser[];
+  allUsers?: { id: number; username: string }[];
 }
 
 async function compressImage(file: File): Promise<string> {
@@ -19,8 +19,13 @@ async function compressImage(file: File): Promise<string> {
         const MAX = 900;
         let { width, height } = img;
         if (width > MAX || height > MAX) {
-          if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
-          else { width = Math.round(width * MAX / height); height = MAX; }
+          if (width > height) {
+            height = Math.round((height * MAX) / width);
+            width = MAX;
+          } else {
+            width = Math.round((width * MAX) / height);
+            height = MAX;
+          }
         }
         const canvas = document.createElement("canvas");
         canvas.width = width;
@@ -36,7 +41,13 @@ async function compressImage(file: File): Promise<string> {
   });
 }
 
-export default function MessageInput({ send, channel, replyTo, onCancelReply, onlineUsers = [] }: Props) {
+export default function MessageInput({
+  send,
+  channel,
+  replyTo,
+  onCancelReply,
+  allUsers = [],
+}: Props) {
   const [text, setText] = useState("");
   const typingRef = useRef(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -60,11 +71,11 @@ export default function MessageInput({ send, channel, replyTo, onCancelReply, on
   const mentionCandidates =
     mentionQuery === null
       ? []
-      : onlineUsers
-          .filter((u) =>
-            (u.nickname || u.username)
-              .toLowerCase()
-              .startsWith(mentionQuery.toLowerCase())
+      : allUsers
+          .filter(
+            (u) =>
+              mentionQuery === "" ||
+              u.username.toLowerCase().startsWith(mentionQuery.toLowerCase()),
           )
           .slice(0, 6);
 
@@ -85,9 +96,15 @@ export default function MessageInput({ send, channel, replyTo, onCancelReply, on
   const parseMention = (val: string, cursorPos: number) => {
     const slice = val.slice(0, cursorPos);
     const atIdx = slice.lastIndexOf("@");
-    if (atIdx === -1) { setMentionQuery(null); return; }
+    if (atIdx === -1) {
+      setMentionQuery(null);
+      return;
+    }
     const fragment = slice.slice(atIdx + 1);
-    if (fragment.includes(" ")) { setMentionQuery(null); return; }
+    if (fragment.includes(" ")) {
+      setMentionQuery(null);
+      return;
+    }
     setMentionQuery(fragment);
     setMentionStart(atIdx);
     setMentionIndex(0);
@@ -100,12 +117,14 @@ export default function MessageInput({ send, channel, replyTo, onCancelReply, on
     if (!typingRef.current) {
       send({ type: "typing", channelId: channel });
       typingRef.current = true;
-      setTimeout(() => { typingRef.current = false; }, 2000);
+      setTimeout(() => {
+        typingRef.current = false;
+      }, 2000);
     }
   };
 
-  const commitMention = (user: OnlineUser) => {
-    const display = user.nickname || user.username;
+  const commitMention = (user: { id: number; username: string }) => {
+    const display = user.username;
     const before = text.slice(0, mentionStart);
     const after = text.slice(mentionStart + 1 + (mentionQuery?.length ?? 0));
     const next = `${before}@${display} ${after}`;
@@ -124,11 +143,21 @@ export default function MessageInput({ send, channel, replyTo, onCancelReply, on
     e.preventDefault();
     if (!text.trim() && !imagePreview) return;
     if (imagePreview) {
-      send({ type: "message", channelId: channel, content: `[img]${imagePreview}`, replyToId: replyTo?.id ?? null });
+      send({
+        type: "message",
+        channelId: channel,
+        content: `[img]${imagePreview}`,
+        replyToId: replyTo?.id ?? null,
+      });
       setImagePreview(null);
     }
     if (text.trim()) {
-      send({ type: "message", channelId: channel, content: text.trim(), replyToId: replyTo?.id ?? null });
+      send({
+        type: "message",
+        channelId: channel,
+        content: text.trim(),
+        replyToId: replyTo?.id ?? null,
+      });
     }
     setText("");
     setMentionQuery(null);
@@ -137,20 +166,55 @@ export default function MessageInput({ send, channel, replyTo, onCancelReply, on
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (mentionCandidates.length > 0) {
-      if (e.key === "ArrowDown") { e.preventDefault(); setMentionIndex((i) => (i + 1) % mentionCandidates.length); return; }
-      if (e.key === "ArrowUp") { e.preventDefault(); setMentionIndex((i) => (i - 1 + mentionCandidates.length) % mentionCandidates.length); return; }
-      if (e.key === "Tab" || e.key === "Enter") { e.preventDefault(); commitMention(mentionCandidates[mentionIndex]); return; }
-      if (e.key === "Escape") { setMentionQuery(null); return; }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((i) => (i + 1) % mentionCandidates.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex(
+          (i) => (i - 1 + mentionCandidates.length) % mentionCandidates.length,
+        );
+        return;
+      }
+      if (e.key === "Tab" || e.key === "Enter") {
+        e.preventDefault();
+        commitMention(mentionCandidates[mentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        setMentionQuery(null);
+        return;
+      }
     }
-    if (e.key === "Escape" && replyTo) { e.preventDefault(); onCancelReply(); }
+    if (e.key === "Escape" && replyTo) {
+      e.preventDefault();
+      onCancelReply();
+    }
   };
 
   return (
     <div
       className={styles.wrapper}
-      onDragOver={(e) => { e.preventDefault(); if (!isDragging) setIsDragging(true); }}
-      onDragLeave={(e) => { if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget as Node)) return; setIsDragging(false); }}
-      onDrop={(e) => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        if (!isDragging) setIsDragging(true);
+      }}
+      onDragLeave={(e) => {
+        if (
+          e.relatedTarget &&
+          e.currentTarget.contains(e.relatedTarget as Node)
+        )
+          return;
+        setIsDragging(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const f = e.dataTransfer.files?.[0];
+        if (f) handleFile(f);
+      }}
     >
       {/* Drop overlay */}
       {isDragging && (
@@ -169,26 +233,35 @@ export default function MessageInput({ send, channel, replyTo, onCancelReply, on
           {mentionCandidates.map((u, i) => (
             <div
               key={u.id}
-              onMouseDown={(e) => { e.preventDefault(); commitMention(u); }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                commitMention(u);
+              }}
               className={`${styles.mentionItem} ${i === mentionIndex ? styles.active : ""}`}
               onMouseEnter={() => setMentionIndex(i)}
             >
               <span className={styles.mentionAt}>@</span>
-              <span className={styles.mentionName}>{u.nickname || u.username}</span>
-              {u.nickname && (
-                <span className={styles.mentionUsername}>({u.username})</span>
-              )}
+              <span className={styles.mentionName}>{u.username}</span>
             </div>
           ))}
-          <div className={styles.mentionFooter}>TAB or ENTER to select · ESC to close</div>
+          <div className={styles.mentionFooter}>
+            TAB or ENTER to select · ESC to close
+          </div>
         </div>
       )}
 
       {/* Image preview */}
       {imagePreview && (
         <div className={styles.imagePreviewBar}>
-          <img src={imagePreview} alt="preview" className={styles.imagePreviewThumb} />
-          <button className={styles.imageRemoveBtn} onClick={() => setImagePreview(null)}>
+          <img
+            src={imagePreview}
+            alt="preview"
+            className={styles.imagePreviewThumb}
+          />
+          <button
+            className={styles.imageRemoveBtn}
+            onClick={() => setImagePreview(null)}
+          >
             ✕ REMOVE
           </button>
         </div>
@@ -198,7 +271,9 @@ export default function MessageInput({ send, channel, replyTo, onCancelReply, on
       {replyTo && (
         <div className={styles.replyBanner}>
           <span className={styles.replyBannerText}>
-            <span className={styles.replyBannerAuthor}>↩ replying to {replyTo.username}</span>
+            <span className={styles.replyBannerAuthor}>
+              ↩ replying to {replyTo.username}
+            </span>
             <span className={styles.replyBannerContent}>
               {replyTo.content.startsWith("[img]")
                 ? "[image]"
@@ -207,7 +282,11 @@ export default function MessageInput({ send, channel, replyTo, onCancelReply, on
                   : replyTo.content}
             </span>
           </span>
-          <button className={styles.replyBannerCancel} onClick={onCancelReply} title="Cancel reply (Esc)">
+          <button
+            className={styles.replyBannerCancel}
+            onClick={onCancelReply}
+            title="Cancel reply (Esc)"
+          >
             ✕
           </button>
         </div>
@@ -223,7 +302,11 @@ export default function MessageInput({ send, channel, replyTo, onCancelReply, on
               type="file"
               accept="image/*"
               style={{ display: "none" }}
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFile(f);
+                e.target.value = "";
+              }}
             />
             <button
               type="button"
@@ -238,11 +321,19 @@ export default function MessageInput({ send, channel, replyTo, onCancelReply, on
           <textarea
             ref={inputRef}
             className={styles.textInput}
-            placeholder={replyTo ? `reply to ${replyTo.username}...` : `transmit to #${channel}...`}
+            placeholder={
+              replyTo
+                ? `reply to ${replyTo.username}...`
+                : `transmit to #${channel}...`
+            }
             value={text}
             onChange={handleChange}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
+                if (mentionCandidates.length > 0) {
+                  handleKeyDown(e);
+                  return;
+                }
                 e.preventDefault();
                 handleSend(e as any);
               } else {

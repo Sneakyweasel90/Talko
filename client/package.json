@@ -1,7 +1,7 @@
 {
   "name": "talko",
   "private": true,
-  "version": "1.14.1",
+  "version": "1.14.2",
   "type": "module",
   "main": "electron.cjs",
   "scripts": {
@@ -51,6 +51,7 @@
     "@livekit/components-react": "^2.9.20",
     "@sapphi-red/web-noise-suppressor": "^0.3.5",
     "axios": "^1.13.5",
+    "emoji-picker-react": "^4.18.0",
     "livekit-client": "^2.17.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -30,21 +30,48 @@ interface Props {
   resolveNickname: (userId: number, username: string) => string;
 }
 
+const onJumpToMessage = (id: number) => {
+  const el = document.getElementById(`msg-${id}`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.add(styles.highlighted);
+  setTimeout(() => el.classList.remove(styles.highlighted), 1500);
+};
+
 export default function MessageFeed({
-  messagesContainerRef, bottomRef, onScroll,
-  groupedMessages, loadingMore, hasMore,
-  activeTab, activeDMConv, channel,
-  hoveredMsgId, pickerMsgId, isAdmin, onPin,
-  currentUsername, currentUserId, avatarMap,
-  onHover, onPickerToggle, onReact, onReply, onEdit, onDelete,
-  onUsernameClick, resolveNickname,
+  messagesContainerRef,
+  bottomRef,
+  onScroll,
+  groupedMessages,
+  loadingMore,
+  hasMore,
+  activeTab,
+  activeDMConv,
+  channel,
+  hoveredMsgId,
+  pickerMsgId,
+  isAdmin,
+  onPin,
+  currentUsername,
+  currentUserId,
+  avatarMap,
+  onHover,
+  onPickerToggle,
+  onReact,
+  onReply,
+  onEdit,
+  onDelete,
+  onUsernameClick,
+  resolveNickname,
 }: Props) {
   return (
-    <div ref={messagesContainerRef} className={styles.container} onScroll={onScroll}>
+    <div
+      ref={messagesContainerRef}
+      className={styles.container}
+      onScroll={onScroll}
+    >
       <div className={styles.statusRow}>
-        {loadingMore && (
-          <span className={styles.loadingText}>LOADING...</span>
-        )}
+        {loadingMore && <span className={styles.loadingText}>LOADING...</span>}
         {!hasMore && groupedMessages.length > 0 && (
           <span className={styles.beginningText}>
             {activeTab === "dms" && activeDMConv
@@ -73,6 +100,7 @@ export default function MessageFeed({
           onDelete={onDelete}
           onUsernameClick={onUsernameClick}
           resolveNickname={resolveNickname}
+          onJumpToMessage={onJumpToMessage}
         />
       ))}
       <div ref={bottomRef} />

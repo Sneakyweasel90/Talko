@@ -54,6 +54,7 @@ interface ChannelListProps {
   onCancelCreate: () => void;
   afkChannel: Channel | null;
   onJoinAfk: () => void;
+  mentionedChannels: Set<string>;
 }
 
 export default function ChannelList({
@@ -63,6 +64,7 @@ export default function ChannelList({
   onSelectChannel, onJoinVoice, onLeaveVoice, onDeleteChannel,
   onToggleCreateText, onToggleCreateVoice,
   onChannelNameChange, onCreateChannel, onCancelCreate, afkChannel, onJoinAfk,
+  mentionedChannels,
 }: ChannelListProps) {
   return (
     <>
@@ -87,15 +89,19 @@ export default function ChannelList({
         const isActive = ch.name === activeChannel;
         const unread = unreadCounts[ch.name] ?? 0;
         const hasUnread = unread > 0 && !isActive;
+        const hasMention = mentionedChannels.has(ch.name);
         return (
           <div
             key={ch.id}
             onClick={() => onSelectChannel(ch.name)}
-            className={`${styles.channel} ${isActive ? styles.active : ""} ${hasUnread ? styles.hasUnread : ""}`}
+            className={`${styles.channel} ${isActive ? styles.active : ""} ${hasUnread ? styles.hasUnread : ""} ${hasMention ? styles.hasMention : ""}`}
           >
             <span className={styles.channelHash}>#</span>
             <span className={styles.channelName}>{ch.name}</span>
-            {hasUnread && (
+            {hasMention && !isActive && (
+              <span className={styles.mentionBadge}>@</span>
+            )}
+            {hasUnread && !hasMention && (
               <span className={styles.unreadBadge}>{unread > 99 ? "99+" : unread}</span>
             )}
             {isActive && <div className={styles.activeDot} />}

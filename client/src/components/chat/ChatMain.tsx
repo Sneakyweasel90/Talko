@@ -39,6 +39,7 @@ interface Props {
   send: (data: object) => void;
   replyTo: GroupedMessage | null;
   onCancelReply: () => void;
+  allUsers: { id: number; username: string }[];
 }
 
 export default function ChatMain({
@@ -50,7 +51,7 @@ export default function ChatMain({
   onScroll, onHover, onPickerToggle, onReact, onReply, onEdit, onDelete,
   onUsernameClick, resolveNickname,
   typers,
-  send, replyTo, onCancelReply,
+  send, replyTo, onCancelReply, allUsers
 }: Props) {
   return (
     <div className={styles.root}>
@@ -100,6 +101,7 @@ export default function ChatMain({
         replyTo={replyTo}
         onCancelReply={onCancelReply}
         onlineUsers={onlineUsers}
+        allUsers={allUsers}
       />
     </div>
   );

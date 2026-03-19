@@ -5,7 +5,7 @@
   max-width: 480px;
   border: 1px solid var(--border);
   border-left: 3px solid var(--primary-dim);
-  border-radius: 4px;
+  border-radius: 8px;
   background: var(--surface2);
   text-decoration: none;
   overflow: hidden;
@@ -21,6 +21,7 @@
   height: 80px;
   object-fit: cover;
   flex-shrink: 0;
+  border-radius: 8px 0 0 8px;
 }
 
 .text {

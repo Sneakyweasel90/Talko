@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { saveBgToDB, loadBgFromDB, clearBgFromDB } from "../utils/bgStorage";
 
 export const themes = {
   cyberpunk: {
@@ -281,16 +282,107 @@ export const themes = {
     error: "#00ff9f",
     gridColor: "rgba(255,0,255,0.04)",
   },
+  custom: {
+    name: "Custom",
+    primary: "#00ff9f",
+    primaryDim: "rgba(0,255,159,0.4)",
+    primaryGlow: "rgba(0,255,159,0.15)",
+    background: "#020a06",
+    surface: "#010a05",
+    surface2: "#020d07",
+    border: "rgba(0,255,159,0.15)",
+    text: "rgba(200,255,220,0.9)",
+    textDim: "rgba(0,255,159,0.5)",
+    error: "#ff3366",
+    gridColor: "rgba(0,255,159,0.05)",
+  },
 };
 
-const ThemeContext = createContext(null);
+const ThemeContext = createContext<any>(null);
 
 export function ThemeProvider({ children }) {
-  const [themeName, setThemeName] = useState(() => {
-    return localStorage.getItem("talko_theme") || "cyberpunk";
+  const [themeName, setThemeName] = useState(
+    () => localStorage.getItem("talko_theme") || "cyberpunk",
+  );
+  const [customTheme, setCustomThemeState] = useState(() => {
+    try {
+      const saved = localStorage.getItem("talko_custom_theme");
+      return saved ? JSON.parse(saved) : themes.custom;
+    } catch {
+      return themes.custom;
+    }
   });
 
-  const theme = themes[themeName];
+  const [chatBgOpacity, setChatBgOpacity] = useState(() =>
+    parseFloat(localStorage.getItem("talko_chat_bg_opacity") || "0.4"),
+  );
+
+  const theme = themeName === "custom" ? customTheme : themes[themeName];
+
+  const saveCustomTheme = (values: typeof themes.custom) => {
+    localStorage.setItem("talko_custom_theme", JSON.stringify(values));
+    setCustomThemeState(values);
+  };
+
+  const [chatBg, setChatBgState] = useState("");
+
+  const saveChatBg = async (url: string) => {
+    if ((window as any).electronAPI?.saveBg) {
+      await (window as any).electronAPI.saveBg(url).catch(() => {});
+    } else {
+      saveBgToDB(url).catch(() => {});
+    }
+    setChatBgState(url);
+  };
+
+  const saveChatBgOpacity = (opacity: number) => {
+    localStorage.setItem("talko_chat_bg_opacity", String(opacity));
+    setChatBgOpacity(opacity);
+    document.documentElement.style.setProperty(
+      "--chat-bg-opacity",
+      String(opacity),
+    );
+  };
+
+  const clearChatBg = async () => {
+    if ((window as any).electronAPI?.clearBg) {
+      await (window as any).electronAPI.clearBg().catch(() => {});
+    } else {
+      clearBgFromDB().catch(() => {});
+    }
+    setChatBgState("");
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      let bg = "";
+      if ((window as any).electronAPI?.loadBg) {
+        bg = await (window as any).electronAPI.loadBg().catch(() => "");
+      } else {
+        bg = await loadBgFromDB().catch(() => "");
+      }
+      setChatBgState(bg);
+      document.documentElement.style.setProperty(
+        "--chat-bg",
+        bg ? `url("${bg}")` : "none"
+      );
+    };
+    load();
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--chat-bg-opacity",
+      String(chatBgOpacity),
+    );
+  }, [chatBgOpacity]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--chat-bg",
+      chatBg ? `url("${chatBg}")` : "none",
+    );
+  }, [chatBg]);
 
   // Inject theme values as CSS custom properties on :root
   useEffect(() => {
@@ -314,7 +406,21 @@ export function ThemeProvider({ children }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, themeName, setTheme, themes }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        themeName,
+        setTheme,
+        themes,
+        customTheme,
+        saveCustomTheme,
+        chatBg,
+        saveChatBg,
+        clearChatBg,
+        chatBgOpacity,
+        saveChatBgOpacity, 
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

@@ -69,7 +69,7 @@
 
 /* ── Channel row ─────────────────────────────────────────────────────────── */
 .channel {
-  padding: 0.4rem 1rem;
+  padding: 0.4rem 0.75rem;
   cursor: pointer;
   font-size: 0.88rem;
   display: flex;
@@ -77,12 +77,13 @@
   gap: 0.45rem;
   position: relative;
   transition: all 0.15s;
-  margin: 1px 0;
+  margin: 1px 8px;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 600;
   color: var(--text-dim);
   background: transparent;
-  border-left: 2px solid transparent;
+  border-radius: 8px;
+  border-left: none;
 }
 
 .channel:hover {
@@ -94,7 +95,7 @@
   font-weight: 700;
   color: var(--primary);
   background: var(--primary-glow);
-  border-left-color: var(--primary);
+  border-radius: 8px;
 }
 
 .channel.hasUnread {

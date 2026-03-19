@@ -6,6 +6,7 @@ import MessageInput from "../messages/MessageInput";
 import type { RefObject } from "react";
 import type { GroupedMessage, DMConversation, OnlineUser } from "../../types";
 import styles from "./ChatMain.module.css";
+import { useTheme } from "../../context/ThemeContext";
 
 interface Props {
   channel: string;
@@ -53,8 +54,19 @@ export default function ChatMain({
   typers,
   send, replyTo, onCancelReply, allUsers
 }: Props) {
+  const { chatBg, chatBgOpacity } = useTheme();
   return (
-    <div className={styles.root}>
+    <div className={styles.root} style={{ position: "relative" }}>
+      {/* Background image */}
+      {chatBg && (
+        <div
+          className={styles.chatBg}
+          style={{
+            backgroundImage: `url("${chatBg}")`,
+            opacity: chatBgOpacity,
+          }}
+        />
+      )}
       {activeTab === "dms" && activeDMConv
         ? <DMHeader conversation={activeDMConv} onlineUsers={onlineUsers} />
         : <ChannelHeader

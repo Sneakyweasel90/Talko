@@ -2,12 +2,18 @@
 .messageRow {
   display: flex;
   gap: 0.75rem;
-  padding: 0.65rem 0.5rem;
+  padding: 0.65rem 0.75rem;
   border-radius: 3px;
 }
 
 .messageRow.grouped {
   padding: 0.1rem 0.5rem;
+}
+
+.messageRow:hover {
+  background: var(--primary-glow);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary-glow) 40%, transparent);
 }
 
 /* ── Avatar Column ───────────────────────────────────────────────────────── */
@@ -192,6 +198,7 @@
   gap: 4px;
   font-size: 0.8rem;
   transition: all 0.15s;
+  border-radius: 12px;
 }
 
 .reactionPill:hover {
@@ -224,7 +231,7 @@
   align-items: center;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 2px 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   z-index: 10;

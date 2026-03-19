@@ -3,6 +3,7 @@
   border-top: 1px solid var(--border);
   background: var(--surface2);
   flex-shrink: 0;
+  border-radius: 0 0 12px 12px;
 }
 
 .status {

@@ -13,4 +13,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onPttKeyup: (cb) => ipcRenderer.on("ptt-keyup", cb),
   offPttKeyup: (cb) => ipcRenderer.removeListener("ptt-keyup", cb),
   getSources: () => ipcRenderer.invoke("get-sources"),
+  saveBg: (dataUrl) => ipcRenderer.invoke("save-bg", dataUrl),
+  loadBg: () => ipcRenderer.invoke("load-bg"),
+  clearBg: () => ipcRenderer.invoke("clear-bg"),
 });

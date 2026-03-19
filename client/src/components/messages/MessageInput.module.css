@@ -194,7 +194,7 @@
   gap: 0.5rem;
   background: var(--primary-glow);
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 12px;
   padding: 0 1rem;
 }
 
@@ -243,7 +243,7 @@
   padding: 0 1.25rem;
   background: transparent;
   border: 1px solid var(--primary-dim);
-  border-radius: 2px;
+  border-radius: 8px;
   font-size: 0.7rem;
   cursor: pointer;
   color: var(--primary);

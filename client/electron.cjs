@@ -8,6 +8,8 @@ const { UiohookKey, uIOhook } = require("uiohook-napi");
 const GITHUB_REPO = "Sneakyweasel90/Talko";
 //PPT key global
 const { globalShortcut } = require("electron");
+const BG_PATH = path.join(os.homedir(), "talko-bg.jpg");
+const WINDOW_STATE_PATH = path.join(os.homedir(), "talko-window-state.json");
 
 
 let win;
@@ -19,6 +21,32 @@ function log(msg) {
   const line = `[${new Date().toISOString()}] ${msg}\n`;
   fs.appendFileSync(logPath, line);
   console.log(msg);
+}
+
+function loadWindowState() {
+  try {
+    if (fs.existsSync(WINDOW_STATE_PATH)) {
+      const state = JSON.parse(fs.readFileSync(WINDOW_STATE_PATH, "utf8"));
+      // This is to make sure it opens on screen
+      const { screen } = require("electron");
+      const displays = screen.getAllDisplays();
+      const onScreen = displays.some(d =>
+        state.x >= d.bounds.x &&
+        state.y >= d.bounds.y &&
+        state.x < d.bounds.x + d.bounds.width &&
+        state.y < d.bounds.y + d.bounds.height
+      );
+      if (onScreen) return state;
+    }
+  } catch {}
+  return { width: 1100, height: 750 };
+}
+
+function saveWindowState(win) {
+  try {
+    const bounds = win.getBounds();
+    fs.writeFileSync(WINDOW_STATE_PATH, JSON.stringify(bounds));
+  } catch {}
 }
 
 function isNewerVersion(latest, current) {
@@ -342,9 +370,13 @@ async function checkForUpdates() {
 }
 
 function createWindow() {
+  const windowState = loadWindowState();
+
   win = new BrowserWindow({
-    width: 1100,
-    height: 750,
+    width: windowState.width,
+    height: windowState.height,
+    x: windowState.x,
+    y: windowState.y,
     minWidth: 800,
     minHeight: 600,
     frame: false,
@@ -355,6 +387,9 @@ function createWindow() {
       preload: path.join(__dirname, "preload.cjs"),
     },
   });
+
+  win.on("resize", () => saveWindowState(win));
+  win.on("move", () => saveWindowState(win));
 
   win.webContents.setVisualZoomLevelLimits(1, 1);
 
@@ -456,6 +491,33 @@ ipcMain.on("ptt-unregister", () => {
     globalShortcut.unregister(currentPttKey);
     currentPttKey = null;
   }
+});
+
+ipcMain.handle("save-bg", async (event, dataUrl) => {
+  try {
+    const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+    fs.writeFileSync(BG_PATH, base64, "base64");
+    return true;
+  } catch (e) {
+    log("save-bg error: " + e.message);
+    return false;
+  }
+});
+
+ipcMain.handle("load-bg", async () => {
+  try {
+    if (!fs.existsSync(BG_PATH)) return "";
+    const data = fs.readFileSync(BG_PATH);
+    return `data:image/jpeg;base64,${data.toString("base64")}`;
+  } catch (e) {
+    log("load-bg error: " + e.message);
+    return "";
+  }
+});
+
+ipcMain.handle("clear-bg", async () => {
+  try { fs.unlinkSync(BG_PATH); } catch {}
+  return true;
 });
 
 process.on("uncaughtException", (err) => {

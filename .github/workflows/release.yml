@@ -27,7 +27,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: client/dist_electron/TalcoSetup.exe
+          path: client/dist_electron/TalkoSetup.exe
 
   build-linux:
     runs-on: ubuntu-latest

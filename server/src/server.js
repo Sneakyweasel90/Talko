@@ -28,6 +28,7 @@ const allowedOrigins = [
   "http://localhost:4000",
   "capacitor://localhost",
   "http://localhost",
+  "https://localhost",
 ];
 
 app.use(helmet());

@@ -26,6 +26,8 @@ const allowedOrigins = [
   "https://talko-production.up.railway.app",
   "http://localhost:5173",
   "http://localhost:4000",
+  "capacitor://localhost",
+  "http://localhost",
 ];
 
 app.use(helmet());

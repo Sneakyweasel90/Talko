@@ -34,6 +34,8 @@ export function useVoice(token: string, send: (data: object) => void) {
 
   const roomRef = useRef<Room | null>(null);
   const isDeafenedRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioElementsRef = useRef<Record<string, HTMLAudioElement>>({});
 
   const refreshParticipants = useCallback((room: Room) => {
     const names = Array.from(room.remoteParticipants.values()).map(
@@ -80,9 +82,9 @@ export function useVoice(token: string, send: (data: object) => void) {
       room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
         if (track.kind === Track.Kind.Audio) {
           const el = track.attach();
-          el.volume = isDeafenedRef.current
-            ? 0
-            : loadVolume(participant.name ?? participant.identity);
+          const name = participant.name ?? participant.identity;
+          el.volume = isDeafenedRef.current ? 0 : loadVolume(name);
+          audioElementsRef.current[name] = el;
           document.body.appendChild(el);
         }
         if (track.source === Track.Source.ScreenShare) {
@@ -91,7 +93,14 @@ export function useVoice(token: string, send: (data: object) => void) {
         }
       });
       room.on(RoomEvent.TrackUnsubscribed, (track) => {
-        track.detach().forEach((el) => el.remove());
+        track.detach().forEach((el) => {
+          for (const [name, audioEl] of Object.entries(
+            audioElementsRef.current,
+          )) {
+            if (audioEl === el) delete audioElementsRef.current[name];
+          }
+          el.remove();
+        });
         if (track.source === Track.Source.ScreenShare) {
           setScreenShareTrack(null);
           setScreenShareParticipant(null);
@@ -103,18 +112,78 @@ export function useVoice(token: string, send: (data: object) => void) {
         setParticipants([]);
         setParticipantVolumes({});
         roomRef.current = null;
+        audioContextRef.current?.close();
+        audioContextRef.current = null;
         setIsScreenSharing(false);
         setLocalScreenShareTrack(null);
         setScreenShareTrack(null);
         setScreenShareParticipant(null);
+        audioElementsRef.current = {};
       });
 
       await room.connect(data.url, data.token);
       send({ type: "voice_join", channelId });
-      await room.localParticipant.setMicrophoneEnabled(true);
-      room.localParticipant.audioTrackPublications.forEach((pub) => {
-        if (pub.track) pub.track.mediaStreamTrack.enabled = true;
-      });
+
+      try {
+        const audioContext = new AudioContext();
+        audioContextRef.current = audioContext;
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: false,
+        });
+
+        // load wasm binary via Electron IPC (handles asar unpacking)
+        let wasmBinary: ArrayBuffer;
+        if ((window as any).electronAPI?.readFile) {
+          const buf = await (window as any).electronAPI.readFile(
+            "rnnoise.wasm",
+          );
+          wasmBinary = buf.buffer.slice(
+            buf.byteOffset,
+            buf.byteOffset + buf.byteLength,
+          );
+        } else {
+          const res = await fetch("/rnnoise.wasm");
+          wasmBinary = await res.arrayBuffer();
+        }
+
+        let workletUrl: string;
+        if ((window as any).electronAPI?.readFile) {
+          const workletBuf = await (window as any).electronAPI.readFile(
+            "workletProcessor.js",
+          );
+          const blob = new Blob([workletBuf], {
+            type: "application/javascript",
+          });
+          workletUrl = URL.createObjectURL(blob);
+        } else {
+          workletUrl = "/workletProcessor.js";
+        }
+        await audioContext.audioWorklet.addModule(workletUrl);
+        if (workletUrl.startsWith("blob:")) URL.revokeObjectURL(workletUrl);
+
+        const source = audioContext.createMediaStreamSource(stream);
+        const workletNode = new AudioWorkletNode(
+          audioContext,
+          "@sapphi-red/web-noise-suppressor/rnnoise",
+          {
+            processorOptions: { wasmBinary, maxChannels: 1 },
+          },
+        );
+
+        const dest = audioContext.createMediaStreamDestination();
+        source.connect(workletNode);
+        workletNode.connect(dest);
+
+        const processedTrack = dest.stream.getAudioTracks()[0];
+        await room.localParticipant.publishTrack(processedTrack, {
+          source: Track.Source.Microphone,
+        });
+      } catch (e) {
+        console.warn("RNNoise failed, falling back to plain mic:", e);
+        await room.localParticipant.setMicrophoneEnabled(true);
+      }
 
       setInVoice(true);
       updateVoiceChannel(channelId);
@@ -127,10 +196,13 @@ export function useVoice(token: string, send: (data: object) => void) {
     send({ type: "voice_leave" });
     await roomRef.current?.disconnect();
     roomRef.current = null;
+    audioContextRef.current?.close();
+    audioContextRef.current = null;
     setInVoice(false);
     updateVoiceChannel(null);
     setParticipants([]);
     setParticipantVolumes({});
+    audioElementsRef.current = {};
   }, [send, updateVoiceChannel]);
 
   const setMuted = useCallback((muted: boolean) => {
@@ -143,7 +215,7 @@ export function useVoice(token: string, send: (data: object) => void) {
 
   const setAllParticipantsDeafened = useCallback((deafened: boolean) => {
     isDeafenedRef.current = deafened;
-    document.querySelectorAll<HTMLAudioElement>("audio").forEach((el) => {
+    Object.values(audioElementsRef.current).forEach((el) => {
       el.volume = deafened ? 0 : 1;
     });
   }, []);
@@ -153,9 +225,9 @@ export function useVoice(token: string, send: (data: object) => void) {
       const clamped = Math.max(0, Math.min(2, volume));
       saveVolume(username, clamped);
       setParticipantVolumes((prev) => ({ ...prev, [username]: clamped }));
-      document.querySelectorAll<HTMLAudioElement>("audio").forEach((el) => {
-        el.volume = Math.min(1, clamped);
-      });
+      // target only this participant's audio element
+      const el = audioElementsRef.current[username];
+      if (el) el.volume = Math.min(1, clamped);
     },
     [],
   );

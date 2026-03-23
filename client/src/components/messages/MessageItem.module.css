@@ -3,7 +3,8 @@
   display: flex;
   gap: 0.75rem;
   padding: 0.65rem 0.75rem;
-  border-radius: 3px;
+  border-radius: 8px;
+  transition: background 0.1s;
 }
 
 .messageRow.grouped {
@@ -12,8 +13,6 @@
 
 .messageRow:hover {
   background: var(--primary-glow);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--primary-glow) 40%, transparent);
 }
 
 /* ── Avatar Column ───────────────────────────────────────────────────────── */
@@ -151,6 +150,12 @@
   line-height: 1.5;
   word-break: break-word;
   color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: inline-block;
+  max-width: 100%;
 }
 
 .editedLabel {

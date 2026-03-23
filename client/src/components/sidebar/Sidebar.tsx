@@ -46,26 +46,72 @@ interface Props {
   onStartScreenShare: () => void;
   onStopScreenShare: () => void;
   mentionedChannels: Set<string>;
+  participantVolumes: Record<string, number>;
+  selfVolume: number;
+  setParticipantVolume: (username: string, volume: number) => void;
+  setSelfVolume: (volume: number) => void;
 }
 
 export default function Sidebar({
-  channel, setChannel, unreadCounts, voiceChannel, joinVoice, leaveVoice,
-  logout, username, nickname, avatar, userId, token, role, customRoleName,
-  onlineUsers, onSearchOpen, onNicknameChange, onAvatarChange,
-  participants, voiceOccupancy,
-  dmConversations, dmLoading, activeDMChannel, totalUnread,
-  activeTab, onTabChange, onSelectDM,
-  onTextChannelNamesChange, inVoice, setMuted, setAllParticipantsDeafened,
-  currentStatus, currentStatusText, onStatusChange, joinAfk,
-  isScreenSharing, onStartScreenShare, onStopScreenShare, mentionedChannels,
+  channel,
+  setChannel,
+  unreadCounts,
+  voiceChannel,
+  joinVoice,
+  leaveVoice,
+  logout,
+  username,
+  nickname,
+  avatar,
+  userId,
+  token,
+  role,
+  customRoleName,
+  onlineUsers,
+  onSearchOpen,
+  onNicknameChange,
+  onAvatarChange,
+  participants,
+  voiceOccupancy,
+  dmConversations,
+  dmLoading,
+  activeDMChannel,
+  totalUnread,
+  activeTab,
+  onTabChange,
+  onSelectDM,
+  onTextChannelNamesChange,
+  inVoice,
+  setMuted,
+  setAllParticipantsDeafened,
+  currentStatus,
+  currentStatusText,
+  onStatusChange,
+  joinAfk,
+  isScreenSharing,
+  onStartScreenShare,
+  onStopScreenShare,
+  mentionedChannels,
+  participantVolumes,
+  selfVolume,
+  setParticipantVolume,
+  setSelfVolume,
 }: Props) {
   const { theme } = useTheme();
   const {
-    textChannels, voiceChannels,
-    newChannelName, setNewChannelName, creating,
-    showCreateText, showCreateVoice,
-    createChannel, deleteChannel,
-    toggleCreateText, toggleCreateVoice, cancelCreate, afkChannel,
+    textChannels,
+    voiceChannels,
+    newChannelName,
+    setNewChannelName,
+    creating,
+    showCreateText,
+    showCreateVoice,
+    createChannel,
+    deleteChannel,
+    toggleCreateText,
+    toggleCreateVoice,
+    cancelCreate,
+    afkChannel,
   } = useChannels(token);
 
   useEffect(() => {
@@ -75,7 +121,9 @@ export default function Sidebar({
   return (
     <div
       className={styles.root}
-      style={{ background: `linear-gradient(180deg, ${theme.surface2} 0%, ${theme.surface} 100%)` }}
+      style={{
+        background: `linear-gradient(180deg, ${theme.surface2} 0%, ${theme.surface} 100%)`,
+      }}
     >
       {/* Logo */}
       <div className={styles.logoWrap}>
@@ -152,6 +200,11 @@ export default function Sidebar({
         leaveVoice={leaveVoice}
         setMuted={setMuted}
         setAllParticipantsDeafened={setAllParticipantsDeafened}
+        participantVolumes={participantVolumes}
+        selfVolume={selfVolume}
+        setParticipantVolume={setParticipantVolume}
+        setSelfVolume={setSelfVolume}
+        participants={participants}
       />
     </div>
   );

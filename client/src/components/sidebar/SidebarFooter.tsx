@@ -4,12 +4,25 @@ import Avatar from "../ui/Avatar";
 import ThemePicker from "../overlays/ThemePicker";
 import AccountSettings from "../overlays/AccountSettings";
 import DMList from "../dm/DMList";
-import type { OnlineUser, DMConversation, UserRole, UserStatus } from "../../types";
+import type {
+  OnlineUser,
+  DMConversation,
+  UserRole,
+  UserStatus,
+} from "../../types";
 import styles from "./SidebarFooter.module.css";
 import VoicePanel from "../voice/VoicePanel";
 
-const STATUS_COLORS: Record<UserStatus, string> = { online: "#4ade80", away: "#facc15", dnd: "#f87171" };
-const STATUS_LABELS: Record<UserStatus, string> = { online: "ONLINE", away: "AWAY", dnd: "DO NOT DISTURB" };
+const STATUS_COLORS: Record<UserStatus, string> = {
+  online: "#4ade80",
+  away: "#facc15",
+  dnd: "#f87171",
+};
+const STATUS_LABELS: Record<UserStatus, string> = {
+  online: "ONLINE",
+  away: "AWAY",
+  dnd: "DO NOT DISTURB",
+};
 
 interface SidebarFooterProps {
   username: string;
@@ -41,9 +54,21 @@ interface SidebarFooterProps {
   isScreenSharing: boolean;
   onStartScreenShare: () => void;
   onStopScreenShare: () => void;
+  participantVolumes: Record<string, number>;
+  selfVolume: number;
+  setParticipantVolume: (username: string, volume: number) => void;
+  setSelfVolume: (volume: number) => void;
+  participants: string[];
 }
 
-function UserRow({ nickname, username, avatar, currentStatus, currentStatusText, onClick }: {
+function UserRow({
+  nickname,
+  username,
+  avatar,
+  currentStatus,
+  currentStatusText,
+  onClick,
+}: {
   nickname: string | null;
   username: string;
   avatar: string | null;
@@ -76,13 +101,40 @@ function UserRow({ nickname, username, avatar, currentStatus, currentStatusText,
 }
 
 export default function SidebarFooter({
-  username, nickname, avatar, userId, token, role, customRoleName,
-  onNicknameChange, onAvatarChange, onLogout,
-  onlineUsers, dmConversations, dmLoading, activeDMChannel, totalUnread,
-  activeTab, onTabChange, onSelectDM,
-  currentStatus, currentStatusText, onStatusChange,
-  inVoice, voiceChannel, leaveVoice, setMuted, setAllParticipantsDeafened,
-  isScreenSharing, onStartScreenShare, onStopScreenShare,
+  username,
+  nickname,
+  avatar,
+  userId,
+  token,
+  role,
+  customRoleName,
+  onNicknameChange,
+  onAvatarChange,
+  onLogout,
+  onlineUsers,
+  dmConversations,
+  dmLoading,
+  activeDMChannel,
+  totalUnread,
+  activeTab,
+  onTabChange,
+  onSelectDM,
+  currentStatus,
+  currentStatusText,
+  onStatusChange,
+  inVoice,
+  voiceChannel,
+  leaveVoice,
+  setMuted,
+  setAllParticipantsDeafened,
+  isScreenSharing,
+  onStartScreenShare,
+  onStopScreenShare,
+  participantVolumes,
+  selfVolume,
+  setParticipantVolume,
+  setSelfVolume,
+  participants,
 }: SidebarFooterProps) {
   const { theme } = useTheme();
   const [showThemes, setShowThemes] = useState(false);
@@ -92,7 +144,10 @@ export default function SidebarFooter({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (statusPickerRef.current && !statusPickerRef.current.contains(e.target as Node)) {
+      if (
+        statusPickerRef.current &&
+        !statusPickerRef.current.contains(e.target as Node)
+      ) {
         setShowStatusPicker(false);
       }
     };
@@ -144,6 +199,11 @@ export default function SidebarFooter({
         isScreenSharing={isScreenSharing}
         onStartScreenShare={onStartScreenShare}
         onStopScreenShare={onStopScreenShare}
+        participantVolumes={participantVolumes}
+        selfVolume={selfVolume}
+        setParticipantVolume={setParticipantVolume}
+        setSelfVolume={setSelfVolume}
+        participants={participants}
       />
 
       {/* Theme row */}
@@ -159,14 +219,22 @@ export default function SidebarFooter({
         {showStatusPicker && (
           <div ref={statusPickerRef} className={styles.statusPicker}>
             <div className={styles.statusPickerTitle}>// SET STATUS</div>
-            {(["online", "away", "dnd"] as const).map(s => (
+            {(["online", "away", "dnd"] as const).map((s) => (
               <div
                 key={s}
-                onClick={() => { onStatusChange(s, currentStatusText); setShowStatusPicker(false); }}
+                onClick={() => {
+                  onStatusChange(s, currentStatusText);
+                  setShowStatusPicker(false);
+                }}
                 className={`${styles.statusOption} ${currentStatus === s ? styles.activeStatus : ""}`}
               >
-                <div className={styles.statusOptionDot} style={{ background: STATUS_COLORS[s] }} />
-                <span className={styles.statusOptionLabel}>{STATUS_LABELS[s]}</span>
+                <div
+                  className={styles.statusOptionDot}
+                  style={{ background: STATUS_COLORS[s] }}
+                />
+                <span className={styles.statusOptionLabel}>
+                  {STATUS_LABELS[s]}
+                </span>
               </div>
             ))}
             <div className={styles.statusTextWrap}>
@@ -175,8 +243,10 @@ export default function SidebarFooter({
                 placeholder="Custom status..."
                 value={currentStatusText ?? ""}
                 maxLength={60}
-                onChange={e => onStatusChange(currentStatus, e.target.value || null)}
-                onClick={e => e.stopPropagation()}
+                onChange={(e) =>
+                  onStatusChange(currentStatus, e.target.value || null)
+                }
+                onClick={(e) => e.stopPropagation()}
               />
             </div>
           </div>
@@ -195,7 +265,7 @@ export default function SidebarFooter({
         {/* Action row */}
         <div className={styles.actionRow}>
           <button
-            onClick={() => setShowStatusPicker(s => !s)}
+            onClick={() => setShowStatusPicker((s) => !s)}
             className={`${styles.statusBtn} ${showStatusPicker ? styles.open : ""}`}
           >
             <div
@@ -213,7 +283,15 @@ export default function SidebarFooter({
       {showThemes && <ThemePicker onClose={() => setShowThemes(false)} />}
       {showSettings && (
         <AccountSettings
-          user={{ id: userId, username, nickname, avatar, token, role: role as UserRole, customRoleName }}
+          user={{
+            id: userId,
+            username,
+            nickname,
+            avatar,
+            token,
+            role: role as UserRole,
+            customRoleName,
+          }}
           onClose={() => setShowSettings(false)}
           onNicknameChange={onNicknameChange}
           onAvatarChange={onAvatarChange}

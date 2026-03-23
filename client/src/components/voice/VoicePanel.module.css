@@ -130,3 +130,44 @@
   letter-spacing: 0.08em;
   white-space: nowrap;
 }
+
+.sliders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.sliderWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 55px;
+}
+
+.sliderLabel {
+  font-size: 0.55rem;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 64px;
+  text-align: center;
+}
+
+.sliderInput {
+  width: 60px;
+  cursor: pointer;
+  height: 3px;
+  accent-color: var(--primary);
+}
+
+.sliderValue {
+  font-size: 0.5rem;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--text-dim);
+  opacity: 0.6;
+}

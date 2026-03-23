@@ -72,7 +72,10 @@ export function useVoice(token: string, send: (data: object) => void) {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      const room = new Room();
+      const room = new Room({
+        adaptiveStream: false,
+        dynacast: false,
+      });
       roomRef.current = room;
 
       room.on(RoomEvent.ParticipantConnected, () => refreshParticipants(room));

@@ -6,6 +6,52 @@ import config from "../../config";
 import InvitePanel from "./InvitePanel";
 import styles from "./AdminPanel.module.css";
 
+  function AfkSettingsPanel({ token }: { token: string }) {
+    const [minutes, setMinutes] = useState(10);
+    const [saving, setSaving] = useState(false);
+    const [msg, setMsg] = useState<string | null>(null);
+
+    useEffect(() => {
+      axios.get(`${config.HTTP}/api/settings/afk-timeout`)
+        .then(({ data }) => setMinutes(data.afk_timeout_minutes))
+        .catch(() => {});
+    }, []);
+
+    const save = async () => {
+      setSaving(true);
+      try {
+        await axios.patch(`${config.HTTP}/api/admin/settings`,
+          { afk_timeout_minutes: minutes },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setMsg("Saved");
+        setTimeout(() => setMsg(null), 2000);
+      } catch { setMsg("Failed"); }
+      finally { setSaving(false); }
+    };
+
+    return (
+      <div>
+        <div className={styles.generateLabel}>AFK TIMEOUT</div>
+        <div className={styles.expiryRow}>
+          <select
+            className={styles.select}
+            value={minutes}
+            onChange={e => setMinutes(parseInt(e.target.value))}
+          >
+            {[5, 10, 15, 20, 30, 60].map(m => (
+              <option key={m} value={m}>{m} minutes</option>
+            ))}
+          </select>
+          <button onClick={save} disabled={saving} className={`${styles.btn} ${styles.btnPrimary}`}>
+            {saving ? "..." : "SAVE"}
+          </button>
+          {msg && <span style={{ fontSize: "0.7rem", color: "var(--primary)" }}>{msg}</span>}
+        </div>
+      </div>
+    );
+  }
+
 export default function AdminPanel({ token, currentUserId }: { token: string; currentUserId: number }) {
   const [adminTab, setAdminTab] = useState<"users" | "invites">("users");
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -107,13 +153,13 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
     <div>
       {/* Sub-tab bar */}
       <div className={styles.tabBar}>
-        {(["users", "invites"] as const).map(t => (
+        {(["users", "invites", "settings"] as const).map(t => (
           <button
             key={t}
             onClick={() => setAdminTab(t)}
             className={`${styles.tab} ${adminTab === t ? styles.active : ""}`}
           >
-            {t === "users" ? "USERS" : "INVITE CODES"}
+            {t === "users" ? "USERS" : t === "invites" ? "INVITE CODES" : "SETTINGS"}
           </button>
         ))}
       </div>
@@ -212,6 +258,9 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
 
       {/* Invites sub-tab */}
       {adminTab === "invites" && <InvitePanel token={token} />}
+
+      {/* Settings sub-tab */}
+      {adminTab === "settings" && <AfkSettingsPanel token={token} />}
     </div>
   );
 }

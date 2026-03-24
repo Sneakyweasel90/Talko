@@ -1,12 +1,12 @@
 import { useEffect, useRef, useCallback } from "react";
 
-const AFK_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
-
 export function useAfkDetector(
   inVoice: boolean,
   voiceChannel: string | null,
   joinAfk: () => void,
+  afkTimeoutMinutes: number = 10,
 ) {
+  const AFK_TIMEOUT_MS = afkTimeoutMinutes * 60 * 1000;
   const lastActivityRef = useRef(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 

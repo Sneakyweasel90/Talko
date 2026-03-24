@@ -31,6 +31,7 @@ export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();
   const { resolve, load, nicknames } = useLocalNicknames();
   const { mutedChannels, toggleMute, isMuted } = useMutedChannels();
+  const [afkTimeoutMinutes, setAfkTimeoutMinutes] = useState(10);
   const { unreadCounts, handleUnreadMessage, markChannelRead } =
     useUnreadChannels(user!.token, mutedChannels);
 
@@ -144,6 +145,12 @@ export default function Chat() {
   );
 
   useEffect(() => {
+    axios.get(`${config.HTTP}/api/settings/afk-timeout`)
+      .then(({ data }) => setAfkTimeoutMinutes(data.afk_timeout_minutes))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     currentChannelRef.current = channel;
   }, [channel]);
 
@@ -249,7 +256,7 @@ export default function Chat() {
     return () => window.removeEventListener("keydown", handler);
   }, [activeTab, handleSelectChannel]);
 
-  useAfkDetector(inVoice, voiceChannel, joinAfk);
+  useAfkDetector(inVoice, voiceChannel, joinAfk, afkTimeoutMinutes);
 
   const handleLogout = useCallback(async () => {
     disconnect();

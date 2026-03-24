@@ -51,6 +51,13 @@ export async function initDB() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS server_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+    INSERT INTO server_settings (key, value) VALUES ('afk_timeout_minutes', '10')
+      ON CONFLICT (key) DO NOTHING;
+
     CREATE INDEX IF NOT EXISTS idx_messages_channel_id ON messages(channel_id, id DESC);
     CREATE INDEX IF NOT EXISTS idx_messages_content_search ON messages USING gin(to_tsvector('english', content));
     CREATE INDEX IF NOT EXISTS idx_reactions_message ON reactions(message_id);

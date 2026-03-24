@@ -110,6 +110,35 @@ router.get("/invites", requireAuth, requireAdmin, async (req, res) => {
   res.json(rows);
 });
 
+// GET /api/admin/settings
+router.get("/settings", requireAuth, requireAdmin, async (req, res) => {
+  const { rows } = await db.query(`SELECT key, value FROM server_settings`);
+  const settings = Object.fromEntries(rows.map(r => [r.key, r.value]));
+  res.json(settings);
+});
+
+// PATCH /api/admin/settings
+router.patch("/settings", requireAuth, requireAdmin, async (req, res) => {
+  const { afk_timeout_minutes } = req.body;
+  const val = parseInt(afk_timeout_minutes);
+  if (isNaN(val) || val < 1 || val > 480)
+    return res.status(400).json({ error: "Must be between 1 and 480 minutes" });
+  await db.query(
+    `INSERT INTO server_settings (key, value) VALUES ('afk_timeout_minutes', $1)
+     ON CONFLICT (key) DO UPDATE SET value = $1`,
+    [String(val)]
+  );
+  res.json({ ok: true });
+});
+
+// GET /api/settings/afk-timeout — public, no auth needed
+router.get("/afk-timeout", async (req, res) => {
+  const { rows } = await db.query(
+    `SELECT value FROM server_settings WHERE key = 'afk_timeout_minutes'`
+  );
+  res.json({ afk_timeout_minutes: rows[0] ? parseInt(rows[0].value) : 10 });
+});
+
 // POST /api/admin/invites — generate a new invite token
 // Body: { note?: string, expiresInHours?: number }  (omit expiresInHours for no expiry)
 router.post("/invites", requireAuth, requireAdmin, async (req, res) => {

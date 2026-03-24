@@ -211,6 +211,17 @@
   color: #4ade80;
 }
 
+.occupantMic.speaking {
+  animation: speakPulse 0.6s ease-in-out infinite;
+  color: #4ade80;
+}
+
+.speakingAvatar {
+  display: inline-flex;
+  border-radius: 50%;
+  animation: speakPulse 0.6s ease-in-out infinite;
+}
+
 /* ── Mention ─────────────────────────────────────────────────────── */
 .mentionBadge {
   background: #f87171;
@@ -276,4 +287,9 @@
 .contextMenuItem:hover {
   background: var(--primary-glow);
   color: var(--primary);
+}
+
+@keyframes speakPulse {
+  0%, 100% { box-shadow: 0 0 0px 0px rgba(74, 222, 128, 0); }
+  50%       { box-shadow: 0 0 0px 4px rgba(74, 222, 128, 0.5); }
 }

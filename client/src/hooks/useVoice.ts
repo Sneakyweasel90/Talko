@@ -15,6 +15,7 @@ function saveVolume(key: string, vol: number) {
 export function useVoice(token: string, send: (data: object) => void) {
   const [inVoice, setInVoice] = useState(false);
   const [voiceChannel, setVoiceChannel] = useState<string | null>(null);
+  const [activeSpeakers, setActiveSpeakers] = useState<Set<string>>(new Set());
   const [participants, setParticipants] = useState<string[]>([]);
   const [participantVolumes, setParticipantVolumes] = useState<
     Record<string, number>
@@ -123,6 +124,10 @@ export function useVoice(token: string, send: (data: object) => void) {
         setScreenShareTrack(null);
         setScreenShareParticipant(null);
         audioElementsRef.current = {};
+        setActiveSpeakers(new Set());
+      });
+      room.on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
+        setActiveSpeakers(new Set(speakers.map(p => p.name ?? p.identity)));
       });
 
       await room.connect(data.url, data.token);
@@ -347,5 +352,6 @@ export function useVoice(token: string, send: (data: object) => void) {
     pickerSources,
     selectSource,
     cancelPicker,
+    activeSpeakers,
   };
 }

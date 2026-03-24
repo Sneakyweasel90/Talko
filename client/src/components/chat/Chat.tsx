@@ -210,6 +210,7 @@ export default function Chat() {
     pickerSources,
     selectSource,
     cancelPicker,
+    activeSpeakers,
   } = useVoice(user!.token, send);
 
   const handleSelectChannel = useCallback(
@@ -295,6 +296,7 @@ export default function Chat() {
       <div className={styles.body}>
         <ResizableSidebar>
           <Sidebar
+            activeSpeakers={activeSpeakers}
             mentionedChannels={mentionedChannels}
             isScreenSharing={isScreenSharing}
             onStartScreenShare={startScreenShare}

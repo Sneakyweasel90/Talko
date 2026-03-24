@@ -71,6 +71,7 @@ interface ChannelListProps {
   mentionedChannels: Set<string>;
   mutedChannels: Set<string>;
   onToggleMute: (name: string) => void;
+  activeSpeakers: Set<string>;
 }
 
 export default function ChannelList({
@@ -100,6 +101,7 @@ export default function ChannelList({
   mentionedChannels,
   mutedChannels,
   onToggleMute,
+  activeSpeakers,
 }: ChannelListProps) {
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -224,7 +226,9 @@ export default function ChannelList({
             <div key={name} className={styles.occupantRow}>
               <Avatar username={name} size={18} />
               <span className={styles.occupantName}>{name}</span>
-              <span className={styles.occupantMic}>💤</span>
+              <span className={`${styles.occupantMic} ${activeSpeakers.has(name) ? styles.speaking : ""}`}>
+                💤
+              </span>
             </div>
           ))}
         </div>
@@ -279,7 +283,9 @@ export default function ChannelList({
             </div>
             {occupants.map((name) => (
               <div key={name} className={styles.occupantRow}>
-                <Avatar username={name} size={18} />
+                <span className={activeSpeakers.has(name) ? styles.speakingAvatar : ""}>
+                  <Avatar username={name} size={18} />
+                </span>
                 <span className={styles.occupantName}>{name}</span>
                 <span className={styles.occupantMic}>🎙</span>
               </div>

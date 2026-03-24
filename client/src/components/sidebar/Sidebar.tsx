@@ -51,6 +51,7 @@ interface Props {
   selfVolume: number;
   setParticipantVolume: (username: string, volume: number) => void;
   setSelfVolume: (volume: number) => void;
+  activeSpeakers: Set<string>;
 }
 
 export default function Sidebar({
@@ -97,6 +98,7 @@ export default function Sidebar({
   selfVolume,
   setParticipantVolume,
   setSelfVolume,
+  activeSpeakers,
 }: Props) {
   const { theme } = useTheme();
   const { mutedChannels, toggleMute } = useMutedChannels();
@@ -144,6 +146,7 @@ export default function Sidebar({
       {activeTab === "channels" && (
         <div className={styles.channelListWrap}>
           <ChannelList
+            activeSpeakers={activeSpeakers}
             mentionedChannels={mentionedChannels}
             textChannels={textChannels}
             voiceChannels={voiceChannels}

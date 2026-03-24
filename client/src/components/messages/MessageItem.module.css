@@ -4,10 +4,10 @@
   gap: 0.75rem;
   padding: 8px 12px;
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--surface2);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--border);
   margin-bottom: 4px;
   width: fit-content;
   max-width: 85%;
@@ -15,20 +15,20 @@
 
 .messageRow.grouped {
   padding: 2px 12px;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: var(--surface2);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   width: fit-content;
   max-width: 85%;
 }
 
 .messageRow:hover {
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--surface);
   border-color: var(--primary-dim);
 }
 
 .messageRow.grouped:hover {
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--surface);
 }
 
 /* ── Avatar Column ───────────────────────────────────────────────────────── */

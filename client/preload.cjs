@@ -16,4 +16,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
   saveBg: (dataUrl) => ipcRenderer.invoke("save-bg", dataUrl),
   loadBg: () => ipcRenderer.invoke("load-bg"),
   clearBg: () => ipcRenderer.invoke("clear-bg"),
+  getIdleTime: () => ipcRenderer.invoke("get-idle-time"),
 });

@@ -6,7 +6,6 @@ export function useAfkDetector(
   joinAfk: () => void,
   afkTimeoutMinutes: number = 10,
 ) {
-  const AFK_TIMEOUT_MS = afkTimeoutMinutes * 60 * 1000;
   const lastActivityRef = useRef(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -22,19 +21,29 @@ export function useAfkDetector(
 
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-
-    // Only run the check when in a real voice channel (not already AFK)
     if (!inVoice || voiceChannel === "voice-afk") return;
 
-    timerRef.current = setInterval(() => {
-      const idle = Date.now() - lastActivityRef.current;
+    const AFK_TIMEOUT_MS = afkTimeoutMinutes * 60 * 1000;
+    const isElectron = !!(window as any).electronAPI?.getIdleTime;
+
+    timerRef.current = setInterval(async () => {
+      let idle: number;
+      if (isElectron) {
+        const idleSecs = await (window as any).electronAPI.getIdleTime();
+        idle = idleSecs * 1000;
+        console.log(`[AFK] Electron idle: ${idleSecs}s, timeout: ${afkTimeoutMinutes * 60}s, inVoice: ${inVoice}, channel: ${voiceChannel}`);
+      } else {
+        idle = Date.now() - lastActivityRef.current;
+        console.log(`[AFK] Browser idle: ${Math.round(idle/1000)}s, timeout: ${afkTimeoutMinutes * 60}s`);
+      }
       if (idle >= AFK_TIMEOUT_MS) {
+        console.log(`[AFK] Triggering joinAfk`);
         joinAfk();
       }
-    }, 30_000); // check every 30 seconds
+    }, 30_000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [inVoice, voiceChannel, joinAfk]);
+  }, [inVoice, voiceChannel, joinAfk, afkTimeoutMinutes]);
 }

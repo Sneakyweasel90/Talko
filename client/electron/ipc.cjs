@@ -1,4 +1,4 @@
-const { ipcMain, Notification, globalShortcut, desktopCapturer } = require("electron");
+const { ipcMain, Notification, globalShortcut, desktopCapturer, powerMonitor } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -17,6 +17,10 @@ function initIpc(getWin, log) {
     } catch {
       return fs.readFileSync(normalPath);
     }
+  });
+
+  ipcMain.handle("get-idle-time", () => {
+    return powerMonitor.getSystemIdleTime();
   });
 
   ipcMain.handle("get-sources", async () => {

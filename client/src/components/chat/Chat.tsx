@@ -145,17 +145,21 @@ export default function Chat() {
   );
 
   useEffect(() => {
-    axios.get(`${config.HTTP}/api/settings/afk-timeout`)
-      .then(({ data }) => setAfkTimeoutMinutes(data.afk_timeout_minutes))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     currentChannelRef.current = channel;
   }, [channel]);
 
   useEffect(() => {
     if (user?.token) load(user.token);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!user?.token) return;
+    axios
+      .get(`${config.HTTP}/api/users/all`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      })
+      .then(({ data }) => setAllUsers(data))
+      .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -256,7 +260,13 @@ export default function Chat() {
     return () => window.removeEventListener("keydown", handler);
   }, [activeTab, handleSelectChannel]);
 
-  useAfkDetector(inVoice, voiceChannel, joinAfk, afkTimeoutMinutes);
+    const handleJoinAfk = useCallback(() => {
+      joinAfk();
+      send({ type: "set_status", status: "away", statusText: null });
+      setMyStatus("away");
+    }, [joinAfk, send]);
+
+  useAfkDetector(inVoice, voiceChannel, handleJoinAfk, afkTimeoutMinutes);
 
   const handleLogout = useCallback(async () => {
     disconnect();
@@ -288,13 +298,15 @@ export default function Chat() {
 
   useEffect(() => {
     if (!user?.token) return;
-    axios
-      .get(`${config.HTTP}/api/users/all`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      })
-      .then(({ data }) => setAllUsers(data))
-      .catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const fetchTimeout = () => {
+      axios.get(`${config.HTTP}/api/admin/afk-timeout`)
+        .then(({ data }) => setAfkTimeoutMinutes(data.afk_timeout_minutes))
+        .catch(() => {});
+    };
+    fetchTimeout();
+    const interval = setInterval(fetchTimeout, 60_000);
+    return () => clearInterval(interval);
+  }, [user?.token]);
 
   return (
     <div className={styles.root}>
@@ -308,7 +320,7 @@ export default function Chat() {
             isScreenSharing={isScreenSharing}
             onStartScreenShare={startScreenShare}
             onStopScreenShare={stopScreenShare}
-            joinAfk={joinAfk}
+            joinAfk={handleJoinAfk}
             inVoice={inVoice}
             setMuted={setMuted}
             setAllParticipantsDeafened={setAllParticipantsDeafened}

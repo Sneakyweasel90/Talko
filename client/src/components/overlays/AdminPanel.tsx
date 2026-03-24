@@ -7,12 +7,12 @@ import InvitePanel from "./InvitePanel";
 import styles from "./AdminPanel.module.css";
 
   function AfkSettingsPanel({ token }: { token: string }) {
-    const [minutes, setMinutes] = useState(10);
+    const [minutes, setMinutes] = useState<number>(10);
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState<string | null>(null);
 
     useEffect(() => {
-      axios.get(`${config.HTTP}/api/settings/afk-timeout`)
+      axios.get(`${config.HTTP}/api/admin/afk-timeout`)
         .then(({ data }) => setMinutes(data.afk_timeout_minutes))
         .catch(() => {});
     }, []);
@@ -20,14 +20,19 @@ import styles from "./AdminPanel.module.css";
     const save = async () => {
       setSaving(true);
       try {
-        await axios.patch(`${config.HTTP}/api/admin/settings`,
+        await axios.patch(
+          `${config.HTTP}/api/admin/settings`,
           { afk_timeout_minutes: minutes },
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setMsg("Saved");
         setTimeout(() => setMsg(null), 2000);
-      } catch { setMsg("Failed"); }
-      finally { setSaving(false); }
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) setMsg(err.response?.data?.error || "Failed");
+        else setMsg("Failed");
+      } finally {
+        setSaving(false);
+      }
     };
 
     return (
@@ -36,11 +41,11 @@ import styles from "./AdminPanel.module.css";
         <div className={styles.expiryRow}>
           <select
             className={styles.select}
-            value={minutes}
-            onChange={e => setMinutes(parseInt(e.target.value))}
+            value={String(minutes)}
+            onChange={e => setMinutes(Number(e.target.value))}
           >
             {[5, 10, 15, 20, 30, 60].map(m => (
-              <option key={m} value={m}>{m} minutes</option>
+              <option key={m} value={String(m)}>{m} minutes</option>
             ))}
           </select>
           <button onClick={save} disabled={saving} className={`${styles.btn} ${styles.btnPrimary}`}>

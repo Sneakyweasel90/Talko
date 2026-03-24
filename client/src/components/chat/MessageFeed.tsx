@@ -93,7 +93,6 @@ export default function MessageFeed({
           currentUserId={currentUserId}
           avatarMap={avatarMap}
           onHover={onHover}
-          onPickerToggle={onPickerToggle}
           onReact={onReact}
           onReply={onReply}
           onEdit={onEdit}
@@ -101,6 +100,7 @@ export default function MessageFeed({
           onUsernameClick={onUsernameClick}
           resolveNickname={resolveNickname}
           onJumpToMessage={onJumpToMessage}
+          onPickerToggle={onPickerToggle}
         />
       ))}
       <div ref={bottomRef} />

@@ -6,7 +6,12 @@ interface UseMessagesOptions {
   send: (msg: object) => void;
   currentUserId: number;
   currentChannelRef: React.MutableRefObject<string>;
-  userRef: React.MutableRefObject<{ id: number; username: string; nickname: string | null } | null>;
+  userRef: React.MutableRefObject<{
+    id: number;
+    username: string;
+    nickname: string | null;
+  } | null>;
+  mutedChannels: Set<string>;
 }
 
 export function useMessages({
@@ -15,6 +20,7 @@ export function useMessages({
   currentUserId,
   currentChannelRef,
   userRef,
+  mutedChannels,
 }: UseMessagesOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [typers, setTypers] = useState<Record<number, string>>({});
@@ -24,10 +30,14 @@ export function useMessages({
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const typingTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const typingTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>(
+    {},
+  );
   const prevScrollHeightRef = useRef(0);
   const jumpToBottomRef = useRef(true);
-  const [mentionedChannels, setMentionedChannels] = useState<Set<string>>(new Set());
+  const [mentionedChannels, setMentionedChannels] = useState<Set<string>>(
+    new Set(),
+  );
 
   const scrollToBottom = useCallback((instant = false) => {
     const el = messagesContainerRef.current;
@@ -37,91 +47,112 @@ export function useMessages({
   }, []);
 
   const clearMention = useCallback((channelId: string) => {
-    setMentionedChannels(prev => {
+    setMentionedChannels((prev) => {
       const next = new Set(prev);
       next.delete(channelId);
       return next;
     });
   }, []);
 
-  const handleMessage = useCallback((data: ServerMessage) => {
-    if (data.type === "history") {
-      setMessages(data.messages);
-      setHasMore(data.hasMore);
-      setOldestId(data.oldestId);
-      jumpToBottomRef.current = true;
-    }
+  const handleMessage = useCallback(
+    (data: ServerMessage) => {
+      if (data.type === "history") {
+        setMessages(data.messages);
+        setHasMore(data.hasMore);
+        setOldestId(data.oldestId);
+        jumpToBottomRef.current = true;
+      }
 
-    if (data.type === "history_prepend") {
-      setLoadingMore(false);
-      if (data.messages.length === 0) {
-        setHasMore(false);
+      if (data.type === "history_prepend") {
+        setLoadingMore(false);
+        if (data.messages.length === 0) {
+          setHasMore(false);
+          return;
+        }
+        prevScrollHeightRef.current =
+          messagesContainerRef.current?.scrollHeight ?? 0;
+        setMessages((prev) => [...data.messages, ...prev]);
+        setHasMore(data.hasMore);
+        setOldestId(data.oldestId);
+      }
+
+      if (data.type === "mention") {
+        if (mutedChannels.has(data.channelId)) return;
+        setMentionedChannels((prev) => new Set([...prev, data.channelId]));
+        const isDM = data.channelId.startsWith("dm:");
+        const title = isDM
+          ? `${data.senderName} mentioned you in a DM`
+          : `${data.senderName} mentioned you in #${data.channelId}`;
+        window.electronAPI?.notify(title, data.content);
+        // Also trigger browser notification for web users
+        if (
+          typeof Notification !== "undefined" &&
+          Notification.permission === "granted"
+        ) {
+          new Notification(title, { body: data.content });
+        }
         return;
       }
-      prevScrollHeightRef.current = messagesContainerRef.current?.scrollHeight ?? 0;
-      setMessages((prev) => [...data.messages, ...prev]);
-      setHasMore(data.hasMore);
-      setOldestId(data.oldestId);
-    }
 
-    if (data.type === "mention") {
-      setMentionedChannels(prev => new Set([...prev, data.channelId]));
-      const isDM = data.channelId.startsWith("dm:");
-      const title = isDM
-        ? `${data.senderName} mentioned you in a DM`
-        : `${data.senderName} mentioned you in #${data.channelId}`;
-      window.electronAPI?.notify(title, data.content);
-      // Also trigger browser notification for web users
-      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-        new Notification(title, { body: data.content });
+      if (data.type === "message") {
+        if (data.message.channel_id === currentChannelRef.current) {
+          setMessages((prev) => {
+            if (prev.find((m) => m.id === data.message.id)) return prev;
+            return [...prev, data.message];
+          });
+        }
+        // Non-mention messages in other channels — keep existing notify for DMs only
+        else if (
+          data.message.user_id !== currentUserId &&
+          data.message.channel_id.startsWith("dm:")
+        ) {
+          window.electronAPI?.notify(
+            `DM from ${data.message.username}`,
+            data.message.content.slice(0, 80),
+          );
+        }
       }
-      return;
-    }
 
-    if (data.type === "message") {
-      if (data.message.channel_id === currentChannelRef.current) {
-        setMessages((prev) => {
-          if (prev.find((m) => m.id === data.message.id)) return prev;
-          return [...prev, data.message];
-        });
-      }
-      // Non-mention messages in other channels — keep existing notify for DMs only
-      else if (data.message.user_id !== currentUserId && data.message.channel_id.startsWith("dm:")) {
-        window.electronAPI?.notify(
-          `DM from ${data.message.username}`,
-          data.message.content.slice(0, 80),
+      if (data.type === "reaction_update") {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === data.messageId ? { ...m, reactions: data.reactions } : m,
+          ),
         );
       }
-    }
 
-    if (data.type === "reaction_update") {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === data.messageId ? { ...m, reactions: data.reactions } : m)),
-      );
-    }
+      if (data.type === "message_edited") {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === data.messageId
+              ? {
+                  ...m,
+                  content: data.content,
+                  edited_at: new Date().toISOString(),
+                }
+              : m,
+          ),
+        );
+      }
 
-    if (data.type === "message_edited") {
-      setMessages((prev) =>
-        prev.map((m) => m.id === data.messageId ? { ...m, content: data.content, edited_at: new Date().toISOString() } : m)
-      );
-    }
+      if (data.type === "message_deleted") {
+        setMessages((prev) => prev.filter((m) => m.id !== data.messageId));
+      }
 
-    if (data.type === "message_deleted") {
-      setMessages((prev) => prev.filter((m) => m.id !== data.messageId));
-    }
-
-    if (data.type === "typing") {
-      setTypers((prev) => ({ ...prev, [data.userId]: data.username }));
-      clearTimeout(typingTimers.current[data.userId]);
-      typingTimers.current[data.userId] = setTimeout(() => {
-        setTypers((prev) => {
-          const n = { ...prev };
-          delete n[data.userId];
-          return n;
-        });
-      }, 3000);
-    }
-  }, [currentChannelRef, currentUserId ]); // eslint-disable-line react-hooks/exhaustive-deps
+      if (data.type === "typing") {
+        setTypers((prev) => ({ ...prev, [data.userId]: data.username }));
+        clearTimeout(typingTimers.current[data.userId]);
+        typingTimers.current[data.userId] = setTimeout(() => {
+          setTypers((prev) => {
+            const n = { ...prev };
+            delete n[data.userId];
+            return n;
+          });
+        }, 3000);
+      }
+    },
+    [currentChannelRef, currentUserId, mutedChannels],
+  ); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset and rejoin when channel changes
   useEffect(() => {
@@ -142,7 +173,8 @@ export function useMessages({
     } else {
       const el = messagesContainerRef.current;
       if (!el) return;
-      if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) scrollToBottom(false);
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 120)
+        scrollToBottom(false);
     }
   }, [messages, loadingMore, scrollToBottom]);
 
@@ -185,15 +217,20 @@ export function useMessages({
     [send],
   );
 
-  const groupedMessages: GroupedMessage[] = messages.reduce<GroupedMessage[]>((acc, msg, i) => {
-    const prev = messages[i - 1];
-    const isGrouped =
-      !!prev &&
-      prev.user_id === msg.user_id &&
-      new Date(msg.created_at).getTime() - new Date(prev.created_at).getTime() < 300000;
-    acc.push({ ...msg, isGrouped });
-    return acc;
-  }, []);
+  const groupedMessages: GroupedMessage[] = messages.reduce<GroupedMessage[]>(
+    (acc, msg, i) => {
+      const prev = messages[i - 1];
+      const isGrouped =
+        !!prev &&
+        prev.user_id === msg.user_id &&
+        new Date(msg.created_at).getTime() -
+          new Date(prev.created_at).getTime() <
+          300000;
+      acc.push({ ...msg, isGrouped });
+      return acc;
+    },
+    [],
+  );
 
   return {
     groupedMessages,

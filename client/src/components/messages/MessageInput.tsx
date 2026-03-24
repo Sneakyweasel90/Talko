@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { GroupedMessage } from "../../types";
 import styles from "./MessageInput.module.css";
+import GifPicker from "../overlays/GifPicker";
 
 interface Props {
   send: (msg: object) => void;
@@ -57,6 +58,7 @@ export default function MessageInput({
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionStart, setMentionStart] = useState<number>(0);
   const [mentionIndex, setMentionIndex] = useState(0);
+  const [showGifPicker, setShowGifPicker] = useState(false);
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) return;
@@ -67,6 +69,19 @@ export default function MessageInput({
     const compressed = await compressImage(file);
     setImagePreview(compressed);
   }, []);
+
+  const handleGifSelect = useCallback(
+    (gifUrl: string) => {
+      send({
+        type: "message",
+        channelId: channel,
+        content: `[gif]${gifUrl}`,
+        replyToId: replyTo?.id ?? null,
+      });
+      onCancelReply();
+    },
+    [send, channel, replyTo, onCancelReply],
+  );
 
   const mentionCandidates =
     mentionQuery === null
@@ -109,6 +124,23 @@ export default function MessageInput({
     setMentionStart(atIdx);
     setMentionIndex(0);
   };
+
+  const handlePaste = useCallback(
+    async (e: React.ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) handleFile(file);
+          return;
+        }
+      }
+    },
+    [handleFile],
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
@@ -165,6 +197,11 @@ export default function MessageInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape" && showGifPicker) {
+      e.preventDefault();
+      setShowGifPicker(false);
+      return;
+    }
     if (mentionCandidates.length > 0) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -316,9 +353,18 @@ export default function MessageInput({
             >
               📎
             </button>
+            <button
+              type="button"
+              className={`${styles.attachBtn} ${showGifPicker ? styles.hasImage : ""}`}
+              onClick={() => setShowGifPicker((v) => !v)}
+              title="Send a GIF"
+            >
+              GIF
+            </button>
             &gt;
           </span>
           <textarea
+            onPaste={handlePaste}
             ref={inputRef}
             className={styles.textInput}
             placeholder={
@@ -342,6 +388,12 @@ export default function MessageInput({
             }}
             rows={1}
           />
+          {showGifPicker && (
+            <GifPicker
+              onSelect={handleGifSelect}
+              onClose={() => setShowGifPicker(false)}
+            />
+          )}
         </div>
         <button type="submit" className={styles.sendBtn}>
           SEND

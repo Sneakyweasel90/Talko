@@ -19,12 +19,22 @@ interface EmojiPickerProps {
 }
 
 function extractFirstUrl(text: string): string | null {
-  if (text.startsWith("[img]")) return null;
+  if (text.startsWith("[img]") || text.startsWith("[gif]")) return null;
   const match = text.match(URL_REGEX);
   return match ? match[0] : null;
 }
 
 function renderContent(text: string, currentUsername: string): React.ReactNode {
+  if (text.startsWith("[gif]")) {
+    return (
+      <img
+        src={text.slice(5)}
+        alt="GIF"
+        className={styles.attachmentImg}
+        style={{ maxWidth: 320, maxHeight: 240 }}
+      />
+    );
+  }
   if (text.startsWith("[img]")) {
     const src = text.slice(5);
     return (
@@ -287,7 +297,8 @@ export default function MessageItem({
           >
             <span className={styles.replyAuthor}>{msg.reply_to_username}</span>
             <span className={styles.replyContent}>
-              {msg.reply_to_content.startsWith("[img]")
+              {msg.reply_to_content.startsWith("[img]") ||
+              msg.reply_to_content.startsWith("[gif]")
                 ? "[image]"
                 : msg.reply_to_content.length > 80
                   ? msg.reply_to_content.slice(0, 80) + "…"
@@ -401,7 +412,7 @@ export default function MessageItem({
                 ✎ EDIT
               </button>
             )}
-            {isOwnMessage && !editing && (
+            {(isOwnMessage || isAdmin) && !editing && (
               <button
                 className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
                 onClick={() => {

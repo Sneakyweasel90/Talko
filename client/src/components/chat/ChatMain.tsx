@@ -29,7 +29,7 @@ interface Props {
   avatarMap: Record<number, string | null>;
   onScroll: () => void;
   onHover: (id: number | null) => void;
-  onPickerToggle: (id: number | null) => void;
+  onPickerToggle: (id: number | null) => void; 
   onReact: (messageId: number, emoji: string) => void;
   onReply: (msg: GroupedMessage) => void;
   onEdit: (messageId: number, content: string) => void;
@@ -94,7 +94,6 @@ export default function ChatMain({
         currentUserId={currentUserId}
         avatarMap={avatarMap}
         onHover={onHover}
-        onPickerToggle={onPickerToggle}
         onReact={onReact}
         onReply={onReply}
         onEdit={onEdit}
@@ -103,6 +102,7 @@ export default function ChatMain({
         resolveNickname={resolveNickname}
         isAdmin={isAdmin}
         onPin={onPin}
+        onPickerToggle={onPickerToggle}
       />
 
       <TypingIndicator typers={Object.values(typers)} />

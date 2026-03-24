@@ -25,12 +25,14 @@ import styles from "./Chat.module.css";
 import { useAfkDetector } from "../../hooks/useAfkDetector";
 import ScreenShareViewer from "../voice/ScreenShareViewer";
 import ScreenPickerModal from "../voice/ScreenPickerModal";
+import { useMutedChannels } from "../../hooks/useMutedChannels";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();
   const { resolve, load, nicknames } = useLocalNicknames();
+  const { mutedChannels, toggleMute, isMuted } = useMutedChannels();
   const { unreadCounts, handleUnreadMessage, markChannelRead } =
-    useUnreadChannels(user!.token);
+    useUnreadChannels(user!.token, mutedChannels);
 
   const userRef = useRef(user);
   useEffect(() => {
@@ -183,6 +185,7 @@ export default function Chat() {
     currentUserId: user!.id,
     currentChannelRef,
     userRef,
+    mutedChannels,
   });
 
   const {

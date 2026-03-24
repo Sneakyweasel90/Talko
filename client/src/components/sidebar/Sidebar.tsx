@@ -5,6 +5,7 @@ import ChannelList from "./ChannelList";
 import SidebarFooter from "./SidebarFooter";
 import type { OnlineUser, DMConversation, UserStatus } from "../../types";
 import styles from "./Sidebar.module.css";
+import { useMutedChannels } from "../../hooks/useMutedChannels";
 
 interface Props {
   channel: string;
@@ -98,6 +99,7 @@ export default function Sidebar({
   setSelfVolume,
 }: Props) {
   const { theme } = useTheme();
+  const { mutedChannels, toggleMute } = useMutedChannels();
   const {
     textChannels,
     voiceChannels,
@@ -166,6 +168,8 @@ export default function Sidebar({
             unreadCounts={unreadCounts}
             onJoinAfk={joinAfk}
             afkChannel={afkChannel}
+            mutedChannels={mutedChannels}
+            onToggleMute={toggleMute}
           />
         </div>
       )}

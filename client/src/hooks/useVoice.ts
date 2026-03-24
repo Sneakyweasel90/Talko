@@ -87,6 +87,7 @@ export function useVoice(token: string, send: (data: object) => void) {
           const el = track.attach();
           const name = participant.name ?? participant.identity;
           el.volume = isDeafenedRef.current ? 0 : loadVolume(name);
+          el.setAttribute('playsinline', '');
           audioElementsRef.current[name] = el;
           document.body.appendChild(el);
         }
@@ -175,9 +176,13 @@ export function useVoice(token: string, send: (data: object) => void) {
           },
         );
 
+        const merger = audioContext.createChannelMerger(2);
+        workletNode.connect(merger, 0, 0); // left channel
+        workletNode.connect(merger, 0, 1); // right channel
+
         const dest = audioContext.createMediaStreamDestination();
+        merger.connect(dest);
         source.connect(workletNode);
-        workletNode.connect(dest);
 
         const processedTrack = dest.stream.getAudioTracks()[0];
         await room.localParticipant.publishTrack(processedTrack, {

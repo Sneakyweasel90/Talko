@@ -229,3 +229,51 @@
   color: var(--text);
   font-weight: 700;
 }
+
+/* ── Muted channel ───────────────────────────────────────────────────────── */
+.channel.muted {
+  opacity: 0.45;
+}
+
+.channel.muted:hover {
+  opacity: 0.75;
+}
+
+.muteIcon {
+  font-size: 0.65rem;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+/* ── Context menu ────────────────────────────────────────────────────────── */
+.contextMenu {
+  position: fixed;
+  z-index: 500;
+  background: var(--surface);
+  border: 1px solid var(--primary-dim);
+  border-radius: 4px;
+  padding: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  min-width: 160px;
+}
+
+.contextMenuItem {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-align: left;
+  padding: 6px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.contextMenuItem:hover {
+  background: var(--primary-glow);
+  color: var(--primary);
+}

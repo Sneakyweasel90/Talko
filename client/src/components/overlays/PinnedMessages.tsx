@@ -60,7 +60,7 @@ export default function PinnedMessages({ channel, token, isAdmin, onClose, onUnp
                   </span>
                 </div>
                 <div className={styles.pinContent}>
-                  {pin.content.startsWith("[img]")
+                  {pin.content.startsWith("[img]") || pin.content.startsWith("[gif]")
                     ? <span className={styles.pinImageLabel}>[image]</span>
                     : pin.content
                   }

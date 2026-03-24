@@ -230,18 +230,10 @@
 
 /* ── Action Bar ──────────────────────────────────────────────────────────── */
 .actionBar {
-  position: absolute;
-  top: -18px;
-  right: 0;
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 2px 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  z-index: 10;
+  margin-top: 4px;
 }
 
 .actionBtn {
@@ -309,8 +301,8 @@
 
 .emojiPickerWrap2 {
   position: absolute;
-  bottom: 28px;
-  right: 0;
+  bottom: calc(100% + 4px);
+  left: 0;
   z-index: 200;
 }
 

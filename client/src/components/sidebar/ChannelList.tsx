@@ -1,6 +1,7 @@
 import Avatar from "../ui/Avatar";
 import type { Channel } from "../../types";
 import styles from "./ChannelList.module.css";
+import { useState, useEffect } from "react";
 
 interface CreateChannelInputProps {
   type: "text" | "voice";
@@ -11,7 +12,14 @@ interface CreateChannelInputProps {
   onCancel: () => void;
 }
 
-function CreateChannelInput({ type, value, creating, onChange, onSubmit, onCancel }: CreateChannelInputProps) {
+function CreateChannelInput({
+  type,
+  value,
+  creating,
+  onChange,
+  onSubmit,
+  onCancel,
+}: CreateChannelInputProps) {
   return (
     <div className={styles.createRow}>
       <input
@@ -25,7 +33,13 @@ function CreateChannelInput({ type, value, creating, onChange, onSubmit, onCance
           if (e.key === "Escape") onCancel();
         }}
       />
-      <button className={styles.createConfirmBtn} onClick={onSubmit} disabled={creating}>✓</button>
+      <button
+        className={styles.createConfirmBtn}
+        onClick={onSubmit}
+        disabled={creating}
+      >
+        ✓
+      </button>
     </div>
   );
 }
@@ -55,23 +69,62 @@ interface ChannelListProps {
   afkChannel: Channel | null;
   onJoinAfk: () => void;
   mentionedChannels: Set<string>;
+  mutedChannels: Set<string>;
+  onToggleMute: (name: string) => void;
 }
 
 export default function ChannelList({
-  unreadCounts, textChannels, voiceChannels,
-  activeChannel, voiceChannel, participants, username,
-  newChannelName, creating, showCreateText, showCreateVoice, voiceOccupancy,
-  onSelectChannel, onJoinVoice, onLeaveVoice, onDeleteChannel,
-  onToggleCreateText, onToggleCreateVoice,
-  onChannelNameChange, onCreateChannel, onCancelCreate, afkChannel, onJoinAfk,
+  unreadCounts,
+  textChannels,
+  voiceChannels,
+  activeChannel,
+  voiceChannel,
+  participants,
+  username,
+  newChannelName,
+  creating,
+  showCreateText,
+  showCreateVoice,
+  voiceOccupancy,
+  onSelectChannel,
+  onJoinVoice,
+  onLeaveVoice,
+  onDeleteChannel,
+  onToggleCreateText,
+  onToggleCreateVoice,
+  onChannelNameChange,
+  onCreateChannel,
+  onCancelCreate,
+  afkChannel,
+  onJoinAfk,
   mentionedChannels,
+  mutedChannels,
+  onToggleMute,
 }: ChannelListProps) {
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    channelName: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const handler = () => setContextMenu(null);
+    window.addEventListener("click", handler);
+    return () => window.removeEventListener("click", handler);
+  }, []);
+
   return (
     <>
       {/* Text channels header */}
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>// TEXT CHANNELS</span>
-        <button className={styles.addBtn} onClick={onToggleCreateText} title="Create text channel">+</button>
+        <button
+          className={styles.addBtn}
+          onClick={onToggleCreateText}
+          title="Create text channel"
+        >
+          +
+        </button>
       </div>
 
       {showCreateText && (
@@ -87,26 +140,48 @@ export default function ChannelList({
 
       {textChannels.map((ch) => {
         const isActive = ch.name === activeChannel;
-        const unread = unreadCounts[ch.name] ?? 0;
+        const muted = mutedChannels.has(ch.name);
+        const unread = muted ? 0 : (unreadCounts[ch.name] ?? 0);
         const hasUnread = unread > 0 && !isActive;
-        const hasMention = mentionedChannels.has(ch.name);
+        const hasMention = !muted && mentionedChannels.has(ch.name);
         return (
           <div
             key={ch.id}
             onClick={() => onSelectChannel(ch.name)}
-            className={`${styles.channel} ${isActive ? styles.active : ""} ${hasUnread ? styles.hasUnread : ""} ${hasMention ? styles.hasMention : ""}`}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu({
+                x: e.clientX,
+                y: e.clientY,
+                channelName: ch.name,
+              });
+            }}
+            className={`${styles.channel} ${isActive ? styles.active : ""} ${hasUnread ? styles.hasUnread : ""} ${hasMention ? styles.hasMention : ""} ${muted ? styles.muted : ""}`}
           >
             <span className={styles.channelHash}>#</span>
             <span className={styles.channelName}>{ch.name}</span>
+            {muted && (
+              <span className={styles.muteIcon} title="Muted">
+                🔇
+              </span>
+            )}
             {hasMention && !isActive && (
               <span className={styles.mentionBadge}>@</span>
             )}
             {hasUnread && !hasMention && (
-              <span className={styles.unreadBadge}>{unread > 99 ? "99+" : unread}</span>
+              <span className={styles.unreadBadge}>
+                {unread > 99 ? "99+" : unread}
+              </span>
             )}
             {isActive && <div className={styles.activeDot} />}
             {ch.created_by !== null && (
-              <span className={styles.deleteBtn} onClick={(e) => onDeleteChannel(ch.id, e)} title="Delete channel">×</span>
+              <span
+                className={styles.deleteBtn}
+                onClick={(e) => onDeleteChannel(ch.id, e)}
+                title="Delete channel"
+              >
+                ×
+              </span>
             )}
           </div>
         );
@@ -115,7 +190,13 @@ export default function ChannelList({
       {/* Voice channels header */}
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>// VOICE CHANNELS</span>
-        <button className={styles.addBtn} onClick={onToggleCreateVoice} title="Create voice channel">+</button>
+        <button
+          className={styles.addBtn}
+          onClick={onToggleCreateVoice}
+          title="Create voice channel"
+        >
+          +
+        </button>
       </div>
 
       {/* AFK channel */}
@@ -128,13 +209,18 @@ export default function ChannelList({
             >
               <span className={styles.channelVoiceIcon}>💤</span>
               <span className={styles.channelName}>AFK</span>
-              {(voiceOccupancy["voice-afk"] ?? []).length > 0 && voiceChannel !== "voice-afk" && (
-                <span className={styles.voiceOccupantCount}>{voiceOccupancy["voice-afk"].length}</span>
-              )}
+              {(voiceOccupancy["voice-afk"] ?? []).length > 0 &&
+                voiceChannel !== "voice-afk" && (
+                  <span className={styles.voiceOccupantCount}>
+                    {voiceOccupancy["voice-afk"].length}
+                  </span>
+                )}
             </div>
-            {voiceChannel === "voice-afk" && <span className={styles.liveBadge}>AFK</span>}
+            {voiceChannel === "voice-afk" && (
+              <span className={styles.liveBadge}>AFK</span>
+            )}
           </div>
-          {(voiceOccupancy["voice-afk"] ?? []).map(name => (
+          {(voiceOccupancy["voice-afk"] ?? []).map((name) => (
             <div key={name} className={styles.occupantRow}>
               <Avatar username={name} size={18} />
               <span className={styles.occupantName}>{name}</span>
@@ -165,18 +251,30 @@ export default function ChannelList({
           <div key={ch.id} className={styles.voiceChannelWrap}>
             <div className={styles.voiceChannelRow}>
               <div
-                onClick={() => isActiveVoice ? onLeaveVoice() : onJoinVoice(ch.name)}
+                onClick={() =>
+                  isActiveVoice ? onLeaveVoice() : onJoinVoice(ch.name)
+                }
                 className={`${styles.channel} ${styles.voiceChannelMain} ${isActiveVoice ? styles.active : ""}`}
               >
                 <span className={styles.channelVoiceIcon}>◈</span>
-                <span className={styles.channelName}>{ch.name.replace("voice-", "")}</span>
+                <span className={styles.channelName}>
+                  {ch.name.replace("voice-", "")}
+                </span>
                 {occupants.length > 0 && !isActiveVoice && (
-                  <span className={styles.voiceOccupantCount}>{occupants.length}</span>
+                  <span className={styles.voiceOccupantCount}>
+                    {occupants.length}
+                  </span>
                 )}
               </div>
               {isActiveVoice && <span className={styles.liveBadge}>LIVE</span>}
               {ch.created_by !== null && (
-                <span className={styles.deleteBtn} onClick={(e) => onDeleteChannel(ch.id, e)} title="Delete channel">×</span>
+                <span
+                  className={styles.deleteBtn}
+                  onClick={(e) => onDeleteChannel(ch.id, e)}
+                  title="Delete channel"
+                >
+                  ×
+                </span>
               )}
             </div>
             {occupants.map((name) => (
@@ -189,6 +287,25 @@ export default function ChannelList({
           </div>
         );
       })}
+      {contextMenu && (
+        <div
+          className={styles.contextMenu}
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className={styles.contextMenuItem}
+            onClick={() => {
+              onToggleMute(contextMenu.channelName);
+              setContextMenu(null);
+            }}
+          >
+            {mutedChannels.has(contextMenu.channelName)
+              ? "🔔 Unmute channel"
+              : "🔇 Mute channel"}
+          </button>
+        </div>
+      )}
     </>
   );
 }

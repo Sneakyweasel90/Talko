@@ -45,6 +45,8 @@ function broadcastAll(wss, data) {
   }
 }
 
+let wssInstance = null;
+export function getWss() { return wssInstance; }
 async function broadcastPresence(wss) {
   const liveUserIds = new Set();
   for (const client of wss.clients) {
@@ -148,8 +150,8 @@ function broadcastDM(channelId, data, wss) {
 
 export async function initWebSocket(server) {
   await redis.del("online_users");
-
   const wss = new WebSocketServer({ server });
+  wssInstance = wss;
 
   wss.on("connection", async (ws, req) => {
     const token = new URL(req.url, "http://localhost:4000").searchParams.get("token");

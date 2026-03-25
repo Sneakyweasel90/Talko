@@ -12,6 +12,21 @@ function saveVolume(key: string, vol: number) {
   localStorage.setItem(`talko_vol_${key}`, String(vol));
 }
 
+function playTone(freq: number, duration: number) {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + duration);
+  } catch {}
+}
+
 export function useVoice(token: string, send: (data: object) => void) {
   const [inVoice, setInVoice] = useState(false);
   const [voiceChannel, setVoiceChannel] = useState<string | null>(null);
@@ -79,15 +94,19 @@ export function useVoice(token: string, send: (data: object) => void) {
       });
       roomRef.current = room;
 
-      room.on(RoomEvent.ParticipantConnected, () => refreshParticipants(room));
-      room.on(RoomEvent.ParticipantDisconnected, () =>
-        refreshParticipants(room),
-      );
+      room.on(RoomEvent.ParticipantConnected, () => {
+        refreshParticipants(room);
+        playTone(880, 0.15);
+      });
+      room.on(RoomEvent.ParticipantDisconnected, () => {
+        refreshParticipants(room);
+        playTone(440, 0.2);
+      });
       room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
         if (track.kind === Track.Kind.Audio) {
           const el = track.attach();
           const name = participant.name ?? participant.identity;
-          el.volume = isDeafenedRef.current ? 0 : loadVolume(name);
+          el.volume = isDeafenedRef.current ? 0 : Math.min(1, loadVolume(name));
           el.setAttribute('playsinline', '');
           audioElementsRef.current[name] = el;
           document.body.appendChild(el);

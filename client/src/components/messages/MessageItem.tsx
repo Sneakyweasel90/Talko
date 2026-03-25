@@ -35,15 +35,29 @@ function renderContent(text: string, currentUsername: string): React.ReactNode {
       />
     );
   }
-  if (text.startsWith("[img]")) {
+  if (text.startsWith("[img]") || text.startsWith("[gif]")) {
     const src = text.slice(5);
+    const isGif = text.startsWith("[gif]");
     return (
-      <img
-        src={src}
-        alt="attachment"
-        className={styles.attachmentImg}
-        onClick={() => window.open(src, "_blank")}
-      />
+      <>
+        <img
+          src={src}
+          alt={isGif ? "GIF" : "attachment"}
+          className={styles.attachmentImg}
+          style={isGif ? { maxWidth: 320, maxHeight: 240 } : undefined}
+          onClick={() => {
+            const overlay = document.createElement("div");
+            overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out";
+            const img = document.createElement("img");
+            img.src = src;
+            img.style.cssText = "max-width:90vw;max-height:90vh;object-fit:contain;border-radius:4px";
+            overlay.appendChild(img);
+            overlay.onclick = () => overlay.remove();
+            document.body.appendChild(overlay);
+          }}
+          style={{ cursor: "zoom-in", ...(isGif ? { maxWidth: 320, maxHeight: 240 } : {}) }}
+        />
+      </>
     );
   }
 
@@ -324,6 +338,12 @@ export default function MessageItem({
               autoFocus
               className={styles.editInput}
               value={editText}
+              ref={(el) => {
+                if (el) {
+                  el.focus();
+                  el.setSelectionRange(el.value.length, el.value.length);
+                }
+              }}
               onChange={(e) => setEditText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {

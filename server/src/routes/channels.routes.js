@@ -1,6 +1,7 @@
 import express from "express";
 import db from "../db/postgres.js";
 import { requireAuth } from "../middleware/auth.js";
+import { getWss } from "../websocket/gateway.js";
 
 const router = express.Router();
 
@@ -81,12 +82,20 @@ router.post("/", requireAuth, async (req, res) => {
       `INSERT INTO channels (name, type, created_by) VALUES ($1, $2, $3) RETURNING *`,
       [finalName, type, req.user.id]
     );
+      const wss = getWss();
+      if (wss) {
+        for (const client of wss.clients) {
+          if (client.readyState === 1) client.send(JSON.stringify({ type: "channel_created" }));
+        }
+      }
     res.status(201).json(rows[0]);
   } catch (err) {
     if (err.code === "23505") return res.status(400).json({ error: "Channel already exists" });
     res.status(500).json({ error: "Server error" });
   }
 });
+
+
 
 // DELETE a channel (only creator or admin can delete — for now just creator)
 router.delete("/:id", requireAuth, async (req, res) => {
@@ -98,14 +107,24 @@ router.delete("/:id", requireAuth, async (req, res) => {
   if (ch.created_by !== req.user.id)
     return res.status(403).json({ error: "Only the channel creator can delete it" });
 
-  // Don't allow deleting seeded defaults
   const defaults = ["general", "random", "yakking", "voice-general", "voice-chill"];
   if (ch.is_afk) return res.status(403).json({ error: "Cannot delete the AFK channel" });
   if (defaults.includes(ch.name))
     return res.status(403).json({ error: "Cannot delete default channels" });
 
   await db.query(`DELETE FROM channels WHERE id = $1`, [req.params.id]);
+
+  const wss = getWss();
+  if (wss) {
+    for (const client of wss.clients) {
+      if (client.readyState === 1) client.send(JSON.stringify({ type: "channel_deleted" }));
+    }
+  }
+
   res.json({ ok: true });
 });
+
+
+
 
 export default router;

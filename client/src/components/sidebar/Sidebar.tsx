@@ -52,6 +52,7 @@ interface Props {
   setParticipantVolume: (username: string, volume: number) => void;
   setSelfVolume: (volume: number) => void;
   activeSpeakers: Set<string>;
+  onRegisterRefetchChannels?: (fn: () => void) => void;
 }
 
 export default function Sidebar({
@@ -99,6 +100,7 @@ export default function Sidebar({
   setParticipantVolume,
   setSelfVolume,
   activeSpeakers,
+  onRegisterRefetchChannels,
 }: Props) {
   const { theme } = useTheme();
   const { mutedChannels, toggleMute } = useMutedChannels();
@@ -116,11 +118,16 @@ export default function Sidebar({
     toggleCreateVoice,
     cancelCreate,
     afkChannel,
+    refetch,
   } = useChannels(token);
 
   useEffect(() => {
     onTextChannelNamesChange?.(textChannels.map((c) => c.name));
   }, [textChannels, onTextChannelNamesChange]);
+
+  useEffect(() => {
+    onRegisterRefetchChannels?.(refetch);
+  }, [refetch, onRegisterRefetchChannels]);
 
   return (
     <div

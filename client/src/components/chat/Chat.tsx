@@ -81,8 +81,13 @@ export default function Chat() {
   } = useDMs(user!.token, user!.id);
   const textChannelNamesRef = useRef<string[]>([]);
   const currentChannelRef = useRef(channel);
+  const refetchChannelsRef = useRef<(() => void) | null>(null);
 
   const { send, disconnect } = useWebSocket(user!.token, (data) => {
+    if (data.type === "channel_created" || data.type === "channel_deleted") {
+            refetchChannelsRef.current?.();
+            return;
+          }
     if (data.type?.startsWith("voice_")) {
       if (data.type === "voice_state") {
         setVoiceOccupancy(data.channels);
@@ -315,6 +320,7 @@ export default function Chat() {
       <div className={styles.body}>
         <ResizableSidebar>
           <Sidebar
+            onRegisterRefetchChannels={(fn) => { refetchChannelsRef.current = fn; }}
             activeSpeakers={activeSpeakers}
             mentionedChannels={mentionedChannels}
             isScreenSharing={isScreenSharing}

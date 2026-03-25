@@ -220,12 +220,7 @@ export function useMessages({
   const groupedMessages: GroupedMessage[] = messages.reduce<GroupedMessage[]>(
     (acc, msg, i) => {
       const prev = messages[i - 1];
-      const isGrouped =
-        !!prev &&
-        prev.user_id === msg.user_id &&
-        new Date(msg.created_at).getTime() -
-          new Date(prev.created_at).getTime() <
-          300000;
+      const isGrouped = false;
       acc.push({ ...msg, isGrouped });
       return acc;
     },

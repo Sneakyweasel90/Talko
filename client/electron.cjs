@@ -14,7 +14,13 @@ let progressWin = null;
 const logPath = path.join(os.homedir(), "talko-log.txt");
 function log(msg) {
   const line = `[${new Date().toISOString()}] ${msg}\n`;
-  fs.appendFileSync(logPath, line);
+  try {
+    if (fs.existsSync(logPath) && fs.statSync(logPath).size > 1024 * 1024) {
+      fs.writeFileSync(logPath, line);
+    } else {
+      fs.appendFileSync(logPath, line);
+    }
+  } catch {}
   console.log(msg);
 }
 

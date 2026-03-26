@@ -10,6 +10,18 @@ export default defineConfig({
   optimizeDeps: {
     include: ['@sapphi-red/web-noise-suppressor'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'livekit': ['livekit-client', '@livekit/components-react'],
+          'markdown': ['react-markdown', 'remark-gfm', 'react-syntax-highlighter'],
+          'emoji': ['emoji-picker-react'],
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       '/api': {

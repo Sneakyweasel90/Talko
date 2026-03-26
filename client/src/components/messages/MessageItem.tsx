@@ -12,6 +12,55 @@ import LinkPreview from "./LinkPreview";
 
 const URL_REGEX = /https?:\/\/[^\s<>"']+/g;
 
+function PausableGif({ src }: { src: string }) {
+  const imgRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [paused, setPaused] = React.useState(false);
+
+  const toggle = () => {
+    if (!paused) {
+      const img = imgRef.current;
+      const canvas = canvasRef.current;
+      if (img && canvas) {
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext("2d")?.drawImage(img, 0, 0);
+      }
+    }
+    setPaused(p => !p);
+  };
+
+  return (
+    <div
+      style={{ position: "relative", display: "inline-block", cursor: "pointer" }}
+      onClick={toggle}
+      title={paused ? "Click to play" : "Click to pause"}
+    >
+      <img
+        ref={imgRef}
+        src={src}
+        alt="GIF"
+        className={styles.attachmentImg}
+        style={{ maxWidth: 320, maxHeight: 240, display: paused ? "none" : "block" }}
+      />
+      <canvas
+        ref={canvasRef}
+        className={styles.attachmentImg}
+        style={{ maxWidth: 320, maxHeight: 240, display: paused ? "block" : "none" }}
+      />
+      {paused && (
+        <div style={{
+          position: "absolute", inset: 0, display: "flex",
+          alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.3)", borderRadius: 4,
+        }}>
+          <span style={{ fontSize: "2rem" }}>▶</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface EmojiPickerProps {
   messageId: number;
   onReact: (messageId: number, emoji: string) => void;
@@ -26,38 +75,32 @@ function extractFirstUrl(text: string): string | null {
 
 function renderContent(text: string, currentUsername: string): React.ReactNode {
   if (text.startsWith("[gif]")) {
-    return (
-      <img
-        src={text.slice(5)}
-        alt="GIF"
-        className={styles.attachmentImg}
-        style={{ maxWidth: 320, maxHeight: 240 }}
-      />
-    );
+    const src = text.slice(5);
+    return <PausableGif src={src} />;
   }
   if (text.startsWith("[img]") || text.startsWith("[gif]")) {
     const src = text.slice(5);
     const isGif = text.startsWith("[gif]");
     return (
-      <>
-        <img
-          src={src}
-          alt={isGif ? "GIF" : "attachment"}
-          className={styles.attachmentImg}
-          style={isGif ? { maxWidth: 320, maxHeight: 240 } : undefined}
-          onClick={() => {
-            const overlay = document.createElement("div");
-            overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out";
-            const img = document.createElement("img");
-            img.src = src;
-            img.style.cssText = "max-width:90vw;max-height:90vh;object-fit:contain;border-radius:4px";
-            overlay.appendChild(img);
-            overlay.onclick = () => overlay.remove();
-            document.body.appendChild(overlay);
-          }}
-          style={{ cursor: "zoom-in", ...(isGif ? { maxWidth: 320, maxHeight: 240 } : {}) }}
-        />
-      </>
+      <img
+        src={src}
+        alt={isGif ? "GIF" : "attachment"}
+        className={styles.attachmentImg}
+        style={{
+          cursor: "zoom-in",
+          ...(isGif ? { maxWidth: 320, maxHeight: 240 } : {}),
+        }}
+        onClick={() => {
+          const overlay = document.createElement("div");
+          overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out";
+          const img = document.createElement("img");
+          img.src = src;
+          img.style.cssText = "max-width:90vw;max-height:90vh;object-fit:contain;border-radius:4px";
+          overlay.appendChild(img);
+          overlay.onclick = () => overlay.remove();
+          document.body.appendChild(overlay);
+        }}
+      />
     );
   }
 
@@ -397,75 +440,30 @@ export default function MessageItem({
         />
 
         {/* Action bar */}
-        {(isHovered || isPickerOpen || editing) && (
-          <div className={styles.actionBar}>
-            {/* Reply */}
-            <button
-              className={styles.actionBtn}
-              onClick={() => onReply(msg)}
-              title="Reply"
-            >
-              ↩ REPLY
-            </button>
+        <div className={styles.actionBar}>
+          {(isHovered || isPickerOpen || editing) && (
+            <>
+              <button className={styles.actionBtn} onClick={() => onReply(msg)}>↩ REPLY</button>
 
-            {/* Pin — admins only, not for images */}
-            {isAdmin && !msg.content.startsWith("[img]") && (
-              <button
-                className={styles.actionBtn}
-                onClick={() => onPin(msg.id)}
-                title="Pin message"
-              >
-                📌 PIN
-              </button>
-            )}
-
-            {/* Edit + Delete — own messages only */}
-            {isOwnMessage && !editing && !msg.content.startsWith("[img]") && (
-              <button
-                className={styles.actionBtn}
-                onClick={() => {
-                  setEditing(true);
-                  setEditText(msg.content);
-                }}
-                title="Edit"
-              >
-                ✎ EDIT
-              </button>
-            )}
-            {(isOwnMessage || isAdmin) && !editing && (
-              <button
-                className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                onClick={() => {
-                  if (window.confirm("Delete this message?")) onDelete(msg.id);
-                }}
-                title="Delete"
-              >
-                ✕ DEL
-              </button>
-            )}
-
-            {/* React */}
-            <div className={styles.emojiPickerWrap}>
-              <button
-                className={`${styles.actionBtn} ${isPickerOpen ? styles.actionBtnActive : ""}`}
-                onClick={() => onPickerToggle(isPickerOpen ? null : msg.id)}
-                title="Add reaction"
-              >
-                + 😊
-              </button>
-              {isPickerOpen && (
-                <EmojiPicker
-                  messageId={msg.id}
-                  onReact={onReact}
-                  onClose={() => {
-                    onPickerToggle(null);
-                    onHover(null);
-                  }}
-                />
+              {isAdmin && !msg.content.startsWith("[img]") && !msg.content.startsWith("[gif]") && (
+                <button className={styles.actionBtn} onClick={() => onPin(msg.id)}>📌 PIN</button>
               )}
-            </div>
-          </div>
-        )}
+
+              {isOwnMessage && !editing && !msg.content.startsWith("[img]") && !msg.content.startsWith("[gif]") && (
+                <button className={styles.actionBtn} onClick={() => { setEditing(true); setEditText(msg.content); }}>✎ EDIT</button>
+              )}
+
+              {(isOwnMessage || isAdmin) && !editing && (
+                <button className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={() => { if (window.confirm("Delete this message?")) onDelete(msg.id); }}>✕ DEL</button>
+              )}
+
+              <div className={styles.emojiPickerWrap}>
+                <button className={`${styles.actionBtn} ${isPickerOpen ? styles.actionBtnActive : ""}`} onClick={() => onPickerToggle(isPickerOpen ? null : msg.id)}>+ 😊</button>
+                {isPickerOpen && <EmojiPicker messageId={msg.id} onReact={onReact} onClose={() => { onPickerToggle(null); onHover(null); }} />}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

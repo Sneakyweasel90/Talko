@@ -78,7 +78,7 @@ function renderContent(text: string, currentUsername: string): React.ReactNode {
     const src = text.slice(5);
     return <PausableGif src={src} />;
   }
-  if (text.startsWith("[img]") || text.startsWith("[gif]")) {
+  if (text.startsWith("[img]")) {
     const src = text.slice(5);
     const isGif = text.startsWith("[gif]");
     return (
@@ -291,6 +291,7 @@ export default function MessageItem({
   const isOwnMessage = msg.user_id === currentUserId;
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(msg.content);
+  const messageBodyRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
@@ -313,7 +314,7 @@ export default function MessageItem({
       </div>
 
       {/* Message body */}
-      <div className={styles.messageBody}>
+      <div className={styles.messageBody} ref={messageBodyRef}>
         {/* Header row */}
         {!msg.isGrouped && (
           <div className={styles.headerRow}>
@@ -383,11 +384,16 @@ export default function MessageItem({
               value={editText}
               ref={(el) => {
                 if (el) {
-                  el.focus();
+                  el.style.height = "auto";
+                  el.style.height = el.scrollHeight + "px";
                   el.setSelectionRange(el.value.length, el.value.length);
                 }
               }}
-              onChange={(e) => setEditText(e.target.value)}
+              onChange={(e) => {
+                setEditText(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = e.target.scrollHeight + "px";
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -400,21 +406,17 @@ export default function MessageItem({
                   setEditText(msg.content);
                 }
               }}
-              rows={1}
             />
-            <button type="submit" className={styles.editSaveBtn}>
-              SAVE
-            </button>
-            <button
-              type="button"
-              className={styles.editCancelBtn}
-              onClick={() => {
-                setEditing(false);
-                setEditText(msg.content);
-              }}
-            >
-              CANCEL
-            </button>
+            <div className={styles.editActions}>
+              <button type="submit" className={styles.editSaveBtn}>SAVE</button>
+              <button
+                type="button"
+                className={styles.editCancelBtn}
+                onClick={() => { setEditing(false); setEditText(msg.content); }}
+              >
+                CANCEL
+              </button>
+            </div>
           </form>
         ) : (
           <>

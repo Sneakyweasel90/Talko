@@ -31,6 +31,11 @@
   background: var(--surface);
 }
 
+.messageRow:has(textarea) {
+  width: 85%;
+  max-width: 85%;
+}
+
 /* ── Avatar Column ───────────────────────────────────────────────────────── */
 .avatarCol {
   width: 34px;
@@ -102,21 +107,36 @@
 /* ── Edit Form ───────────────────────────────────────────────────────────── */
 .editForm {
   display: flex;
-  gap: 6px;
-  align-items: center;
-  margin-bottom: 4px;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .editInput {
-  flex: 1;
-  background: var(--surface2);
-  border: 1px solid var(--primary-dim);
-  border-radius: 3px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--primary-dim);
   color: var(--text);
   font-size: 0.9rem;
-  padding: 3px 8px;
+  padding: 0;
+  margin: 0;
   font-family: "Share Tech Mono", monospace;
   outline: none;
+  resize: none;
+  line-height: 1.5;
+  overflow: hidden;
+  box-sizing: border-box;
+  caret-color: var(--primary);
+  word-break: break-word;
+  white-space: normal;
+}
+
+.editActions {
+  display: flex;
+  gap: 6px;
 }
 
 .editSaveBtn {
@@ -328,20 +348,6 @@
 .mdParagraph {
   display: block;
   margin: 0;
-}
-
-.editInput {
-  flex: 1;
-  background: var(--surface2);
-  border: 1px solid var(--primary-dim);
-  border-radius: 3px;
-  color: var(--text);
-  font-size: 0.9rem;
-  padding: 3px 8px;
-  font-family: "Share Tech Mono", monospace;
-  outline: none;
-  resize: none;
-  line-height: 1.4;
 }
 
 /* ── Mention ────────────────────────────────────────────────────────────── */

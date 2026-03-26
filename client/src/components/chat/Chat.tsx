@@ -26,6 +26,7 @@ import { useAfkDetector } from "../../hooks/useAfkDetector";
 import ScreenShareViewer from "../voice/ScreenShareViewer";
 import ScreenPickerModal from "../voice/ScreenPickerModal";
 import { useMutedChannels } from "../../hooks/useMutedChannels";
+import ConnectionModal from "../overlays/ConnectionModal";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();
@@ -83,7 +84,7 @@ export default function Chat() {
   const currentChannelRef = useRef(channel);
   const refetchChannelsRef = useRef<(() => void) | null>(null);
 
-  const { send, disconnect } = useWebSocket(user!.token, (data) => {
+  const { send, disconnect, status, reconnect } = useWebSocket(user!.token, (data) => {
     if (data.type === "channel_created" || data.type === "channel_deleted") {
             refetchChannelsRef.current?.();
             return;
@@ -488,6 +489,7 @@ export default function Chat() {
           onClose={() => setShowSearch(false)}
         />
       )}
+      <ConnectionModal status={status} onRetry={reconnect} />
     </div>
   );
 }

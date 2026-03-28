@@ -85,6 +85,11 @@ export default function Chat() {
   const refetchChannelsRef = useRef<(() => void) | null>(null);
 
   const { send, disconnect, status, reconnect } = useWebSocket(user!.token, (data) => {
+    if (data.type === "force_logout") {
+      disconnect();
+      logout();
+      return;
+    }
     if (data.type === "channel_created" || data.type === "channel_deleted") {
             refetchChannelsRef.current?.();
             return;

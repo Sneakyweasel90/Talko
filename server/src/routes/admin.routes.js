@@ -2,6 +2,7 @@ import express from "express";
 import crypto from "crypto";
 import db from "../db/postgres.js";
 import { requireAuth } from "../middleware/auth.js";
+import { getWss } from "../websocket/gateway.js";
 
 const router = express.Router();
 
@@ -9,6 +10,18 @@ const router = express.Router();
 function requireAdmin(req, res, next) {
   if (req.user?.role !== "admin") return res.status(403).json({ error: "Admin only" });
   next();
+}
+
+// Helper to force disconnect a user by ID
+function forceDisconnectUser(userId) {
+  const wss = getWss();
+  if (!wss) return;
+  for (const client of wss.clients) {
+    if (client.readyState === 1 && client.user?.id === userId) {
+      client.send(JSON.stringify({ type: "force_logout" }));
+      client.close(1008, "Kicked");
+    }
+  }
 }
 
 // Helper: get the owner (lowest ID user) and target user info
@@ -30,6 +43,32 @@ router.get("/users", requireAuth, requireAdmin, async (req, res) => {
   );
   const { rows: ownerRows } = await db.query(`SELECT id FROM users ORDER BY id ASC LIMIT 1`);
   res.json({ users: rows, ownerId: ownerRows[0]?.id ?? null });
+});
+
+router.delete("/users/:id", requireAuth, requireAdmin, async (req, res) => {
+  const targetId = parseInt(req.params.id);
+  if (isNaN(targetId)) return res.status(400).json({ error: "Invalid user id" });
+  if (targetId === req.user.id) return res.status(400).json({ error: "Cannot delete yourself" });
+
+  const { ownerId, target } = await getTargetAndOwner(targetId);
+  if (!target) return res.status(404).json({ error: "User not found" });
+  if (targetId === ownerId) return res.status(403).json({ error: "Cannot delete the server owner" });
+  if (target.role === "admin") return res.status(403).json({ error: "Cannot delete another admin" });
+
+  forceDisconnectUser(targetId);
+
+  await db.query(`DELETE FROM reactions WHERE user_id = $1`, [targetId]);
+  await db.query(`DELETE FROM local_nicknames WHERE owner_id = $1 OR target_id = $1`, [targetId]);
+  await db.query(`DELETE FROM refresh_tokens WHERE user_id = $1`, [targetId]);
+  await db.query(`DELETE FROM invite_tokens WHERE created_by = $1`, [targetId]);
+  await db.query(`DELETE FROM channel_last_read WHERE user_id = $1`, [targetId]);
+  await db.query(`DELETE FROM dm_last_read WHERE user_id = $1`, [targetId]);
+  await db.query(`DELETE FROM pinned_messages WHERE pinned_by = $1`, [targetId]);
+  await db.query(`UPDATE messages SET username = '[deleted]', user_id = NULL WHERE user_id = $1`, [targetId]);
+  await db.query(`DELETE FROM dm_conversations WHERE user1_id = $1 OR user2_id = $1`, [targetId]);
+  await db.query(`DELETE FROM users WHERE id = $1`, [targetId]);
+
+  res.json({ ok: true });
 });
 
 // PATCH /api/admin/users/:id/role
@@ -71,7 +110,12 @@ router.post("/users/:id/kick", requireAuth, requireAdmin, async (req, res) => {
   if (targetId === ownerId) return res.status(403).json({ error: "Cannot kick the server owner" });
   if (target.role === "admin") return res.status(403).json({ error: "Cannot kick another admin" });
 
+  const { durationMinutes = 10 } = req.body;
+  const kickedUntil = new Date(Date.now() + durationMinutes * 60 * 1000);
+
+  await db.query(`UPDATE users SET kicked_until = $1 WHERE id = $2`, [kickedUntil, targetId]);
   await db.query(`DELETE FROM refresh_tokens WHERE user_id = $1`, [targetId]);
+  forceDisconnectUser(targetId);
   res.json({ ok: true });
 });
 
@@ -88,6 +132,7 @@ router.post("/users/:id/ban", requireAuth, requireAdmin, async (req, res) => {
 
   await db.query(`UPDATE users SET banned_at = NOW() WHERE id = $1`, [targetId]);
   await db.query(`DELETE FROM refresh_tokens WHERE user_id = $1`, [targetId]);
+  forceDisconnectUser(targetId);
   res.json({ ok: true });
 });
 
@@ -95,7 +140,7 @@ router.post("/users/:id/ban", requireAuth, requireAdmin, async (req, res) => {
 router.post("/users/:id/unban", requireAuth, requireAdmin, async (req, res) => {
   const targetId = parseInt(req.params.id);
   if (isNaN(targetId)) return res.status(400).json({ error: "Invalid user id" });
-  await db.query(`UPDATE users SET banned_at = NULL WHERE id = $1`, [targetId]);
+  await db.query(`UPDATE users SET banned_at = NULL, kicked_until = NULL WHERE id = $1`, [targetId]);
   res.json({ ok: true });
 });
 

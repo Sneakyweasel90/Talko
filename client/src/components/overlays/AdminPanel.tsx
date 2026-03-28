@@ -120,13 +120,35 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
     }
   };
 
-  const kick = async (userId: number, username: string) => {
-    if (!window.confirm(`Kick ${username}? They will be logged out immediately.`)) return;
+  const deleteAccount = async (userId: number, username: string) => {
+    if (!window.confirm(
+      `Permanently delete ${username}'s account?\n\nThis will remove all their data and cannot be undone.`
+    )) return;
     try {
-      await axios.post(`${config.HTTP}/api/admin/users/${userId}/kick`, {}, {
+      await axios.delete(`${config.HTTP}/api/admin/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      alert(`${username} has been kicked.`);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) alert(err.response?.data?.error || "Failed");
+    }
+  };
+
+  const kick = async (userId: number, username: string) => {
+    const input = window.prompt(
+      `Kick ${username}? Enter duration in minutes (default 10):`,
+      "10"
+    );
+    if (input === null) return;
+    const durationMinutes = Math.max(1, parseInt(input) || 10);
+
+    try {
+      await axios.post(
+        `${config.HTTP}/api/admin/users/${userId}/kick`,
+        { durationMinutes },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(`${username} has been kicked for ${durationMinutes} minute${durationMinutes === 1 ? "" : "s"}.`);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) alert(err.response?.data?.error || "Failed");
     }
@@ -252,6 +274,12 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
                           {isBanned ? "UNBAN" : "BAN"}
                         </button>
                       </div>
+                      <button
+                        onClick={() => deleteAccount(u.id, u.username)}
+                        className={`${styles.btn} ${styles.btnDanger}`}
+                      >
+                        DELETE
+                      </button>
                     </div>
                   )}
                 </div>

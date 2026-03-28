@@ -140,6 +140,13 @@ router.post("/login", loginLimiter, async (req, res) => {
 
   if (user.banned_at) return res.status(403).json({ error: "This account has been banned" });
 
+  if (user.kicked_until && new Date(user.kicked_until) > new Date()) {
+  const remaining = Math.ceil((new Date(user.kicked_until) - new Date()) / 60000);
+  return res.status(403).json({ 
+    error: `You have been kicked. Try again in ${remaining} minute${remaining === 1 ? "" : "s"}.` 
+  });
+}
+
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) return res.status(400).json({ error: "Invalid credentials" });
 

@@ -91,6 +91,9 @@ export async function initDB() {
   await pool.query(
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_at TIMESTAMPTZ;`,
   );
+  await pool.query(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS kicked_until TIMESTAMPTZ NULL`
+  )
 
   // DM tables
   await pool.query(`

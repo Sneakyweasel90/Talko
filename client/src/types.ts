@@ -51,14 +51,6 @@ export interface GroupedMessage extends Message {
   isGrouped: boolean;
 }
 
-export interface Channel {
-  id: number;
-  name: string;
-  type: "text" | "voice";
-  created_by: number | null;
-  created_at: string;
-}
-
 export interface OnlineUser {
   id: number;
   username: string;
@@ -93,7 +85,8 @@ export type ServerMessage =
   | { type: "channel_unread_counts"; counts: Record<string, number> }
   | { type: "channel_unread_increment"; channelName: string }
   | { type: "message_pinned"; messageId: number; channelId: string; pinnedBy: string }
-  | { type: "message_unpinned"; messageId: number; channelId: string };
+  | { type: "message_unpinned"; messageId: number; channelId: string }
+  | { type: "force_logout" };
 
 export type ClientMessage =
   | { type: "join"; channelId: string }

@@ -12,7 +12,10 @@
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "electron:build": "node scripts/copy-worklet.cjs && npm run build && electron-builder",
     "electron:build:win": "node scripts/copy-worklet.cjs && npm run build && electron-builder --win",
-    "electron:build:linux": "node scripts/copy-worklet.cjs && npm run build && electron-builder --linux"
+    "electron:build:linux": "node scripts/copy-worklet.cjs && npm run build && electron-builder --linux",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
   },
   "build": {
     "appId": "com.talko.app",
@@ -64,10 +67,14 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/ui": "^4.1.2",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron": "^40.6.0",
@@ -76,7 +83,9 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "jsdom": "^29.0.1",
     "vite": "^7.3.1",
+    "vitest": "^4.1.2",
     "wait-on": "^9.0.4"
   }
 }

@@ -5,7 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
   },
   "keywords": [],
   "author": "",
@@ -23,5 +25,10 @@
     "pg": "^8.18.0",
     "redis": "^5.11.0",
     "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^1.6.1",
+    "supertest": "^7.2.2",
+    "vitest": "^1.6.1"
   }
 }

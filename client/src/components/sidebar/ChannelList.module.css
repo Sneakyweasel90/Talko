@@ -8,7 +8,7 @@
 
 .sectionLabel {
   font-size: 0.62rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.08em;
   color: var(--text-dim);
 }
@@ -42,7 +42,7 @@
   color: var(--primary);
   padding: 0.3rem 0.5rem;
   border-radius: 2px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.75rem;
   outline: none;
   transition: border-color 0.15s;
@@ -78,7 +78,7 @@
   position: relative;
   transition: all 0.15s;
   margin: 1px 8px;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 600;
   color: var(--text-dim);
   background: transparent;
@@ -122,7 +122,7 @@
   border-radius: 8px;
   padding: 0 5px;
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-weight: 700;
   min-width: 16px;
   text-align: center;
@@ -175,7 +175,7 @@
 
 .voiceOccupantCount {
   font-size: 0.55rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--primary);
   opacity: 0.7;
 }
@@ -184,7 +184,7 @@
   font-size: 0.5rem;
   border-radius: 2px;
   padding: 1px 4px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.1em;
   border: 1px solid var(--primary-dim);
   flex-shrink: 0;
@@ -198,12 +198,13 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.2rem 1rem 0.2rem 2.5rem;
+  position: relative;
 }
 
 .occupantName {
   font-size: 0.75rem;
   color: var(--text-dim);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
 }
 
 .occupantMic {
@@ -229,7 +230,7 @@
   border-radius: 8px;
   padding: 0 5px;
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-weight: 700;
   min-width: 16px;
   text-align: center;
@@ -274,7 +275,7 @@
   background: none;
   border: none;
   color: var(--text);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.72rem;
   letter-spacing: 0.05em;
   text-align: left;
@@ -290,6 +291,49 @@
 }
 
 @keyframes speakPulse {
-  0%, 100% { box-shadow: 0 0 0px 0px rgba(74, 222, 128, 0); }
-  50%       { box-shadow: 0 0 0px 4px rgba(74, 222, 128, 0.5); }
+  0%,
+  100% {
+    box-shadow: 0 0 0px 0px rgba(74, 222, 128, 0);
+  }
+  50% {
+    box-shadow: 0 0 0px 4px rgba(74, 222, 128, 0.5);
+  }
+}
+
+.occupantName {
+  cursor: pointer;
+  flex: 1;
+}
+
+.occupantName:hover {
+  color: var(--primary);
+}
+
+.volumePopout {
+  position: absolute;
+  left: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  min-width: 130px;
+}
+
+.volumePopoutLabel {
+  font-size: 0.6rem;
+  font-family: "Share Tech Mono", monospace;
+  color: var(--primary);
+  min-width: 30px;
+}
+
+.volumePopoutSlider {
+  flex: 1;
+  height: 3px;
+  cursor: pointer;
+  accent-color: var(--primary);
 }

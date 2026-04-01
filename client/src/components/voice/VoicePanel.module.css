@@ -24,7 +24,7 @@
 
 .statusText {
   font-size: 0.55rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.12em;
   color: #23a55a;
 }
@@ -38,7 +38,7 @@
 
 .channelName {
   font-size: 0.65rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text);
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -48,7 +48,7 @@
 
 .pttBadge {
   font-size: 0.55rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   border: 1px solid var(--border);
   border-radius: 2px;
@@ -125,7 +125,7 @@
 
 .pttKeyLabel {
   font-size: 0.55rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   letter-spacing: 0.08em;
   white-space: nowrap;
@@ -149,7 +149,7 @@
 
 .sliderLabel {
   font-size: 0.55rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -167,7 +167,37 @@
 
 .sliderValue {
   font-size: 0.5rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   opacity: 0.6;
+}
+
+.selfVolume {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 2px;
+  border-top: 1px solid var(--border);
+}
+
+.selfVolumeLabel {
+  font-size: 0.58rem;
+  font-family: "Share Tech Mono", monospace;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.selfVolumeSlider {
+  flex: 1;
+  height: 3px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.selfVolumeValue {
+  font-size: 0.55rem;
+  font-family: "Share Tech Mono", monospace;
+  color: var(--text-dim);
+  min-width: 28px;
+  text-align: right;
 }

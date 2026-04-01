@@ -189,47 +189,6 @@ export default function VoicePanel({
               </svg>
             </button>
           </div>
-          {/* Volume sliders */}
-          {participants.length > 0 && (
-            <div className={styles.sliders}>
-              <div className={styles.sliderWrap}>
-                <span className={styles.sliderLabel}>YOU</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={2}
-                  step={0.05}
-                  value={selfVolume}
-                  onChange={(e) => setSelfVolume(parseFloat(e.target.value))}
-                  className={styles.sliderInput}
-                  title={`${Math.round(selfVolume * 100)}%`}
-                />
-                <span className={styles.sliderValue}>
-                  {Math.round(selfVolume * 100)}%
-                </span>
-              </div>
-              {participants.map((name) => (
-                <div key={name} className={styles.sliderWrap}>
-                  <span className={styles.sliderLabel}>{name}</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={2}
-                    step={0.05}
-                    value={participantVolumes[name] ?? 1}
-                    onChange={(e) =>
-                      setParticipantVolume(name, parseFloat(e.target.value))
-                    }
-                    className={styles.sliderInput}
-                    title={`${Math.round((participantVolumes[name] ?? 1) * 100)}%`}
-                  />
-                  <span className={styles.sliderValue}>
-                    {Math.round((participantVolumes[name] ?? 1) * 100)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </>
       )}
     </div>

@@ -72,6 +72,8 @@ interface ChannelListProps {
   mutedChannels: Set<string>;
   onToggleMute: (name: string) => void;
   activeSpeakers: Set<string>;
+  participantVolumes: Record<string, number>;
+  setParticipantVolume: (username: string, volume: number) => void;
 }
 
 export default function ChannelList({
@@ -102,6 +104,8 @@ export default function ChannelList({
   mutedChannels,
   onToggleMute,
   activeSpeakers,
+  participantVolumes,
+  setParticipantVolume,
 }: ChannelListProps) {
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -109,8 +113,13 @@ export default function ChannelList({
     channelName: string;
   } | null>(null);
 
+  const [volumePopout, setVolumePopout] = useState<string | null>(null);
+
   useEffect(() => {
-    const handler = () => setContextMenu(null);
+    const handler = () => {
+      setContextMenu(null);
+      setVolumePopout(null);
+    };
     window.addEventListener("click", handler);
     return () => window.removeEventListener("click", handler);
   }, []);
@@ -226,7 +235,9 @@ export default function ChannelList({
             <div key={name} className={styles.occupantRow}>
               <Avatar username={name} size={18} />
               <span className={styles.occupantName}>{name}</span>
-              <span className={`${styles.occupantMic} ${activeSpeakers.has(name) ? styles.speaking : ""}`}>
+              <span
+                className={`${styles.occupantMic} ${activeSpeakers.has(name) ? styles.speaking : ""}`}
+              >
                 💤
               </span>
             </div>
@@ -283,11 +294,45 @@ export default function ChannelList({
             </div>
             {occupants.map((name) => (
               <div key={name} className={styles.occupantRow}>
-                <span className={activeSpeakers.has(name) ? styles.speakingAvatar : ""}>
+                <span
+                  className={
+                    activeSpeakers.has(name) ? styles.speakingAvatar : ""
+                  }
+                >
                   <Avatar username={name} size={18} />
                 </span>
-                <span className={styles.occupantName}>{name}</span>
+                <span
+                  className={styles.occupantName}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setVolumePopout(volumePopout === name ? null : name);
+                  }}
+                  title="Click to adjust volume"
+                >
+                  {name}
+                </span>
                 <span className={styles.occupantMic}>🎙</span>
+                {volumePopout === name && (
+                  <div
+                    className={styles.volumePopout}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className={styles.volumePopoutLabel}>
+                      {Math.round((participantVolumes[name] ?? 1) * 100)}%
+                    </span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={2}
+                      step={0.05}
+                      value={participantVolumes[name] ?? 1}
+                      onChange={(e) =>
+                        setParticipantVolume(name, parseFloat(e.target.value))
+                      }
+                      className={styles.volumePopoutSlider}
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>

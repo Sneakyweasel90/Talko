@@ -180,6 +180,8 @@ export default function Sidebar({
             afkChannel={afkChannel}
             mutedChannels={mutedChannels}
             onToggleMute={toggleMute}
+            participantVolumes={participantVolumes}
+            setParticipantVolume={setParticipantVolume}
           />
         </div>
       )}

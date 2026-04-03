@@ -5,7 +5,6 @@ import ChannelList from "./ChannelList";
 import SidebarFooter from "./SidebarFooter";
 import type { OnlineUser, DMConversation, UserStatus } from "../../types";
 import styles from "./Sidebar.module.css";
-import { useMutedChannels } from "../../hooks/useMutedChannels";
 
 interface Props {
   channel: string;
@@ -53,6 +52,8 @@ interface Props {
   setSelfVolume: (volume: number) => void;
   activeSpeakers: Set<string>;
   onRegisterRefetchChannels?: (fn: () => void) => void;
+  mutedChannels: Set<string>;
+  onToggleMute: (channel: string) => void;
 }
 
 export default function Sidebar({
@@ -101,9 +102,10 @@ export default function Sidebar({
   setSelfVolume,
   activeSpeakers,
   onRegisterRefetchChannels,
+  mutedChannels,
+  onToggleMute,
 }: Props) {
   const { theme } = useTheme();
-  const { mutedChannels, toggleMute } = useMutedChannels();
   const {
     textChannels,
     voiceChannels,
@@ -179,7 +181,7 @@ export default function Sidebar({
             onJoinAfk={joinAfk}
             afkChannel={afkChannel}
             mutedChannels={mutedChannels}
-            onToggleMute={toggleMute}
+            onToggleMute={onToggleMute}
             participantVolumes={participantVolumes}
             setParticipantVolume={setParticipantVolume}
           />

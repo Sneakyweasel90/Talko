@@ -5,6 +5,10 @@ import { useVoice } from "../../hooks/useVoice";
 import { useLocalNicknames } from "../../context/LocalNicknameContext";
 import { useMessages } from "../../hooks/useMessages";
 import { useDMs } from "../../hooks/useDMs";
+import { useUnreadChannels } from "../../hooks/useUnreadChannels";
+import { useAfkDetector } from "../../hooks/useAfkDetector";
+import { usePresence } from "../../hooks/usePresence";
+import { useChatKeyboard } from "../../hooks/useChatKeyboard";
 import axios from "axios";
 import config from "../../config";
 import TitleBar from "../ui/TitleBar";
@@ -14,32 +18,56 @@ import ChatMain from "./ChatMain";
 import MemberList from "../ui/MemberList";
 import SearchOverlay from "../overlays/SearchOverlay";
 import UserPopover from "../overlays/UserPopover";
-import type {
-  OnlineUser,
-  DMConversation,
-  GroupedMessage,
-  UserStatus,
-} from "../../types";
-import { useUnreadChannels } from "../../hooks/useUnreadChannels";
-import styles from "./Chat.module.css";
-import { useAfkDetector } from "../../hooks/useAfkDetector";
 import ScreenShareViewer from "../voice/ScreenShareViewer";
 import ScreenPickerModal from "../voice/ScreenPickerModal";
+import type { GroupedMessage, UserStatus } from "../../types";
+import styles from "./Chat.module.css";
+import { useDMState } from "../../hooks/useDMState";
+import { usePopover } from "../../hooks/usePopover";
 import { useMutedChannels } from "../../hooks/useMutedChannels";
-import ConnectionModal from "../overlays/ConnectionModal";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();
   const { resolve, load, nicknames } = useLocalNicknames();
-  const { mutedChannels, toggleMute, isMuted } = useMutedChannels();
-  const [afkTimeoutMinutes, setAfkTimeoutMinutes] = useState(10);
   const { unreadCounts, handleUnreadMessage, markChannelRead } =
-    useUnreadChannels(user!.token, mutedChannels);
+    useUnreadChannels(user!.token);
+  const {
+    onlineUsers,
+    voiceOccupancy,
+    avatarMap,
+    handlePresenceMessage,
+    updateAvatarMap,
+  } = usePresence();
+  const { popover, openPopover, closePopover } = usePopover();
 
+  const [channel, setChannel] = useState("general");
+  const [showSearch, setShowSearch] = useState(false);
+  const [pickerMsgId, setPickerMsgId] = useState<number | null>(null);
+  const [hoveredMsgId, setHoveredMsgId] = useState<number | null>(null);
+  const [replyTo, setReplyTo] = useState<GroupedMessage | null>(null);
+  const [activeTab, setActiveTab] = useState<"channels" | "dms">("channels");
+  const [myStatus, setMyStatus] = useState<UserStatus>("online");
+  const [myStatusText, setMyStatusText] = useState<string | null>(null);
+  const [allUsers, setAllUsers] = useState<{ id: number; username: string }[]>(
+    [],
+  );
+
+  const textChannelNamesRef = useRef<string[]>([]);
+  const currentChannelRef = useRef(channel);
   const userRef = useRef(user);
+  const sendRef = useRef<(data: object) => void>(() => {});
+  const sendViaRef = useCallback((data: object) => sendRef.current(data), []);
+  const { mutedChannels, toggleMute } = useMutedChannels(user!.token);
+
   useEffect(() => {
     userRef.current = user;
   }, [user]);
+  useEffect(() => {
+    currentChannelRef.current = channel;
+  }, [channel]);
+  useEffect(() => {
+    if (user?.token) load(user.token);
+  }, []); // eslint-disable-line
 
   const resolveNickname = useCallback(
     (userId: number, serverDisplayName: string): string => {
@@ -47,31 +75,9 @@ export default function Chat() {
         return userRef.current?.nickname || serverDisplayName;
       return resolve(userId, serverDisplayName);
     },
-    [resolve, nicknames],
-  ); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const [channel, setChannel] = useState("general");
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [voiceOccupancy, setVoiceOccupancy] = useState<
-    Record<string, string[]>
-  >({});
-  const [showSearch, setShowSearch] = useState(false);
-  const [pickerMsgId, setPickerMsgId] = useState<number | null>(null);
-  const [hoveredMsgId, setHoveredMsgId] = useState<number | null>(null);
-  const [replyTo, setReplyTo] = useState<GroupedMessage | null>(null);
-  const [popover, setPopover] = useState<{
-    userId: number;
-    username: string;
-    el: HTMLElement;
-  } | null>(null);
-  const [avatarMap, setAvatarMap] = useState<Record<number, string | null>>({});
-  const [activeTab, setActiveTab] = useState<"channels" | "dms">("channels");
-  const [activeDMConv, setActiveDMConv] = useState<DMConversation | null>(null);
-  const [myStatus, setMyStatus] = useState<UserStatus>("online");
-  const [myStatusText, setMyStatusText] = useState<string | null>(null);
-  const [allUsers, setAllUsers] = useState<{ id: number; username: string }[]>(
-    [],
+    [resolve, nicknames], // eslint-disable-line
   );
+
   const {
     conversations: dmConversations,
     dmLoading,
@@ -80,115 +86,6 @@ export default function Chat() {
     onDMMessage,
     totalUnread,
   } = useDMs(user!.token, user!.id);
-  const textChannelNamesRef = useRef<string[]>([]);
-  const currentChannelRef = useRef(channel);
-  const refetchChannelsRef = useRef<(() => void) | null>(null);
-
-  const { send, disconnect, status, reconnect } = useWebSocket(
-    user!.token,
-    (data) => {
-      if (data.type === "force_logout") {
-        disconnect();
-        logout();
-        return;
-      }
-      if (data.type === "channel_created" || data.type === "channel_deleted") {
-        refetchChannelsRef.current?.();
-        return;
-      }
-      if (data.type?.startsWith("voice_")) {
-        if (data.type === "voice_state") {
-          setVoiceOccupancy(data.channels);
-          return;
-        }
-        if (data.type === "voice_presence_update") {
-          setVoiceOccupancy((prev) => {
-            const current = prev[data.channelId] ?? [];
-            if (data.action === "join") {
-              return {
-                ...prev,
-                [data.channelId]: current.includes(data.username)
-                  ? current
-                  : [...current, data.username],
-              };
-            } else {
-              const updated = current.filter((u) => u !== data.username);
-              const next = { ...prev };
-              if (updated.length === 0) delete next[data.channelId];
-              else next[data.channelId] = updated;
-              return next;
-            }
-          });
-          return;
-        }
-      } else if (data.type === "presence") {
-        setOnlineUsers(data.users);
-      } else if (
-        data.type === "channel_unread_counts" ||
-        data.type === "channel_unread_increment"
-      ) {
-        handleUnreadMessage(data);
-      } else if (data.type === "avatar_update") {
-        setAvatarMap((prev) => ({ ...prev, [data.userId]: data.avatar }));
-      } else {
-        if (
-          data.type === "message" &&
-          typeof data.message?.channel_id === "string" &&
-          data.message.channel_id.startsWith("dm:")
-        ) {
-          onDMMessage(
-            data.message.channel_id,
-            data.message.content,
-            data.message.user_id,
-            data.message.created_at,
-          );
-          return;
-        }
-        handleMessage(data);
-      }
-    },
-  );
-
-  const handleStatusChange = useCallback(
-    (status: UserStatus, statusText?: string | null) => {
-      setMyStatus(status);
-      setMyStatusText(statusText ?? null);
-      send({ type: "set_status", status, statusText: statusText ?? null });
-    },
-    [send],
-  );
-
-  useEffect(() => {
-    currentChannelRef.current = channel;
-  }, [channel]);
-
-  useEffect(() => {
-    if (user?.token) load(user.token);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!user?.token) return;
-    axios
-      .get(`${config.HTTP}/api/users/all`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      })
-      .then(({ data }) => setAllUsers(data))
-      .catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!user?.token) return;
-    axios
-      .get(`${config.HTTP}/api/users/avatars`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      })
-      .then(({ data }) => {
-        const map: Record<number, string | null> = {};
-        for (const u of data) map[u.id] = u.avatar;
-        setAvatarMap(map);
-      })
-      .catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const {
     groupedMessages,
@@ -206,37 +103,56 @@ export default function Chat() {
     clearMention,
   } = useMessages({
     channel,
-    send,
+    send: sendViaRef,
     currentUserId: user!.id,
     currentChannelRef,
     userRef,
     mutedChannels,
   });
 
+  const { send, disconnect } = useWebSocket(user!.token, (data) => {
+    if (handlePresenceMessage(data)) return;
+    if (
+      data.type === "channel_unread_counts" ||
+      data.type === "channel_unread_increment"
+    ) {
+      handleUnreadMessage(data);
+      return;
+    }
+    if (
+      data.type === "message" &&
+      typeof data.message?.channel_id === "string" &&
+      data.message.channel_id.startsWith("dm:")
+    ) {
+      onDMMessage(
+        data.message.channel_id,
+        data.message.content,
+        data.message.user_id,
+        data.message.created_at,
+      );
+      return;
+    }
+    handleMessage(data);
+  });
+
+  sendRef.current = send;
+
+  const voice = useVoice(user!.token, send);
+
   const {
-    inVoice,
-    voiceChannel,
-    participants,
-    participantVolumes,
-    selfVolume,
-    joinVoice,
-    leaveVoice,
-    setParticipantVolume,
-    setSelfVolume,
-    setMuted,
-    setAllParticipantsDeafened,
-    joinAfk,
-    localScreenShareTrack,
-    isScreenSharing,
-    screenShareTrack,
-    screenShareParticipant,
-    startScreenShare,
-    stopScreenShare,
-    pickerSources,
-    selectSource,
-    cancelPicker,
-    activeSpeakers,
-  } = useVoice(user!.token, send);
+    activeDMConv,
+    setActiveDMConv,
+    handleOpenDM,
+    handleSelectDM,
+    handleTabToDMs,
+    handleTabToChannels,
+  } = useDMState({
+    send,
+    openDM,
+    markRead,
+    currentChannelRef,
+    dmConversations,
+  });
 
   const handleSelectChannel = useCallback(
     (name: string) => {
@@ -247,40 +163,24 @@ export default function Chat() {
     [markChannelRead, clearMention],
   );
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        setShowSearch((s) => !s);
-        return;
-      }
-      if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-        const tag = (e.target as HTMLElement).tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return;
-        if (activeTab !== "channels") return;
-        const names = textChannelNamesRef.current;
-        if (names.length === 0) return;
-        e.preventDefault();
-        const cur = currentChannelRef.current;
-        const idx = names.indexOf(cur);
-        const next =
-          e.key === "ArrowDown"
-            ? names[(idx + 1) % names.length]
-            : names[(idx - 1 + names.length) % names.length];
-        handleSelectChannel(next);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [activeTab, handleSelectChannel]);
+  useChatKeyboard({
+    activeTab,
+    textChannelNamesRef,
+    currentChannelRef,
+    onOpenSearch: () => setShowSearch((s) => !s),
+    onSelectChannel: handleSelectChannel,
+  });
 
-  const handleJoinAfk = useCallback(() => {
-    joinAfk();
-    send({ type: "set_status", status: "away", statusText: null });
-    setMyStatus("away");
-  }, [joinAfk, send]);
+  useAfkDetector(voice.inVoice, voice.voiceChannel, voice.joinAfk);
 
-  useAfkDetector(inVoice, voiceChannel, handleJoinAfk, afkTimeoutMinutes);
+  const handleStatusChange = useCallback(
+    (status: UserStatus, statusText?: string | null) => {
+      setMyStatus(status);
+      setMyStatusText(statusText ?? null);
+      send({ type: "set_status", status, statusText: statusText ?? null });
+    },
+    [send],
+  );
 
   const handleLogout = useCallback(async () => {
     disconnect();
@@ -288,67 +188,53 @@ export default function Chat() {
     await logout();
   }, [disconnect, logout]);
 
-  const handleOpenDM = useCallback(
-    async (userId: number) => {
-      const channelId = await openDM(userId);
-      if (!channelId) return;
-      setActiveTab("dms");
-      markRead(channelId);
-      currentChannelRef.current = channelId;
-      send({ type: "join", channelId });
-    },
-    [openDM, markRead, send, currentChannelRef],
-  );
-
-  const handleSelectDM = useCallback(
-    (conv: DMConversation) => {
-      setActiveDMConv(conv);
-      markRead(conv.channelId);
-      currentChannelRef.current = conv.channelId;
-      send({ type: "join", channelId: conv.channelId });
-    },
-    [markRead, send, currentChannelRef],
-  );
+  useEffect(() => {
+    if (!user?.token) return;
+    axios
+      .get(`${config.HTTP}/api/users/avatars`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      })
+      .then(({ data }) => {
+        const map: Record<number, string | null> = {};
+        for (const u of data) map[u.id] = u.avatar;
+        for (const [id, avatar] of Object.entries(map)) {
+          updateAvatarMap(Number(id), avatar as string | null);
+        }
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line
 
   useEffect(() => {
     if (!user?.token) return;
-    const fetchTimeout = () => {
-      axios
-        .get(`${config.HTTP}/api/admin/afk-timeout`)
-        .then(({ data }) => setAfkTimeoutMinutes(data.afk_timeout_minutes))
-        .catch(() => {});
-    };
-    fetchTimeout();
-    const interval = setInterval(fetchTimeout, 60_000);
-    return () => clearInterval(interval);
-  }, [user?.token]);
+    axios
+      .get(`${config.HTTP}/api/users/all`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      })
+      .then(({ data }) => setAllUsers(data))
+      .catch(() => {});
+  }, []); // eslint-disable-line
 
   return (
     <div className={styles.root}>
       <TitleBar />
-
       <div className={styles.body}>
         <ResizableSidebar>
           <Sidebar
-            onRegisterRefetchChannels={(fn) => {
-              refetchChannelsRef.current = fn;
-            }}
-            activeSpeakers={activeSpeakers}
             mentionedChannels={mentionedChannels}
-            isScreenSharing={isScreenSharing}
-            onStartScreenShare={startScreenShare}
-            onStopScreenShare={stopScreenShare}
-            joinAfk={handleJoinAfk}
-            inVoice={inVoice}
-            setMuted={setMuted}
-            setAllParticipantsDeafened={setAllParticipantsDeafened}
+            isScreenSharing={voice.isScreenSharing}
+            onStartScreenShare={voice.startScreenShare}
+            onStopScreenShare={voice.stopScreenShare}
+            joinAfk={voice.joinAfk}
+            inVoice={voice.inVoice}
+            setMuted={voice.setMuted}
+            setAllParticipantsDeafened={voice.setAllParticipantsDeafened}
             channel={channel}
             setChannel={handleSelectChannel}
             unreadCounts={unreadCounts}
-            voiceChannel={voiceChannel}
-            participants={participants}
-            joinVoice={joinVoice}
-            leaveVoice={leaveVoice}
+            voiceChannel={voice.voiceChannel}
+            participants={voice.participants}
+            joinVoice={voice.joinVoice}
+            leaveVoice={voice.leaveVoice}
             logout={handleLogout}
             username={user!.username}
             nickname={user!.nickname ?? null}
@@ -362,8 +248,7 @@ export default function Chat() {
             onNicknameChange={updateNickname}
             onAvatarChange={(avatar) => {
               updateAvatar(avatar);
-              if (user?.id)
-                setAvatarMap((prev) => ({ ...prev, [user.id]: avatar }));
+              if (user?.id) updateAvatarMap(user.id, avatar);
             }}
             voiceOccupancy={voiceOccupancy}
             dmConversations={dmConversations}
@@ -373,21 +258,8 @@ export default function Chat() {
             activeTab={activeTab}
             onTabChange={(tab) => {
               setActiveTab(tab);
-              if (tab === "channels") {
-                currentChannelRef.current = channel;
-                send({ type: "join", channelId: channel });
-              }
-              if (tab === "dms") {
-                const firstConv = activeDMConv ?? dmConversations[0] ?? null;
-                if (firstConv && !activeDMConv) {
-                  setActiveDMConv(firstConv);
-                  markRead(firstConv.channelId);
-                  currentChannelRef.current = firstConv.channelId;
-                  send({ type: "join", channelId: firstConv.channelId });
-                } else if (activeDMConv) {
-                  send({ type: "join", channelId: activeDMConv.channelId });
-                }
-              }
+              if (tab === "channels") handleTabToChannels(channel);
+              if (tab === "dms") handleTabToDMs(channel);
             }}
             onSelectDM={(conv) => {
               setActiveDMConv(conv);
@@ -399,10 +271,13 @@ export default function Chat() {
             currentStatus={myStatus}
             currentStatusText={myStatusText}
             onStatusChange={handleStatusChange}
-            participantVolumes={participantVolumes}
-            selfVolume={selfVolume}
-            setParticipantVolume={setParticipantVolume}
-            setSelfVolume={setSelfVolume}
+            participantVolumes={voice.participantVolumes}
+            selfVolume={voice.selfVolume}
+            setParticipantVolume={voice.setParticipantVolume}
+            setSelfVolume={voice.setSelfVolume}
+            activeSpeakers={new Set()}
+            mutedChannels={mutedChannels}
+            onToggleMute={toggleMute}
           />
         </ResizableSidebar>
 
@@ -438,9 +313,7 @@ export default function Chat() {
           onReply={setReplyTo}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          onUsernameClick={(userId, username, el) =>
-            setPopover({ userId, username, el })
-          }
+          onUsernameClick={openPopover}
           resolveNickname={resolveNickname}
           typers={typers}
           send={send}
@@ -453,9 +326,7 @@ export default function Chat() {
           onlineUsers={onlineUsers}
           allUsers={allUsers}
           currentUserId={user!.id}
-          onUserClick={(userId, username, el) =>
-            setPopover({ userId, username, el })
-          }
+          onUserClick={openPopover}
         />
       </div>
 
@@ -465,30 +336,33 @@ export default function Chat() {
           username={popover.username}
           isSelf={popover.userId === user!.id}
           anchorEl={popover.el}
-          onClose={() => setPopover(null)}
-          onOpenDM={(userId) => {
-            setPopover(null);
-            handleOpenDM(userId);
+          onClose={closePopover}
+          onOpenDM={async (userId) => {
+            closePopover();
+            const channelId = await handleOpenDM(userId);
+            if (channelId) setActiveTab("dms");
           }}
         />
       )}
 
-      {(localScreenShareTrack || screenShareTrack) && (
+      {(voice.localScreenShareTrack || voice.screenShareTrack) && (
         <ScreenShareViewer
-          track={(localScreenShareTrack || screenShareTrack)!}
+          track={(voice.localScreenShareTrack || voice.screenShareTrack)!}
           participantName={
-            isScreenSharing ? user!.username : (screenShareParticipant ?? "")
+            voice.isScreenSharing
+              ? user!.username
+              : (voice.screenShareParticipant ?? "")
           }
-          isLocal={isScreenSharing}
-          onClose={stopScreenShare}
+          isLocal={voice.isScreenSharing}
+          onClose={voice.stopScreenShare}
         />
       )}
 
-      {pickerSources && (
+      {voice.pickerSources && (
         <ScreenPickerModal
-          sources={pickerSources}
-          onSelect={selectSource}
-          onCancel={cancelPicker}
+          sources={voice.pickerSources}
+          onSelect={voice.selectSource}
+          onCancel={voice.cancelPicker}
         />
       )}
 
@@ -500,7 +374,6 @@ export default function Chat() {
           onClose={() => setShowSearch(false)}
         />
       )}
-      <ConnectionModal status={status} onRetry={reconnect} />
     </div>
   );
 }

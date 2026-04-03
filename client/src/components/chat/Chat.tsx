@@ -9,7 +9,6 @@ import { useUnreadChannels } from "../../hooks/useUnreadChannels";
 import { useAfkDetector } from "../../hooks/useAfkDetector";
 import { usePresence } from "../../hooks/usePresence";
 import { useChatKeyboard } from "../../hooks/useChatKeyboard";
-import { useDMState } from "../../hooks/useDmState";
 import { usePopover } from "../../hooks/usePopOver";
 import axios from "axios";
 import config from "../../config";
@@ -24,6 +23,7 @@ import ScreenShareViewer from "../voice/ScreenShareViewer";
 import ScreenPickerModal from "../voice/ScreenPickerModal";
 import type { GroupedMessage, UserStatus } from "../../types";
 import styles from "./Chat.module.css";
+import { useDMState } from "../../hooks/useDmState";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();

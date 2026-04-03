@@ -1,47 +1,51 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: './',
+  base: "./",
   plugins: [react()],
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
   optimizeDeps: {
-    include: ['@sapphi-red/web-noise-suppressor'],
+    include: ["@sapphi-red/web-noise-suppressor"],
   },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'livekit': ['livekit-client', '@livekit/components-react'],
-          'markdown': ['react-markdown', 'remark-gfm', 'react-syntax-highlighter'],
-          'emoji': ['emoji-picker-react'],
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          livekit: ["livekit-client", "@livekit/components-react"],
+          markdown: [
+            "react-markdown",
+            "remark-gfm",
+            "react-syntax-highlighter",
+          ],
+          emoji: ["emoji-picker-react"],
         },
       },
     },
   },
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/test/setup.ts',
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.ts",
     css: {
       modules: {
-        classNameStrategy: 'non-scoped'
-      }
-    }
+        classNameStrategy: "non-scoped",
+      },
+    },
   },
   server: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:4000',
+      "/api": {
+        target: "http://localhost:4000",
         changeOrigin: true,
       },
-      '/ws': {
-        target: 'ws://localhost:4000',
+      "/ws": {
+        target: "ws://localhost:4000",
         ws: true,
       },
-    }
-  }
-})
+    },
+  },
+});

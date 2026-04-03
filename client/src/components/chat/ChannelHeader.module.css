@@ -13,7 +13,7 @@
 }
 
 .channelName {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 700;
   font-size: 1rem;
   color: var(--primary);
@@ -33,7 +33,7 @@
   color: var(--text-dim);
   font-size: 0.75rem;
   padding: 2px 7px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   transition: all 0.15s;
 }
 
@@ -44,7 +44,7 @@
 
 .onlineCount {
   font-size: 0.72rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   flex-shrink: 0;
   display: flex;

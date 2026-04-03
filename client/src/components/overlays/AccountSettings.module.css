@@ -13,7 +13,7 @@
   width: 480px;
   max-width: 95vw;
   border-radius: 4px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   max-height: 90vh;
   overflow-y: auto;
   background: var(--surface);
@@ -65,7 +65,7 @@
   border-bottom: 2px solid transparent;
   color: var(--text-dim);
   font-size: 0.65rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.12em;
   padding: 0.6rem;
   cursor: pointer;
@@ -97,7 +97,7 @@
 }
 
 .displayName {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 700;
   font-size: 1.1rem;
   letter-spacing: 0.05em;
@@ -147,7 +147,7 @@
   padding: 0.45rem 0.6rem;
   border-radius: 2px;
   font-size: 0.85rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   outline: none;
   width: 100%;
   background: var(--background);
@@ -174,7 +174,7 @@
   padding: 0.45rem 0.75rem;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   transition: all 0.15s;
   white-space: nowrap;
 }

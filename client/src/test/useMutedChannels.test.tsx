@@ -2,7 +2,6 @@ import { renderHook, act } from "@testing-library/react";
 import { describe, expect, it, beforeEach } from "vitest";
 import { useMutedChannels } from "../hooks/useMutedChannels";
 
-
 describe("useMutedChannels", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -80,7 +79,7 @@ describe("useMutedChannels", () => {
   it("loads muted channels from localStorage on mount", () => {
     localStorage.setItem(
       "talko_muted_channels",
-      JSON.stringify(["general", "random"])
+      JSON.stringify(["general", "random"]),
     );
 
     const { result } = renderHook(() => useMutedChannels());

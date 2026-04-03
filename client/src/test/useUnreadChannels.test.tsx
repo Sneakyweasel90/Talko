@@ -17,14 +17,14 @@ describe("useUnreadChannels", () => {
 
   it("starts with no unread counts", () => {
     const { result } = renderHook(() =>
-      useUnreadChannels("testtoken", new Set())
+      useUnreadChannels("testtoken", new Set()),
     );
     expect(result.current.unreadCounts).toEqual({});
   });
 
   it("sets unread counts from channel_unread_counts event", () => {
     const { result } = renderHook(() =>
-      useUnreadChannels("testtoken", new Set())
+      useUnreadChannels("testtoken", new Set()),
     );
 
     act(() => {
@@ -39,7 +39,7 @@ describe("useUnreadChannels", () => {
 
   it("increments unread count on channel_unread_increment event", () => {
     const { result } = renderHook(() =>
-      useUnreadChannels("testtoken", new Set())
+      useUnreadChannels("testtoken", new Set()),
     );
 
     act(() => {
@@ -63,7 +63,7 @@ describe("useUnreadChannels", () => {
 
   it("clears unread count when channel is marked as read", async () => {
     const { result } = renderHook(() =>
-      useUnreadChannels("testtoken", new Set())
+      useUnreadChannels("testtoken", new Set()),
     );
 
     act(() => {
@@ -83,7 +83,7 @@ describe("useUnreadChannels", () => {
   it("skips increment for muted channels", () => {
     const mutedChannels = new Set(["general"]);
     const { result } = renderHook(() =>
-      useUnreadChannels("testtoken", mutedChannels)
+      useUnreadChannels("testtoken", mutedChannels),
     );
 
     act(() => {
@@ -99,7 +99,7 @@ describe("useUnreadChannels", () => {
   it("still increments for non-muted channels when others are muted", () => {
     const mutedChannels = new Set(["general"]);
     const { result } = renderHook(() =>
-      useUnreadChannels("testtoken", mutedChannels)
+      useUnreadChannels("testtoken", mutedChannels),
     );
 
     act(() => {
@@ -115,7 +115,7 @@ describe("useUnreadChannels", () => {
   it("calls markChannelRead API", async () => {
     const axios = await import("axios");
     const { result } = renderHook(() =>
-      useUnreadChannels("testtoken", new Set())
+      useUnreadChannels("testtoken", new Set()),
     );
 
     await act(async () => {
@@ -125,7 +125,7 @@ describe("useUnreadChannels", () => {
     expect(axios.default.post).toHaveBeenCalledWith(
       expect.stringContaining("/api/channels/read"),
       { channelName: "general" },
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 });

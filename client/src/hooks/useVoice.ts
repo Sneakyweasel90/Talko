@@ -107,7 +107,7 @@ export function useVoice(token: string, send: (data: object) => void) {
           const el = track.attach();
           const name = participant.name ?? participant.identity;
           el.volume = isDeafenedRef.current ? 0 : Math.min(1, loadVolume(name));
-          el.setAttribute('playsinline', '');
+          el.setAttribute("playsinline", "");
           audioElementsRef.current[name] = el;
           document.body.appendChild(el);
         }
@@ -146,7 +146,7 @@ export function useVoice(token: string, send: (data: object) => void) {
         setActiveSpeakers(new Set());
       });
       room.on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
-        setActiveSpeakers(new Set(speakers.map(p => p.name ?? p.identity)));
+        setActiveSpeakers(new Set(speakers.map((p) => p.name ?? p.identity)));
       });
 
       await room.connect(data.url, data.token);

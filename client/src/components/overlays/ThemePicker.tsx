@@ -315,7 +315,9 @@ export default function ThemePicker({ onClose }: { onClose: () => void }) {
               onChange={(e) => saveChatBgOpacity(parseFloat(e.target.value))}
               style={{ flex: 1, accentColor: "var(--primary)" }}
             />
-            <span className={styles.customLabel}>{Math.round(chatBgOpacity * 100)}%</span>
+            <span className={styles.customLabel}>
+              {Math.round(chatBgOpacity * 100)}%
+            </span>
           </div>
           {chatBg && (
             <div

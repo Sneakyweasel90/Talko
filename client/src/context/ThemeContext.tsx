@@ -364,7 +364,7 @@ export function ThemeProvider({ children }) {
       setChatBgState(bg);
       document.documentElement.style.setProperty(
         "--chat-bg",
-        bg ? `url("${bg}")` : "none"
+        bg ? `url("${bg}")` : "none",
       );
     };
     load();
@@ -418,7 +418,7 @@ export function ThemeProvider({ children }) {
         saveChatBg,
         clearChatBg,
         chatBgOpacity,
-        saveChatBgOpacity, 
+        saveChatBgOpacity,
       }}
     >
       {children}

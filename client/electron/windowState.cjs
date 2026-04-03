@@ -10,11 +10,12 @@ function loadWindowState() {
     if (fs.existsSync(WINDOW_STATE_PATH)) {
       const state = JSON.parse(fs.readFileSync(WINDOW_STATE_PATH, "utf8"));
       const displays = screen.getAllDisplays();
-      const onScreen = displays.some(d =>
-        state.x >= d.bounds.x &&
-        state.y >= d.bounds.y &&
-        state.x < d.bounds.x + d.bounds.width &&
-        state.y < d.bounds.y + d.bounds.height
+      const onScreen = displays.some(
+        (d) =>
+          state.x >= d.bounds.x &&
+          state.y >= d.bounds.y &&
+          state.x < d.bounds.x + d.bounds.width &&
+          state.y < d.bounds.y + d.bounds.height,
       );
       if (onScreen) return state;
     }

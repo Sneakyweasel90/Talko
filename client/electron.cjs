@@ -1,9 +1,19 @@
-const { app, BrowserWindow, dialog, shell, protocol, globalShortcut } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  dialog,
+  shell,
+  protocol,
+  globalShortcut,
+} = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
 
-const { loadWindowState, saveWindowState } = require("./electron/windowState.cjs");
+const {
+  loadWindowState,
+  saveWindowState,
+} = require("./electron/windowState.cjs");
 const { initPtt, uIOhook } = require("./electron/ptt.cjs");
 const { initIpc } = require("./electron/ipc.cjs");
 const { checkForUpdates } = require("./electron/updater.cjs");
@@ -61,7 +71,9 @@ function createProgressWindow() {
       });
     </script>
   </body></html>`;
-  progressWin.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+  progressWin.loadURL(
+    "data:text/html;charset=utf-8," + encodeURIComponent(html),
+  );
 }
 
 function createWindow() {
@@ -86,9 +98,16 @@ function createWindow() {
   win.on("move", () => saveWindowState(win));
   win.webContents.setVisualZoomLevelLimits(1, 1);
   win.webContents.on("did-finish-load", () => win.webContents.setZoomFactor(1));
-  win.webContents.on("zoom-changed", (e) => { e.preventDefault(); win.webContents.setZoomFactor(1); });
+  win.webContents.on("zoom-changed", (e) => {
+    e.preventDefault();
+    win.webContents.setZoomFactor(1);
+  });
   win.webContents.on("before-input-event", (event, input) => {
-    if ((input.control || input.meta) && ["+", "-", "=", "0"].includes(input.key)) event.preventDefault();
+    if (
+      (input.control || input.meta) &&
+      ["+", "-", "=", "0"].includes(input.key)
+    )
+      event.preventDefault();
   });
 
   if (process.env.NODE_ENV === "development") {
@@ -98,12 +117,20 @@ function createWindow() {
     win.loadFile(path.join(__dirname, "dist/index.html"));
   }
 
-  win.webContents.session.setPermissionRequestHandler((wc, permission, callback) => {
-    callback(permission === "media");
+  win.webContents.session.setPermissionRequestHandler(
+    (wc, permission, callback) => {
+      callback(permission === "media");
+    },
+  );
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
   });
-  win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: "deny" }; });
   win.webContents.on("will-navigate", (event, url) => {
-    if (!url.startsWith("file://")) { event.preventDefault(); shell.openExternal(url); }
+    if (!url.startsWith("file://")) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
   });
 }
 
@@ -126,15 +153,23 @@ app.whenReady().then(async () => {
   protocol.interceptFileProtocol("file", (request, callback) => {
     let filePath = decodeURIComponent(request.url.slice("file:///".length));
     filePath = filePath.replace(/\//g, path.sep);
-    if (filePath.includes("app.asar") && !filePath.includes("app.asar.unpacked") &&
-        (filePath.endsWith(".wasm") || filePath.endsWith("workletProcessor.js"))) {
+    if (
+      filePath.includes("app.asar") &&
+      !filePath.includes("app.asar.unpacked") &&
+      (filePath.endsWith(".wasm") || filePath.endsWith("workletProcessor.js"))
+    ) {
       callback({ path: filePath.replace("app.asar", "app.asar.unpacked") });
     } else {
       callback({ path: filePath });
     }
   });
 
-  const canContinue = await checkForUpdates(app, createProgressWindow, () => progressWin, log);
+  const canContinue = await checkForUpdates(
+    app,
+    createProgressWindow,
+    () => progressWin,
+    log,
+  );
   if (canContinue) createWindow();
 });
 

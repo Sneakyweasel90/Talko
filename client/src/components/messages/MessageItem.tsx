@@ -27,12 +27,16 @@ function PausableGif({ src }: { src: string }) {
         canvas.getContext("2d")?.drawImage(img, 0, 0);
       }
     }
-    setPaused(p => !p);
+    setPaused((p) => !p);
   };
 
   return (
     <div
-      style={{ position: "relative", display: "inline-block", cursor: "pointer" }}
+      style={{
+        position: "relative",
+        display: "inline-block",
+        cursor: "pointer",
+      }}
       onClick={toggle}
       title={paused ? "Click to play" : "Click to pause"}
     >
@@ -41,19 +45,33 @@ function PausableGif({ src }: { src: string }) {
         src={src}
         alt="GIF"
         className={styles.attachmentImg}
-        style={{ maxWidth: 320, maxHeight: 240, display: paused ? "none" : "block" }}
+        style={{
+          maxWidth: 320,
+          maxHeight: 240,
+          display: paused ? "none" : "block",
+        }}
       />
       <canvas
         ref={canvasRef}
         className={styles.attachmentImg}
-        style={{ maxWidth: 320, maxHeight: 240, display: paused ? "block" : "none" }}
+        style={{
+          maxWidth: 320,
+          maxHeight: 240,
+          display: paused ? "block" : "none",
+        }}
       />
       {paused && (
-        <div style={{
-          position: "absolute", inset: 0, display: "flex",
-          alignItems: "center", justifyContent: "center",
-          background: "rgba(0,0,0,0.3)", borderRadius: 4,
-        }}>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.3)",
+            borderRadius: 4,
+          }}
+        >
           <span style={{ fontSize: "2rem" }}>▶</span>
         </div>
       )}
@@ -92,10 +110,12 @@ function renderContent(text: string, currentUsername: string): React.ReactNode {
         }}
         onClick={() => {
           const overlay = document.createElement("div");
-          overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out";
+          overlay.style.cssText =
+            "position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out";
           const img = document.createElement("img");
           img.src = src;
-          img.style.cssText = "max-width:90vw;max-height:90vh;object-fit:contain;border-radius:4px";
+          img.style.cssText =
+            "max-width:90vw;max-height:90vh;object-fit:contain;border-radius:4px";
           overlay.appendChild(img);
           overlay.onclick = () => overlay.remove();
           document.body.appendChild(overlay);
@@ -408,11 +428,16 @@ export default function MessageItem({
               }}
             />
             <div className={styles.editActions}>
-              <button type="submit" className={styles.editSaveBtn}>SAVE</button>
+              <button type="submit" className={styles.editSaveBtn}>
+                SAVE
+              </button>
               <button
                 type="button"
                 className={styles.editCancelBtn}
-                onClick={() => { setEditing(false); setEditText(msg.content); }}
+                onClick={() => {
+                  setEditing(false);
+                  setEditText(msg.content);
+                }}
               >
                 CANCEL
               </button>
@@ -445,23 +470,65 @@ export default function MessageItem({
         <div className={styles.actionBar}>
           {(isHovered || isPickerOpen || editing) && (
             <>
-              <button className={styles.actionBtn} onClick={() => onReply(msg)}>↩ REPLY</button>
+              <button className={styles.actionBtn} onClick={() => onReply(msg)}>
+                ↩ REPLY
+              </button>
 
-              {isAdmin && !msg.content.startsWith("[img]") && !msg.content.startsWith("[gif]") && (
-                <button className={styles.actionBtn} onClick={() => onPin(msg.id)}>📌 PIN</button>
-              )}
+              {isAdmin &&
+                !msg.content.startsWith("[img]") &&
+                !msg.content.startsWith("[gif]") && (
+                  <button
+                    className={styles.actionBtn}
+                    onClick={() => onPin(msg.id)}
+                  >
+                    📌 PIN
+                  </button>
+                )}
 
-              {isOwnMessage && !editing && !msg.content.startsWith("[img]") && !msg.content.startsWith("[gif]") && (
-                <button className={styles.actionBtn} onClick={() => { setEditing(true); setEditText(msg.content); }}>✎ EDIT</button>
-              )}
+              {isOwnMessage &&
+                !editing &&
+                !msg.content.startsWith("[img]") &&
+                !msg.content.startsWith("[gif]") && (
+                  <button
+                    className={styles.actionBtn}
+                    onClick={() => {
+                      setEditing(true);
+                      setEditText(msg.content);
+                    }}
+                  >
+                    ✎ EDIT
+                  </button>
+                )}
 
               {(isOwnMessage || isAdmin) && !editing && (
-                <button className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={() => { if (window.confirm("Delete this message?")) onDelete(msg.id); }}>✕ DEL</button>
+                <button
+                  className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                  onClick={() => {
+                    if (window.confirm("Delete this message?"))
+                      onDelete(msg.id);
+                  }}
+                >
+                  ✕ DEL
+                </button>
               )}
 
               <div className={styles.emojiPickerWrap}>
-                <button className={`${styles.actionBtn} ${isPickerOpen ? styles.actionBtnActive : ""}`} onClick={() => onPickerToggle(isPickerOpen ? null : msg.id)}>+ 😊</button>
-                {isPickerOpen && <EmojiPicker messageId={msg.id} onReact={onReact} onClose={() => { onPickerToggle(null); onHover(null); }} />}
+                <button
+                  className={`${styles.actionBtn} ${isPickerOpen ? styles.actionBtnActive : ""}`}
+                  onClick={() => onPickerToggle(isPickerOpen ? null : msg.id)}
+                >
+                  + 😊
+                </button>
+                {isPickerOpen && (
+                  <EmojiPicker
+                    messageId={msg.id}
+                    onReact={onReact}
+                    onClose={() => {
+                      onPickerToggle(null);
+                      onHover(null);
+                    }}
+                  />
+                )}
               </div>
             </>
           )}

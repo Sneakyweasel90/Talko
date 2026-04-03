@@ -84,67 +84,70 @@ export default function Chat() {
   const currentChannelRef = useRef(channel);
   const refetchChannelsRef = useRef<(() => void) | null>(null);
 
-  const { send, disconnect, status, reconnect } = useWebSocket(user!.token, (data) => {
-    if (data.type === "force_logout") {
-      disconnect();
-      logout();
-      return;
-    }
-    if (data.type === "channel_created" || data.type === "channel_deleted") {
-            refetchChannelsRef.current?.();
-            return;
-          }
-    if (data.type?.startsWith("voice_")) {
-      if (data.type === "voice_state") {
-        setVoiceOccupancy(data.channels);
+  const { send, disconnect, status, reconnect } = useWebSocket(
+    user!.token,
+    (data) => {
+      if (data.type === "force_logout") {
+        disconnect();
+        logout();
         return;
       }
-      if (data.type === "voice_presence_update") {
-        setVoiceOccupancy((prev) => {
-          const current = prev[data.channelId] ?? [];
-          if (data.action === "join") {
-            return {
-              ...prev,
-              [data.channelId]: current.includes(data.username)
-                ? current
-                : [...current, data.username],
-            };
-          } else {
-            const updated = current.filter((u) => u !== data.username);
-            const next = { ...prev };
-            if (updated.length === 0) delete next[data.channelId];
-            else next[data.channelId] = updated;
-            return next;
-          }
-        });
+      if (data.type === "channel_created" || data.type === "channel_deleted") {
+        refetchChannelsRef.current?.();
         return;
       }
-    } else if (data.type === "presence") {
-      setOnlineUsers(data.users);
-    } else if (
-      data.type === "channel_unread_counts" ||
-      data.type === "channel_unread_increment"
-    ) {
-      handleUnreadMessage(data);
-    } else if (data.type === "avatar_update") {
-      setAvatarMap((prev) => ({ ...prev, [data.userId]: data.avatar }));
-    } else {
-      if (
-        data.type === "message" &&
-        typeof data.message?.channel_id === "string" &&
-        data.message.channel_id.startsWith("dm:")
+      if (data.type?.startsWith("voice_")) {
+        if (data.type === "voice_state") {
+          setVoiceOccupancy(data.channels);
+          return;
+        }
+        if (data.type === "voice_presence_update") {
+          setVoiceOccupancy((prev) => {
+            const current = prev[data.channelId] ?? [];
+            if (data.action === "join") {
+              return {
+                ...prev,
+                [data.channelId]: current.includes(data.username)
+                  ? current
+                  : [...current, data.username],
+              };
+            } else {
+              const updated = current.filter((u) => u !== data.username);
+              const next = { ...prev };
+              if (updated.length === 0) delete next[data.channelId];
+              else next[data.channelId] = updated;
+              return next;
+            }
+          });
+          return;
+        }
+      } else if (data.type === "presence") {
+        setOnlineUsers(data.users);
+      } else if (
+        data.type === "channel_unread_counts" ||
+        data.type === "channel_unread_increment"
       ) {
-        onDMMessage(
-          data.message.channel_id,
-          data.message.content,
-          data.message.user_id,
-          data.message.created_at,
-        );
-        return;
+        handleUnreadMessage(data);
+      } else if (data.type === "avatar_update") {
+        setAvatarMap((prev) => ({ ...prev, [data.userId]: data.avatar }));
+      } else {
+        if (
+          data.type === "message" &&
+          typeof data.message?.channel_id === "string" &&
+          data.message.channel_id.startsWith("dm:")
+        ) {
+          onDMMessage(
+            data.message.channel_id,
+            data.message.content,
+            data.message.user_id,
+            data.message.created_at,
+          );
+          return;
+        }
+        handleMessage(data);
       }
-      handleMessage(data);
-    }
-  });
+    },
+  );
 
   const handleStatusChange = useCallback(
     (status: UserStatus, statusText?: string | null) => {
@@ -271,11 +274,11 @@ export default function Chat() {
     return () => window.removeEventListener("keydown", handler);
   }, [activeTab, handleSelectChannel]);
 
-    const handleJoinAfk = useCallback(() => {
-      joinAfk();
-      send({ type: "set_status", status: "away", statusText: null });
-      setMyStatus("away");
-    }, [joinAfk, send]);
+  const handleJoinAfk = useCallback(() => {
+    joinAfk();
+    send({ type: "set_status", status: "away", statusText: null });
+    setMyStatus("away");
+  }, [joinAfk, send]);
 
   useAfkDetector(inVoice, voiceChannel, handleJoinAfk, afkTimeoutMinutes);
 
@@ -310,7 +313,8 @@ export default function Chat() {
   useEffect(() => {
     if (!user?.token) return;
     const fetchTimeout = () => {
-      axios.get(`${config.HTTP}/api/admin/afk-timeout`)
+      axios
+        .get(`${config.HTTP}/api/admin/afk-timeout`)
         .then(({ data }) => setAfkTimeoutMinutes(data.afk_timeout_minutes))
         .catch(() => {});
     };
@@ -326,7 +330,9 @@ export default function Chat() {
       <div className={styles.body}>
         <ResizableSidebar>
           <Sidebar
-            onRegisterRefetchChannels={(fn) => { refetchChannelsRef.current = fn; }}
+            onRegisterRefetchChannels={(fn) => {
+              refetchChannelsRef.current = fn;
+            }}
             activeSpeakers={activeSpeakers}
             mentionedChannels={mentionedChannels}
             isScreenSharing={isScreenSharing}

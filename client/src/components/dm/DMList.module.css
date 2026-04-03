@@ -2,7 +2,7 @@
   padding: 1rem;
   color: var(--text-dim);
   font-size: 0.7rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   text-align: center;
 }
 
@@ -10,7 +10,7 @@
   padding: 1.5rem 1rem;
   color: var(--text-dim);
   font-size: 0.72rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   text-align: center;
   line-height: 1.6;
 }
@@ -80,7 +80,7 @@
 }
 
 .displayName {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 600;
   font-size: 0.88rem;
   color: var(--text);
@@ -100,7 +100,7 @@
   border-radius: 8px;
   padding: 0 5px;
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-weight: 700;
   flex-shrink: 0;
   min-width: 16px;
@@ -110,7 +110,7 @@
 .subText {
   font-size: 0.65rem;
   color: var(--text-dim);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -120,7 +120,7 @@
 .lastMessage {
   font-size: 0.7rem;
   color: var(--text-dim);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

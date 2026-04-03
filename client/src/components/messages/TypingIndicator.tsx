@@ -13,5 +13,10 @@ export default function TypingIndicator({ typers, currentUserId }) {
 }
 
 const styles = {
-  indicator: { padding: "0 1.5rem", fontSize: "0.8rem", color: "#888", height: "24px" },
+  indicator: {
+    padding: "0 1.5rem",
+    fontSize: "0.8rem",
+    color: "#888",
+    height: "24px",
+  },
 };

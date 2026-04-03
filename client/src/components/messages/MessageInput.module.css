@@ -20,7 +20,7 @@
 
 .dropOverlayInner {
   text-align: center;
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   color: var(--primary);
 }
 
@@ -51,7 +51,7 @@
 .mentionHeader {
   padding: 4px 8px;
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.08em;
   color: var(--text-dim);
   border-bottom: 1px solid var(--border);
@@ -74,13 +74,13 @@
 
 .mentionAt {
   font-size: 0.75rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--primary);
 }
 
 .mentionName {
   font-size: 0.9rem;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 600;
   color: var(--text);
 }
@@ -91,7 +91,7 @@
 
 .mentionUsername {
   font-size: 0.7rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   opacity: 0.6;
 }
@@ -99,7 +99,7 @@
 .mentionFooter {
   padding: 3px 8px;
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   border-top: 1px solid var(--border);
   opacity: 0.5;
@@ -131,7 +131,7 @@
   cursor: pointer;
   font-size: 0.65rem;
   padding: 2px 6px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   transition: all 0.15s;
 }
 
@@ -149,7 +149,7 @@
   background: var(--primary-glow);
   border-bottom: 1px solid var(--border);
   font-size: 0.75rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
 }
 
 .replyBannerText {
@@ -199,7 +199,7 @@
 }
 
 .inputBarPrefix {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.9rem;
   color: var(--text-dim);
   display: flex;
@@ -230,7 +230,7 @@
   border: none;
   font-size: 0.9rem;
   color: var(--primary);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   outline: none;
 }
 
@@ -247,7 +247,7 @@
   font-size: 0.7rem;
   cursor: pointer;
   color: var(--primary);
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-weight: 700;
   letter-spacing: 0.1em;
   transition: all 0.15s;
@@ -265,7 +265,7 @@
   border: none;
   font-size: 0.9rem;
   color: var(--primary);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   outline: none;
   resize: none;
   overflow-y: hidden;

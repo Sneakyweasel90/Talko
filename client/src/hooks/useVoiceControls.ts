@@ -12,19 +12,20 @@ export function useVoiceControls(setMuted: (muted: boolean) => void) {
   const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
   const [mode, setMode] = useState<VoiceMode>(
-    () => (localStorage.getItem(STORAGE_KEY_MODE) as VoiceMode) || "open"
+    () => (localStorage.getItem(STORAGE_KEY_MODE) as VoiceMode) || "open",
   );
   const [muteKey, setMuteKey] = useState<string>(
-    () => localStorage.getItem(STORAGE_KEY_MUTE) || "M"
+    () => localStorage.getItem(STORAGE_KEY_MUTE) || "M",
   );
   const [pttKey, setPttKey] = useState<string>(
-    () => localStorage.getItem(STORAGE_KEY_PTT) || "Space"
+    () => localStorage.getItem(STORAGE_KEY_PTT) || "Space",
   );
   const [assigningKey, setAssigningKey] = useState<"mute" | "ptt" | null>(null);
   const [isPttActive, setIsPttActive] = useState(false);
 
   // Derive the effective mute state
-  const effectiveMuted = isDeafened || (mode === "ptt" ? !isPttActive : isMuted);
+  const effectiveMuted =
+    isDeafened || (mode === "ptt" ? !isPttActive : isMuted);
 
   useEffect(() => {
     setMuted(effectiveMuted);
@@ -41,7 +42,7 @@ export function useVoiceControls(setMuted: (muted: boolean) => void) {
       setIsMuted(false);
       playUnmute();
     } else {
-      setIsMuted(prev => {
+      setIsMuted((prev) => {
         const next = !prev;
         next ? playMute() : playUnmute();
         return next;
@@ -50,7 +51,7 @@ export function useVoiceControls(setMuted: (muted: boolean) => void) {
   }, [isDeafened, playMute, playUnmute]);
 
   const toggleDeafen = useCallback(() => {
-    setIsDeafened(prev => {
+    setIsDeafened((prev) => {
       const next = !prev;
       if (next) {
         setIsMuted(true);
@@ -63,7 +64,7 @@ export function useVoiceControls(setMuted: (muted: boolean) => void) {
   }, [playDeafen, playUndeafen]);
 
   const toggleMode = useCallback(() => {
-    setMode(prev => {
+    setMode((prev) => {
       const next = prev === "open" ? "ptt" : "open";
       localStorage.setItem(STORAGE_KEY_MODE, next);
       return next;
@@ -150,7 +151,7 @@ export function useVoiceControls(setMuted: (muted: boolean) => void) {
     setAssigningKey(null);
     (window as any).electronAPI?.pttUnregister?.();
   }, []);
-  
+
   return {
     isMuted: effectiveMuted,
     isDeafened,

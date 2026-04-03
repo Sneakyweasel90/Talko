@@ -8,7 +8,7 @@
   padding: 0.75rem 1rem;
   min-width: 220px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
 }
 
 /* ── User header ─────────────────────────────────────────────────────────── */
@@ -26,7 +26,7 @@
 
 .displayName {
   color: var(--primary);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 700;
   font-size: 0.95rem;
 }
@@ -45,7 +45,7 @@
   border-radius: 2px;
   color: var(--primary);
   font-size: 0.65rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.1em;
   padding: 0.4rem;
   cursor: pointer;
@@ -78,7 +78,7 @@
   padding: 0.35rem 0.5rem;
   border-radius: 2px;
   font-size: 0.8rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   outline: none;
   transition: border-color 0.15s;
 }
@@ -95,7 +95,7 @@
   padding: 0.35rem 0.6rem;
   border-radius: 2px;
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   transition: all 0.15s;
 }
 
@@ -115,7 +115,7 @@
   color: var(--text-dim);
   font-size: 0.6rem;
   margin-top: 0.3rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   padding: 0;
   opacity: 0.6;
   transition: opacity 0.15s;

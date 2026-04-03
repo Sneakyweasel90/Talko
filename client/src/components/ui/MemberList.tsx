@@ -11,12 +11,17 @@ interface Props {
   onUserClick: (userId: number, username: string, el: HTMLElement) => void;
 }
 
-const STATUS_COLORS = { online: "#4ade80", away: "#facc15", dnd: "#f87171", offline: "#6b7280" };
+const STATUS_COLORS = {
+  online: "#4ade80",
+  away: "#facc15",
+  dnd: "#f87171",
+  offline: "#6b7280",
+};
 const PANEL_WIDTH = 200;
 
 export default function MemberList({
   onlineUsers,
-  allUsers, 
+  allUsers,
   currentUserId,
   onUserClick,
 }: Props) {

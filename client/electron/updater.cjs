@@ -19,8 +19,10 @@ function isNewerVersion(latest, current) {
 }
 
 function getPlatformAsset(assets) {
-  if (process.platform === "win32") return assets?.find(a => a.name.endsWith(".exe"));
-  if (process.platform === "linux") return assets?.find(a => a.name.endsWith(".AppImage"));
+  if (process.platform === "win32")
+    return assets?.find((a) => a.name.endsWith(".exe"));
+  if (process.platform === "linux")
+    return assets?.find((a) => a.name.endsWith(".AppImage"));
   return null;
 }
 
@@ -35,71 +37,98 @@ function getLatestRelease() {
     const options = {
       hostname: "api.github.com",
       path: `/repos/${GITHUB_REPO}/releases/latest`,
-      headers: { "User-Agent": "Talko-App", "Accept": "application/vnd.github+json" },
+      headers: {
+        "User-Agent": "Talko-App",
+        Accept: "application/vnd.github+json",
+      },
     };
-    https.get(options, (res) => {
-      let data = "";
-      res.on("data", (chunk) => (data += chunk));
-      res.on("end", () => {
-        try {
-          const parsed = JSON.parse(data);
-          resolve({ tag_name: parsed.tag_name, assets: parsed.assets || [] });
-        } catch (e) {
-          reject(new Error("Failed to parse release data: " + e.message));
-        }
-      });
-    }).on("error", reject);
+    https
+      .get(options, (res) => {
+        let data = "";
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => {
+          try {
+            const parsed = JSON.parse(data);
+            resolve({ tag_name: parsed.tag_name, assets: parsed.assets || [] });
+          } catch (e) {
+            reject(new Error("Failed to parse release data: " + e.message));
+          }
+        });
+      })
+      .on("error", reject);
   });
 }
 
-function downloadFile(url, destPath, version, createProgressWindow, progressWinRef, log) {
+function downloadFile(
+  url,
+  destPath,
+  version,
+  createProgressWindow,
+  progressWinRef,
+  log,
+) {
   return new Promise((resolve, reject) => {
     const attempt = (currentUrl) => {
-      https.get(currentUrl, { headers: { "User-Agent": "Talko-App" } }, (res) => {
-        if (res.statusCode === 302 || res.statusCode === 301) return attempt(res.headers.location);
-        if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
+      https
+        .get(currentUrl, { headers: { "User-Agent": "Talko-App" } }, (res) => {
+          if (res.statusCode === 302 || res.statusCode === 301)
+            return attempt(res.headers.location);
+          if (res.statusCode !== 200)
+            return reject(new Error(`HTTP ${res.statusCode}`));
 
-        const totalSize = parseInt(res.headers["content-length"] || "0", 10);
-        let downloaded = 0;
-        let lastTime = Date.now();
-        let lastBytes = 0;
+          const totalSize = parseInt(res.headers["content-length"] || "0", 10);
+          let downloaded = 0;
+          let lastTime = Date.now();
+          let lastBytes = 0;
 
-        createProgressWindow();
-        const pw = progressWinRef();
-        if (pw) {
-          pw.webContents.once("did-finish-load", () => {
-            pw.webContents.send("download-version", version);
-          });
-        }
-
-        const file = fs.createWriteStream(destPath);
-        res.on("data", (chunk) => {
-          downloaded += chunk.length;
-          file.write(chunk);
+          createProgressWindow();
           const pw = progressWinRef();
-          if (pw && totalSize > 0) {
-            const now = Date.now();
-            const elapsed = (now - lastTime) / 1000;
-            let mbps = "";
-            if (elapsed >= 0.5) {
-              const speed = ((downloaded - lastBytes) / elapsed / 1024 / 1024).toFixed(1);
-              mbps = speed + " MB/s";
-              lastTime = now;
-              lastBytes = downloaded;
-            }
-            pw.webContents.send("download-progress", { percent: Math.min((downloaded / totalSize) * 100, 99), mbps });
+          if (pw) {
+            pw.webContents.once("did-finish-load", () => {
+              pw.webContents.send("download-version", version);
+            });
           }
-        });
-        res.on("end", () => {
-          file.end(() => {
-            progressWinRef()?.webContents.send("download-progress", { percent: 100, mbps: "" });
-            log("Download complete: " + destPath);
-            resolve();
+
+          const file = fs.createWriteStream(destPath);
+          res.on("data", (chunk) => {
+            downloaded += chunk.length;
+            file.write(chunk);
+            const pw = progressWinRef();
+            if (pw && totalSize > 0) {
+              const now = Date.now();
+              const elapsed = (now - lastTime) / 1000;
+              let mbps = "";
+              if (elapsed >= 0.5) {
+                const speed = (
+                  (downloaded - lastBytes) /
+                  elapsed /
+                  1024 /
+                  1024
+                ).toFixed(1);
+                mbps = speed + " MB/s";
+                lastTime = now;
+                lastBytes = downloaded;
+              }
+              pw.webContents.send("download-progress", {
+                percent: Math.min((downloaded / totalSize) * 100, 99),
+                mbps,
+              });
+            }
           });
-        });
-        res.on("error", (e) => reject(e));
-        file.on("error", (e) => reject(e));
-      }).on("error", (e) => reject(e));
+          res.on("end", () => {
+            file.end(() => {
+              progressWinRef()?.webContents.send("download-progress", {
+                percent: 100,
+                mbps: "",
+              });
+              log("Download complete: " + destPath);
+              resolve();
+            });
+          });
+          res.on("error", (e) => reject(e));
+          file.on("error", (e) => reject(e));
+        })
+        .on("error", (e) => reject(e));
     };
     attempt(url);
   });
@@ -108,7 +137,11 @@ function downloadFile(url, destPath, version, createProgressWindow, progressWinR
 async function installUpdate(destPath) {
   if (process.platform === "win32") {
     shell.openPath(destPath).then(() => {
-      setTimeout(() => { try { fs.unlinkSync(destPath); } catch {} }, 5000);
+      setTimeout(() => {
+        try {
+          fs.unlinkSync(destPath);
+        } catch {}
+      }, 5000);
     });
   } else if (process.platform === "linux") {
     fs.chmodSync(destPath, "755");
@@ -118,7 +151,10 @@ async function installUpdate(destPath) {
 
 async function checkForUpdates(app, createProgressWindow, progressWinRef, log) {
   log("checkForUpdates started");
-  if (process.env.NODE_ENV === "development") { log("Dev mode, skipping"); return true; }
+  if (process.env.NODE_ENV === "development") {
+    log("Dev mode, skipping");
+    return true;
+  }
 
   try {
     const release = await getLatestRelease();
@@ -142,27 +178,47 @@ async function checkForUpdates(app, createProgressWindow, progressWinRef, log) {
 
       if (response === 0 && downloadUrl) {
         try {
-          const destPath = path.join(os.homedir(), "Downloads", getDownloadFileName());
-          await downloadFile(downloadUrl, destPath, latestVersion, createProgressWindow, progressWinRef, log);
+          const destPath = path.join(
+            os.homedir(),
+            "Downloads",
+            getDownloadFileName(),
+          );
+          await downloadFile(
+            downloadUrl,
+            destPath,
+            latestVersion,
+            createProgressWindow,
+            progressWinRef,
+            log,
+          );
           const pw = progressWinRef();
-          if (pw) { pw.close(); }
+          if (pw) {
+            pw.close();
+          }
           await installUpdate(destPath);
-          await new Promise(r => setTimeout(r, 3000));
+          await new Promise((r) => setTimeout(r, 3000));
           app.quit();
           return false;
         } catch (err) {
           log("Download error: " + err.message);
           const pw = progressWinRef();
-          if (pw) { pw.close(); }
-          await dialog.showMessageBox({
-            type: "error",
-            title: "Download Failed",
-            message: "Could not download update.",
-            detail: `Error: ${err.message}\n\nPlease visit GitHub to download manually.`,
-            buttons: ["Open GitHub", "Close"],
-          }).then(({ response: r }) => {
-            if (r === 0) shell.openExternal(`https://github.com/Sneakyweasel90/Talko/releases`);
-          });
+          if (pw) {
+            pw.close();
+          }
+          await dialog
+            .showMessageBox({
+              type: "error",
+              title: "Download Failed",
+              message: "Could not download update.",
+              detail: `Error: ${err.message}\n\nPlease visit GitHub to download manually.`,
+              buttons: ["Open GitHub", "Close"],
+            })
+            .then(({ response: r }) => {
+              if (r === 0)
+                shell.openExternal(
+                  `https://github.com/Sneakyweasel90/Talko/releases`,
+                );
+            });
           app.quit();
           return false;
         }

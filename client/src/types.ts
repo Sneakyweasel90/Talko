@@ -68,14 +68,29 @@ export interface SearchResult {
 }
 
 export type ServerMessage =
-  | { type: "history"; messages: Message[]; hasMore: boolean; oldestId: number | null }
-  | { type: "history_prepend"; messages: Message[]; hasMore: boolean; oldestId: number | null }
+  | {
+      type: "history";
+      messages: Message[];
+      hasMore: boolean;
+      oldestId: number | null;
+    }
+  | {
+      type: "history_prepend";
+      messages: Message[];
+      hasMore: boolean;
+      oldestId: number | null;
+    }
   | { type: "message"; message: Message }
   | { type: "typing"; userId: number; username: string }
   | { type: "error"; message: string }
   | { type: "presence"; users: OnlineUser[] }
   | { type: "reaction_update"; messageId: number; reactions: Reaction[] }
-  | { type: "voice_presence_update"; channelId: string; username: string; action: "join" | "leave" }
+  | {
+      type: "voice_presence_update";
+      channelId: string;
+      username: string;
+      action: "join" | "leave";
+    }
   | { type: "voice_state"; channels: Record<string, string[]> }
   | { type: "message_edited"; messageId: number; content: string }
   | { type: "message_deleted"; messageId: number }
@@ -84,14 +99,24 @@ export type ServerMessage =
   | { type: "mention"; channelId: string; senderName: string; content: string }
   | { type: "channel_unread_counts"; counts: Record<string, number> }
   | { type: "channel_unread_increment"; channelName: string }
-  | { type: "message_pinned"; messageId: number; channelId: string; pinnedBy: string }
+  | {
+      type: "message_pinned";
+      messageId: number;
+      channelId: string;
+      pinnedBy: string;
+    }
   | { type: "message_unpinned"; messageId: number; channelId: string }
   | { type: "force_logout" };
 
 export type ClientMessage =
   | { type: "join"; channelId: string }
   | { type: "load_more"; channelId: string; beforeId: number }
-  | { type: "message"; channelId: string; content: string; replyToId?: number | null }
+  | {
+      type: "message";
+      channelId: string;
+      content: string;
+      replyToId?: number | null;
+    }
   | { type: "typing"; channelId: string }
   | { type: "react"; messageId: number; emoji: string }
   | { type: "edit_message"; messageId: number; content: string }

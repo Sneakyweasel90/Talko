@@ -11,9 +11,13 @@ const STATUS_COLORS = { online: "#4ade80", away: "#facc15", dnd: "#f87171" };
 const STATUS_LABELS = { online: "ONLINE", away: "AWAY", dnd: "DO NOT DISTURB" };
 
 export default function DMHeader({ conversation, onlineUsers }: Props) {
-  const userStatus = onlineUsers.find(u => u.id === conversation.other_user_id);
+  const userStatus = onlineUsers.find(
+    (u) => u.id === conversation.other_user_id,
+  );
   const displayName = conversation.nickname || conversation.username;
-  const dotColor = userStatus ? STATUS_COLORS[userStatus.status ?? "online"] : undefined;
+  const dotColor = userStatus
+    ? STATUS_COLORS[userStatus.status ?? "online"]
+    : undefined;
 
   return (
     <div className={styles.header}>

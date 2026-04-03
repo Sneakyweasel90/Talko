@@ -11,7 +11,7 @@
   border-bottom: 2px solid transparent;
   color: var(--text-dim);
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.1em;
   padding: 0.4rem 0.75rem;
   cursor: pointer;
@@ -73,7 +73,7 @@
 
 .userName {
   font-size: 0.8rem;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 700;
   color: var(--text);
   flex: 1;
@@ -93,13 +93,13 @@
 
 .userRole {
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
 }
 
 .protectedNote {
   font-size: 0.6rem;
   color: var(--text-dim);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   margin-top: 4px;
   opacity: 0.6;
 }
@@ -117,7 +117,7 @@
   border: 1px solid var(--border);
   color: var(--text);
   font-size: 0.65rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   padding: 2px 4px;
   border-radius: 2px;
   cursor: pointer;
@@ -128,7 +128,7 @@
   border: 1px solid var(--border);
   color: var(--text);
   font-size: 0.65rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   padding: 2px 6px;
   border-radius: 2px;
   width: 90px;
@@ -153,7 +153,7 @@
   font-size: 0.6rem;
   padding: 2px 7px;
   border-radius: 2px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.08em;
   transition: all 0.15s;
 }

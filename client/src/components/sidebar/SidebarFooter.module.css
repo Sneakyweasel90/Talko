@@ -31,7 +31,7 @@
   border-top: 2px solid transparent;
   color: var(--text-dim);
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.1em;
   padding: 0.5rem 0.25rem;
   cursor: pointer;
@@ -53,7 +53,7 @@
   border-radius: 8px;
   padding: 0 4px;
   font-size: 0.55rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-weight: 700;
   min-width: 14px;
   text-align: center;
@@ -74,7 +74,7 @@
   border: 1px solid var(--border);
   cursor: pointer;
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.08em;
   padding: 3px 7px;
   border-radius: 2px;
@@ -114,7 +114,7 @@
 
 .statusPickerTitle {
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   letter-spacing: 0.1em;
   margin-bottom: 0.4rem;
@@ -148,7 +148,7 @@
 
 .statusOptionLabel {
   font-size: 0.7rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text);
 }
 
@@ -170,7 +170,7 @@
   color: var(--primary);
   font-size: 0.72rem;
   padding: 4px 6px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.15s;
@@ -194,7 +194,7 @@
   border-radius: 2px;
   cursor: pointer;
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.08em;
   padding: 3px 0;
   color: var(--text-dim);
@@ -228,7 +228,7 @@
   border: 1px solid var(--border);
   cursor: pointer;
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.1em;
   padding: 3px 8px;
   border-radius: 2px;
@@ -282,7 +282,7 @@
 
 .userDisplayName {
   font-size: 0.85rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -296,7 +296,7 @@
 
 .userStatusText {
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   opacity: 0.8;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -306,6 +306,6 @@
 .userUsernameHint {
   font-size: 0.6rem;
   color: var(--text-dim);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   opacity: 0.6;
 }

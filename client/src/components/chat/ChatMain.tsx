@@ -29,7 +29,7 @@ interface Props {
   avatarMap: Record<number, string | null>;
   onScroll: () => void;
   onHover: (id: number | null) => void;
-  onPickerToggle: (id: number | null) => void; 
+  onPickerToggle: (id: number | null) => void;
   onReact: (messageId: number, emoji: string) => void;
   onReply: (msg: GroupedMessage) => void;
   onEdit: (messageId: number, content: string) => void;
@@ -44,15 +44,38 @@ interface Props {
 }
 
 export default function ChatMain({
-  channel, activeTab, activeDMConv, onlineUsers,
-  token, isAdmin, onPin, onUnpin,
-  messagesContainerRef, bottomRef, groupedMessages,
-  loadingMore, hasMore,
-  hoveredMsgId, pickerMsgId, currentUsername, currentUserId, avatarMap,
-  onScroll, onHover, onPickerToggle, onReact, onReply, onEdit, onDelete,
-  onUsernameClick, resolveNickname,
+  channel,
+  activeTab,
+  activeDMConv,
+  onlineUsers,
+  token,
+  isAdmin,
+  onPin,
+  onUnpin,
+  messagesContainerRef,
+  bottomRef,
+  groupedMessages,
+  loadingMore,
+  hasMore,
+  hoveredMsgId,
+  pickerMsgId,
+  currentUsername,
+  currentUserId,
+  avatarMap,
+  onScroll,
+  onHover,
+  onPickerToggle,
+  onReact,
+  onReply,
+  onEdit,
+  onDelete,
+  onUsernameClick,
+  resolveNickname,
   typers,
-  send, replyTo, onCancelReply, allUsers
+  send,
+  replyTo,
+  onCancelReply,
+  allUsers,
 }: Props) {
   const { chatBg, chatBgOpacity } = useTheme();
   return (
@@ -67,16 +90,17 @@ export default function ChatMain({
           }}
         />
       )}
-      {activeTab === "dms" && activeDMConv
-        ? <DMHeader conversation={activeDMConv} onlineUsers={onlineUsers} />
-        : <ChannelHeader
-            channel={channel}
-            onlineCount={onlineUsers.length}
-            token={token}
-            isAdmin={isAdmin}
-            onUnpin={onUnpin}
-          />
-      }
+      {activeTab === "dms" && activeDMConv ? (
+        <DMHeader conversation={activeDMConv} onlineUsers={onlineUsers} />
+      ) : (
+        <ChannelHeader
+          channel={channel}
+          onlineCount={onlineUsers.length}
+          token={token}
+          isAdmin={isAdmin}
+          onUnpin={onUnpin}
+        />
+      )}
 
       <MessageFeed
         messagesContainerRef={messagesContainerRef}
@@ -109,7 +133,9 @@ export default function ChatMain({
 
       <MessageInput
         send={send}
-        channel={activeTab === "dms" && activeDMConv ? activeDMConv.channelId : channel}
+        channel={
+          activeTab === "dms" && activeDMConv ? activeDMConv.channelId : channel
+        }
         replyTo={replyTo}
         onCancelReply={onCancelReply}
         onlineUsers={onlineUsers}

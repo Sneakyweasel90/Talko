@@ -10,7 +10,13 @@ interface Props {
   onUnpin: (messageId: number) => void;
 }
 
-export default function ChannelHeader({ channel, onlineCount, token, isAdmin, onUnpin }: Props) {
+export default function ChannelHeader({
+  channel,
+  onlineCount,
+  token,
+  isAdmin,
+  onUnpin,
+}: Props) {
   const [showPins, setShowPins] = useState(false);
 
   return (

@@ -101,7 +101,7 @@ export default function Chat() {
     clearMention,
   } = useMessages({
     channel,
-    send: (data) => sendRef.current(data),
+    send,
     currentUserId: user!.id,
     currentChannelRef,
     userRef,

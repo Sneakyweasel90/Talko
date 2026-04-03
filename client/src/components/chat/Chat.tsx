@@ -23,7 +23,7 @@ import ScreenShareViewer from "../voice/ScreenShareViewer";
 import ScreenPickerModal from "../voice/ScreenPickerModal";
 import type { GroupedMessage, UserStatus } from "../../types";
 import styles from "./Chat.module.css";
-import { useDMState } from "../../hooks/useDmState";
+import { useDMState } from "../../hooks/useDMState";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();

@@ -1,4 +1,10 @@
-const { ipcMain, Notification, globalShortcut, desktopCapturer, powerMonitor } = require("electron");
+const {
+  ipcMain,
+  Notification,
+  globalShortcut,
+  desktopCapturer,
+  powerMonitor,
+} = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -10,7 +16,11 @@ let currentPttKey = null;
 function initIpc(getWin, log) {
   ipcMain.handle("read-file", async (event, filename) => {
     const appPath = require("electron").app.getAppPath();
-    const unpackedPath = path.join(appPath.replace("app.asar", "app.asar.unpacked"), "dist", filename);
+    const unpackedPath = path.join(
+      appPath.replace("app.asar", "app.asar.unpacked"),
+      "dist",
+      filename,
+    );
     const normalPath = path.join(appPath, "dist", filename);
     try {
       return fs.readFileSync(unpackedPath);
@@ -28,7 +38,7 @@ function initIpc(getWin, log) {
       types: ["screen", "window"],
       thumbnailSize: { width: 320, height: 180 },
     });
-    return sources.map(s => ({
+    return sources.map((s) => ({
       id: s.id,
       name: s.name,
       thumbnailDataURL: s.thumbnail.toDataURL(),
@@ -58,12 +68,16 @@ function initIpc(getWin, log) {
   });
 
   ipcMain.handle("clear-bg", async () => {
-    try { fs.unlinkSync(BG_PATH); } catch {}
+    try {
+      fs.unlinkSync(BG_PATH);
+    } catch {}
     return true;
   });
 
   ipcMain.on("minimize", () => getWin()?.minimize());
-  ipcMain.on("maximize", () => getWin()?.isMaximized() ? getWin().unmaximize() : getWin().maximize());
+  ipcMain.on("maximize", () =>
+    getWin()?.isMaximized() ? getWin().unmaximize() : getWin().maximize(),
+  );
   ipcMain.on("close", () => getWin()?.close());
 
   ipcMain.on("notify", (event, { title, body }) => {

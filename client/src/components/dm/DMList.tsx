@@ -12,7 +12,13 @@ interface Props {
 
 const STATUS_COLORS = { online: "#4ade80", away: "#facc15", dnd: "#f87171" };
 
-export default function DMList({ conversations, activeDMChannel, onlineUsers, onSelectDM, loading }: Props) {
+export default function DMList({
+  conversations,
+  activeDMChannel,
+  onlineUsers,
+  onSelectDM,
+  loading,
+}: Props) {
   if (loading && conversations.length === 0) {
     return <div className={styles.loading}>LOADING...</div>;
   }
@@ -30,10 +36,12 @@ export default function DMList({ conversations, activeDMChannel, onlineUsers, on
 
   return (
     <div className={styles.list}>
-      {conversations.map(conv => {
+      {conversations.map((conv) => {
         const isActive = activeDMChannel === conv.channelId;
-        const userStatus = onlineUsers.find(u => u.id === conv.other_user_id);
-        const dotColor = userStatus ? STATUS_COLORS[userStatus.status ?? "online"] : undefined;
+        const userStatus = onlineUsers.find((u) => u.id === conv.other_user_id);
+        const dotColor = userStatus
+          ? STATUS_COLORS[userStatus.status ?? "online"]
+          : undefined;
         const displayName = conv.nickname || conv.username;
         const hasUnread = conv.unread_count > 0;
 
@@ -58,7 +66,9 @@ export default function DMList({ conversations, activeDMChannel, onlineUsers, on
             {/* Name + last message */}
             <div className={styles.nameWrap}>
               <div className={styles.nameRow}>
-                <span className={`${styles.displayName} ${hasUnread ? styles.hasUnread : ""}`}>
+                <span
+                  className={`${styles.displayName} ${hasUnread ? styles.hasUnread : ""}`}
+                >
                   {displayName}
                 </span>
                 {hasUnread && (
@@ -70,8 +80,12 @@ export default function DMList({ conversations, activeDMChannel, onlineUsers, on
               {userStatus?.statusText ? (
                 <div className={styles.subText}>{userStatus.statusText}</div>
               ) : conv.last_message ? (
-                <div className={`${styles.lastMessage} ${hasUnread ? styles.hasUnread : ""}`}>
-                  {conv.last_message.length > 35 ? conv.last_message.slice(0, 35) + "…" : conv.last_message}
+                <div
+                  className={`${styles.lastMessage} ${hasUnread ? styles.hasUnread : ""}`}
+                >
+                  {conv.last_message.length > 35
+                    ? conv.last_message.slice(0, 35) + "…"
+                    : conv.last_message}
                 </div>
               ) : null}
             </div>

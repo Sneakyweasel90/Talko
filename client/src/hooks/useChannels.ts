@@ -21,7 +21,9 @@ export function useChannels(token: string) {
     }
   }, [token]);
 
-  useEffect(() => { fetchChannels(); }, [fetchChannels]);
+  useEffect(() => {
+    fetchChannels();
+  }, [fetchChannels]);
 
   const createChannel = async (type: "text" | "voice") => {
     if (!newChannelName.trim()) return;
@@ -30,7 +32,7 @@ export function useChannels(token: string) {
       await axios.post(
         `${config.HTTP}/api/channels`,
         { name: newChannelName.trim(), type },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setNewChannelName("");
       setShowCreateText(false);
@@ -61,13 +63,13 @@ export function useChannels(token: string) {
   };
 
   const toggleCreateText = () => {
-    setShowCreateText(s => !s);
+    setShowCreateText((s) => !s);
     setShowCreateVoice(false);
     setNewChannelName("");
   };
 
   const toggleCreateVoice = () => {
-    setShowCreateVoice(s => !s);
+    setShowCreateVoice((s) => !s);
     setShowCreateText(false);
     setNewChannelName("");
   };
@@ -78,9 +80,9 @@ export function useChannels(token: string) {
     setNewChannelName("");
   };
 
-  const textChannels = channels.filter(c => c.type === "text");
-  const voiceChannels = channels.filter(c => c.type === "voice" && !c.is_afk);
-  const afkChannel = channels.find(c => c.is_afk) ?? null;
+  const textChannels = channels.filter((c) => c.type === "text");
+  const voiceChannels = channels.filter((c) => c.type === "voice" && !c.is_afk);
+  const afkChannel = channels.find((c) => c.is_afk) ?? null;
 
   return {
     textChannels,

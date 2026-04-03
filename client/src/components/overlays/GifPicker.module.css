@@ -18,7 +18,7 @@
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
@@ -73,7 +73,7 @@
   border: none;
   outline: none;
   color: var(--text);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.8rem;
 }
 
@@ -148,7 +148,9 @@
   cursor: pointer;
   overflow: hidden;
   aspect-ratio: 1;
-  transition: border-color 0.15s, transform 0.1s;
+  transition:
+    border-color 0.15s,
+    transform 0.1s;
 }
 
 .gifBtn:hover {

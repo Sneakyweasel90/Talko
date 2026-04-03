@@ -33,7 +33,7 @@ export function useMutedChannels() {
 
   const isMuted = useCallback(
     (channelName: string) => mutedChannels.has(channelName),
-    [mutedChannels]
+    [mutedChannels],
   );
 
   return { mutedChannels, toggleMute, isMuted };

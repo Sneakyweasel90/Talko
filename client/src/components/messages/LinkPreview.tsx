@@ -26,9 +26,7 @@ export default function LinkPreview({ url }: Props) {
         {preview.siteName && (
           <div className={styles.siteName}>{preview.siteName}</div>
         )}
-        {preview.title && (
-          <div className={styles.title}>{preview.title}</div>
-        )}
+        {preview.title && <div className={styles.title}>{preview.title}</div>}
         {preview.description && (
           <div className={styles.description}>{preview.description}</div>
         )}

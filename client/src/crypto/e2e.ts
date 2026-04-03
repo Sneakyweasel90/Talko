@@ -17,7 +17,7 @@ export async function generateKeyPair(): Promise<CryptoKeyPair> {
   return crypto.subtle.generateKey(
     { name: "ECDH", namedCurve: "P-256" },
     true,
-    ["deriveKey"]
+    ["deriveKey"],
   );
 }
 
@@ -29,7 +29,11 @@ export async function exportPublicKey(key: CryptoKey): Promise<string> {
 export async function importPublicKey(b64: string): Promise<CryptoKey> {
   const raw = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
   return crypto.subtle.importKey(
-    "spki", raw, { name: "ECDH", namedCurve: "P-256" }, true, []
+    "spki",
+    raw,
+    { name: "ECDH", namedCurve: "P-256" },
+    true,
+    [],
   );
 }
 
@@ -37,14 +41,14 @@ export async function importPublicKey(b64: string): Promise<CryptoKey> {
 
 export async function deriveSharedKey(
   privateKey: CryptoKey,
-  theirPublicKey: CryptoKey
+  theirPublicKey: CryptoKey,
 ): Promise<CryptoKey> {
   return crypto.subtle.deriveKey(
     { name: "ECDH", public: theirPublicKey },
     privateKey,
     { name: "AES-GCM", length: 256 },
     false,
-    ["encrypt", "decrypt"]
+    ["encrypt", "decrypt"],
   );
 }
 
@@ -57,11 +61,15 @@ export interface EncryptedPayload {
 
 export async function encryptMessage(
   sharedKey: CryptoKey,
-  plaintext: string
+  plaintext: string,
 ): Promise<EncryptedPayload> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(plaintext);
-  const cipherBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, sharedKey, encoded);
+  const cipherBuffer = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    sharedKey,
+    encoded,
+  );
   return {
     iv: btoa(String.fromCharCode(...iv)),
     data: btoa(String.fromCharCode(...new Uint8Array(cipherBuffer))),
@@ -70,11 +78,15 @@ export async function encryptMessage(
 
 export async function decryptMessage(
   sharedKey: CryptoKey,
-  payload: EncryptedPayload
+  payload: EncryptedPayload,
 ): Promise<string> {
   const iv = Uint8Array.from(atob(payload.iv), (c) => c.charCodeAt(0));
   const data = Uint8Array.from(atob(payload.data), (c) => c.charCodeAt(0));
-  const plainBuffer = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, sharedKey, data);
+  const plainBuffer = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    sharedKey,
+    data,
+  );
   return new TextDecoder().decode(plainBuffer);
 }
 
@@ -87,14 +99,17 @@ export function serializeEncrypted(payload: EncryptedPayload): string {
 export function parseEncrypted(content: string): EncryptedPayload | null {
   try {
     const parsed = JSON.parse(content);
-    if (parsed.__e2e && parsed.iv && parsed.data) return { iv: parsed.iv, data: parsed.data };
-  } catch { /* not JSON */ }
+    if (parsed.__e2e && parsed.iv && parsed.data)
+      return { iv: parsed.iv, data: parsed.data };
+  } catch {
+    /* not JSON */
+  }
   return null;
 }
 
 // ─── IndexedDB helpers ────────────────────────────────────────────────────────
 
-const IDB_NAME  = "yakk_e2e";
+const IDB_NAME = "yakk_e2e";
 const IDB_STORE = "keys";
 
 function openIDB(): Promise<IDBDatabase> {
@@ -102,31 +117,40 @@ function openIDB(): Promise<IDBDatabase> {
     const req = indexedDB.open(IDB_NAME, 1);
     req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
     req.onsuccess = () => resolve(req.result);
-    req.onerror  = () => reject(req.error);
+    req.onerror = () => reject(req.error);
   });
 }
 
 function idbGet(db: IDBDatabase, key: string): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    const req = db.transaction(IDB_STORE, "readonly").objectStore(IDB_STORE).get(key);
+    const req = db
+      .transaction(IDB_STORE, "readonly")
+      .objectStore(IDB_STORE)
+      .get(key);
     req.onsuccess = () => resolve(req.result);
-    req.onerror  = () => reject(req.error);
+    req.onerror = () => reject(req.error);
   });
 }
 
 function idbSet(db: IDBDatabase, key: string, value: unknown): Promise<void> {
   return new Promise((resolve, reject) => {
-    const req = db.transaction(IDB_STORE, "readwrite").objectStore(IDB_STORE).put(value, key);
+    const req = db
+      .transaction(IDB_STORE, "readwrite")
+      .objectStore(IDB_STORE)
+      .put(value, key);
     req.onsuccess = () => resolve();
-    req.onerror  = () => reject(req.error);
+    req.onerror = () => reject(req.error);
   });
 }
 
 function idbDelete(db: IDBDatabase, key: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const req = db.transaction(IDB_STORE, "readwrite").objectStore(IDB_STORE).delete(key);
+    const req = db
+      .transaction(IDB_STORE, "readwrite")
+      .objectStore(IDB_STORE)
+      .delete(key);
     req.onsuccess = () => resolve();
-    req.onerror  = () => reject(req.error);
+    req.onerror = () => reject(req.error);
   });
 }
 
@@ -134,23 +158,30 @@ function idbDelete(db: IDBDatabase, key: string): Promise<void> {
 // Derives an AES-KW wrapping key from the user's password + a random salt.
 // The wrapping key is used to encrypt/decrypt the ECDH private key at rest in IndexedDB.
 
-async function deriveWrappingKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveWrappingKey(
+  password: string,
+  salt: Uint8Array,
+): Promise<CryptoKey> {
   const base = await crypto.subtle.importKey(
-    "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveKey"],
   );
   return crypto.subtle.deriveKey(
     { name: "PBKDF2", salt, iterations: 200_000, hash: "SHA-256" },
     base,
     { name: "AES-KW", length: 256 },
     false,
-    ["wrapKey", "unwrapKey"]
+    ["wrapKey", "unwrapKey"],
   );
 }
 
 interface PersistedBundle {
   wrappedPrivateKey: string; // base64 AES-KW wrapped PKCS8
-  publicKeySpki: string;     // base64 SPKI public key
-  salt: string;              // base64 32-byte PBKDF2 salt
+  publicKeySpki: string; // base64 SPKI public key
+  salt: string; // base64 32-byte PBKDF2 salt
 }
 
 // ─── Key Store ────────────────────────────────────────────────────────────────
@@ -169,24 +200,39 @@ class E2EKeyStore {
     try {
       const db = await openIDB();
       const storeKey = `ecdh:${username}`;
-      const bundle = await idbGet(db, storeKey) as PersistedBundle | undefined;
+      const bundle = (await idbGet(db, storeKey)) as
+        | PersistedBundle
+        | undefined;
 
       if (bundle) {
         try {
-          const salt        = Uint8Array.from(atob(bundle.salt), c => c.charCodeAt(0));
+          const salt = Uint8Array.from(atob(bundle.salt), (c) =>
+            c.charCodeAt(0),
+          );
           const wrappingKey = await deriveWrappingKey(password, salt);
-          const wrapped     = Uint8Array.from(atob(bundle.wrappedPrivateKey), c => c.charCodeAt(0));
-
-          const privateKey = await crypto.subtle.unwrapKey(
-            "pkcs8", wrapped, wrappingKey,
-            "AES-KW",
-            { name: "ECDH", namedCurve: "P-256" },
-            true, ["deriveKey"]
+          const wrapped = Uint8Array.from(atob(bundle.wrappedPrivateKey), (c) =>
+            c.charCodeAt(0),
           );
 
-          const pubBytes  = Uint8Array.from(atob(bundle.publicKeySpki), c => c.charCodeAt(0));
+          const privateKey = await crypto.subtle.unwrapKey(
+            "pkcs8",
+            wrapped,
+            wrappingKey,
+            "AES-KW",
+            { name: "ECDH", namedCurve: "P-256" },
+            true,
+            ["deriveKey"],
+          );
+
+          const pubBytes = Uint8Array.from(atob(bundle.publicKeySpki), (c) =>
+            c.charCodeAt(0),
+          );
           const publicKey = await crypto.subtle.importKey(
-            "spki", pubBytes, { name: "ECDH", namedCurve: "P-256" }, true, []
+            "spki",
+            pubBytes,
+            { name: "ECDH", namedCurve: "P-256" },
+            true,
+            [],
           );
 
           this.keyPair = { privateKey, publicKey };
@@ -200,26 +246,33 @@ class E2EKeyStore {
       }
 
       // Generate fresh pair and persist it
-      this.keyPair         = await generateKeyPair();
-      const publicKeyB64   = await exportPublicKey(this.keyPair.publicKey);
-      const salt           = crypto.getRandomValues(new Uint8Array(32));
-      const wrappingKey    = await deriveWrappingKey(password, salt);
+      this.keyPair = await generateKeyPair();
+      const publicKeyB64 = await exportPublicKey(this.keyPair.publicKey);
+      const salt = crypto.getRandomValues(new Uint8Array(32));
+      const wrappingKey = await deriveWrappingKey(password, salt);
       const wrappedPrivate = await crypto.subtle.wrapKey(
-        "pkcs8", this.keyPair.privateKey, wrappingKey, "AES-KW"
+        "pkcs8",
+        this.keyPair.privateKey,
+        wrappingKey,
+        "AES-KW",
       );
 
       const newBundle: PersistedBundle = {
-        wrappedPrivateKey: btoa(String.fromCharCode(...new Uint8Array(wrappedPrivate))),
+        wrappedPrivateKey: btoa(
+          String.fromCharCode(...new Uint8Array(wrappedPrivate)),
+        ),
         publicKeySpki: publicKeyB64,
         salt: btoa(String.fromCharCode(...salt)),
       };
       await idbSet(db, storeKey, newBundle);
       db.close();
       return publicKeyB64;
-
     } catch (err) {
       // IndexedDB unavailable (e.g. some private-browsing modes) — fall back to in-memory only
-      console.warn("E2E key persistence unavailable, using in-memory only:", err);
+      console.warn(
+        "E2E key persistence unavailable, using in-memory only:",
+        err,
+      );
       this.keyPair = await generateKeyPair();
       return exportPublicKey(this.keyPair.publicKey);
     }
@@ -235,10 +288,13 @@ class E2EKeyStore {
     return this.keyPair.publicKey;
   }
 
-  async getSharedKey(userId: number, theirPublicKeyB64: string): Promise<CryptoKey> {
+  async getSharedKey(
+    userId: number,
+    theirPublicKeyB64: string,
+  ): Promise<CryptoKey> {
     if (this.sharedKeys.has(userId)) return this.sharedKeys.get(userId)!;
     const theirKey = await importPublicKey(theirPublicKeyB64);
-    const shared   = await deriveSharedKey(this.getPrivateKey(), theirKey);
+    const shared = await deriveSharedKey(this.getPrivateKey(), theirKey);
     this.sharedKeys.set(userId, shared);
     return shared;
   }

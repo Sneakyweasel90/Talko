@@ -19,7 +19,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--primary-dim);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px var(--primary-dim);
 }
 
 /* ── Search header ───────────────────────────────────────────────────────── */
@@ -32,7 +34,7 @@
 }
 
 .searchIcon {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   font-size: 0.9rem;
 }
@@ -43,7 +45,7 @@
   border: none;
   color: var(--primary);
   font-size: 1rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   outline: none;
 }
 
@@ -56,7 +58,7 @@
   border-radius: 2px;
   cursor: pointer;
   font-size: 0.62rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.06em;
   padding: 3px 8px;
   white-space: nowrap;
@@ -82,7 +84,7 @@
   padding: 1.5rem;
   text-align: center;
   color: var(--text-dim);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.8rem;
 }
 
@@ -126,20 +128,20 @@
 }
 
 .resultAuthor {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.75rem;
   color: var(--primary);
   font-weight: 700;
 }
 
 .resultChannel {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.6rem;
   color: var(--text-dim);
 }
 
 .resultTime {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.6rem;
   color: var(--text-dim);
   opacity: 0.5;
@@ -157,7 +159,7 @@
   color: var(--text-dim);
   cursor: pointer;
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.05em;
   padding: 2px 6px;
   transition: all 0.15s;
@@ -181,7 +183,7 @@
   color: var(--primary);
   cursor: pointer;
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.05em;
   padding: 2px 6px;
   transition: all 0.15s;
@@ -192,7 +194,7 @@
 }
 
 .resultContent {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-size: 0.9rem;
   color: var(--text);
   line-height: 1.4;
@@ -214,7 +216,7 @@
 
 .contextLabel {
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   letter-spacing: 0.08em;
   margin-bottom: 0.4rem;
@@ -237,7 +239,7 @@
 }
 
 .contextMsgAuthor {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.7rem;
   color: var(--text-dim);
   min-width: 80px;
@@ -249,7 +251,7 @@
 }
 
 .contextMsgContent {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-size: 0.85rem;
   color: var(--text-dim);
   flex: 1;
@@ -268,7 +270,7 @@
   color: var(--primary);
   cursor: pointer;
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.06em;
   padding: 3px 10px;
   transition: all 0.15s;
@@ -285,7 +287,7 @@
   display: flex;
   gap: 1rem;
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   opacity: 0.6;
 }

@@ -26,7 +26,9 @@ export default function ConnectionModal({ status, onRetry }: Props) {
           </button>
         )}
         <div className={styles.dots}>
-          <span /><span /><span />
+          <span />
+          <span />
+          <span />
         </div>
       </div>
     </div>

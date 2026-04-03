@@ -90,7 +90,9 @@ export default function GifPicker({ onSelect, onClose }: Props) {
         {/* Header */}
         <div className={styles.header}>
           <span className={styles.title}>◈ GIF</span>
-          <button className={styles.closeBtn} onClick={onClose} type="button">✕</button>
+          <button className={styles.closeBtn} onClick={onClose} type="button">
+            ✕
+          </button>
         </div>
 
         {/* Search — Klipy requires "Search KLIPY" as placeholder per attribution guidelines */}
@@ -105,20 +107,26 @@ export default function GifPicker({ onSelect, onClose }: Props) {
             spellCheck={false}
           />
           {query && (
-            <button className={styles.clearBtn} type="button" onClick={() => setQuery("")}>✕</button>
+            <button
+              className={styles.clearBtn}
+              type="button"
+              onClick={() => setQuery("")}
+            >
+              ✕
+            </button>
           )}
         </div>
 
         {/* Label */}
         <div className={styles.sectionLabel}>
-          {query.trim() ? `// RESULTS FOR "${query.trim().toUpperCase()}"` : "// TRENDING"}
+          {query.trim()
+            ? `// RESULTS FOR "${query.trim().toUpperCase()}"`
+            : "// TRENDING"}
         </div>
 
         {/* Grid */}
         <div className={styles.grid}>
-          {loading && (
-            <div className={styles.status}>LOADING...</div>
-          )}
+          {loading && <div className={styles.status}>LOADING...</div>}
           {!loading && error && (
             <div className={styles.status}>
               {KLIPY_KEY ? "FAILED TO LOAD GIFS" : "MISSING VITE_KLIPY_API_KEY"}
@@ -127,31 +135,31 @@ export default function GifPicker({ onSelect, onClose }: Props) {
           {!loading && !error && gifs.length === 0 && (
             <div className={styles.status}>NO RESULTS</div>
           )}
-          {!loading && !error && gifs.map((gif) => (
-            <button
-              key={gif.id}
-              className={styles.gifBtn}
-              type="button"
-              title={gif.title}
-              onClick={() => {
-                onSelect(gif.url);
-                onClose();
-              }}
-            >
-              <img
-                src={gif.preview}
-                alt={gif.title}
-                className={styles.gifImg}
-                loading="lazy"
-              />
-            </button>
-          ))}
+          {!loading &&
+            !error &&
+            gifs.map((gif) => (
+              <button
+                key={gif.id}
+                className={styles.gifBtn}
+                type="button"
+                title={gif.title}
+                onClick={() => {
+                  onSelect(gif.url);
+                  onClose();
+                }}
+              >
+                <img
+                  src={gif.preview}
+                  alt={gif.title}
+                  className={styles.gifImg}
+                  loading="lazy"
+                />
+              </button>
+            ))}
         </div>
 
         {/* Footer — Klipy attribution requirement */}
-        <div className={styles.footer}>
-          Powered by KLIPY
-        </div>
+        <div className={styles.footer}>Powered by KLIPY</div>
       </div>
     </div>
   );

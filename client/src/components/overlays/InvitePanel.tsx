@@ -28,21 +28,30 @@ export default function InvitePanel({ token }: { token: string }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       setInvites(data);
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
+    } catch {
+      /* ignore */
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const create = async () => {
     setCreating(true);
     try {
       const body: Record<string, unknown> = { note: note.trim() || undefined };
       if (expiresIn !== "never") body.expiresInHours = parseInt(expiresIn);
-      const { data } = await axios.post(`${config.HTTP}/api/admin/invites`, body, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setInvites(prev => [data, ...prev]);
+      const { data } = await axios.post(
+        `${config.HTTP}/api/admin/invites`,
+        body,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      setInvites((prev) => [data, ...prev]);
       setNote("");
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) alert(err.response?.data?.error || "Failed");
@@ -57,7 +66,7 @@ export default function InvitePanel({ token }: { token: string }) {
       await axios.delete(`${config.HTTP}/api/admin/invites/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setInvites(prev => prev.filter(i => i.id !== id));
+      setInvites((prev) => prev.filter((i) => i.id !== id));
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) alert(err.response?.data?.error || "Failed");
     }
@@ -78,7 +87,8 @@ export default function InvitePanel({ token }: { token: string }) {
   };
 
   const isUsedOrExpired = (invite: InviteToken) =>
-    !!invite.used_at || (!!invite.expires_at && new Date(invite.expires_at) < new Date());
+    !!invite.used_at ||
+    (!!invite.expires_at && new Date(invite.expires_at) < new Date());
 
   if (loading) return <div className={styles.loading}>LOADING...</div>;
 
@@ -90,7 +100,7 @@ export default function InvitePanel({ token }: { token: string }) {
         <input
           className={styles.input}
           value={note}
-          onChange={e => setNote(e.target.value)}
+          onChange={(e) => setNote(e.target.value)}
           placeholder="note (optional — who is this for?)"
         />
         <div className={styles.expiryRow}>
@@ -98,7 +108,7 @@ export default function InvitePanel({ token }: { token: string }) {
           <select
             className={styles.select}
             value={expiresIn}
-            onChange={e => setExpiresIn(e.target.value)}
+            onChange={(e) => setExpiresIn(e.target.value)}
           >
             <option value="1">1 hour</option>
             <option value="6">6 hours</option>
@@ -122,12 +132,17 @@ export default function InvitePanel({ token }: { token: string }) {
         <div className={styles.empty}>No invite codes yet</div>
       ) : (
         <div className={styles.tokenList}>
-          {invites.map(inv => {
+          {invites.map((inv) => {
             const dead = isUsedOrExpired(inv);
             return (
-              <div key={inv.id} className={`${styles.tokenCard} ${dead ? styles.dead : ""}`}>
+              <div
+                key={inv.id}
+                className={`${styles.tokenCard} ${dead ? styles.dead : ""}`}
+              >
                 <div className={styles.tokenRow}>
-                  <code className={`${styles.tokenCode} ${dead ? styles.dead : ""}`}>
+                  <code
+                    className={`${styles.tokenCode} ${dead ? styles.dead : ""}`}
+                  >
                     {inv.token}
                   </code>
                   {!dead && (
@@ -147,7 +162,11 @@ export default function InvitePanel({ token }: { token: string }) {
                 </div>
                 <div className={styles.tokenMeta}>
                   {inv.note && <span>{inv.note}</span>}
-                  <span className={inv.note ? styles.tokenExpiry : styles.tokenExpiryAuto}>
+                  <span
+                    className={
+                      inv.note ? styles.tokenExpiry : styles.tokenExpiryAuto
+                    }
+                  >
                     {formatExpiry(inv)}
                   </span>
                 </div>

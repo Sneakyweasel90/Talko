@@ -12,16 +12,22 @@ interface Props {
   onCancel: () => void;
 }
 
-export default function ScreenPickerModal({ sources, onSelect, onCancel }: Props) {
+export default function ScreenPickerModal({
+  sources,
+  onSelect,
+  onCancel,
+}: Props) {
   return (
     <div className={styles.overlay} onClick={onCancel}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <span>Choose what to share</span>
-          <button className={styles.closeBtn} onClick={onCancel}>✕</button>
+          <button className={styles.closeBtn} onClick={onCancel}>
+            ✕
+          </button>
         </div>
         <div className={styles.grid}>
-          {sources.map(source => (
+          {sources.map((source) => (
             <button
               key={source.id}
               className={styles.tile}

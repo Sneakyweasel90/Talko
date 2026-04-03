@@ -8,9 +8,24 @@ export default function TitleBar() {
         TALKO <span className={styles.version}>v{APP_VERSION}</span>
       </span>
       <div className={styles.controls}>
-        <button className={styles.btn} onClick={() => window.electronAPI?.minimize()}>─</button>
-        <button className={styles.btn} onClick={() => window.electronAPI?.maximize()}>□</button>
-        <button className={`${styles.btn} ${styles.btnClose}`} onClick={() => window.electronAPI?.close()}>✕</button>
+        <button
+          className={styles.btn}
+          onClick={() => window.electronAPI?.minimize()}
+        >
+          ─
+        </button>
+        <button
+          className={styles.btn}
+          onClick={() => window.electronAPI?.maximize()}
+        >
+          □
+        </button>
+        <button
+          className={`${styles.btn} ${styles.btnClose}`}
+          onClick={() => window.electronAPI?.close()}
+        >
+          ✕
+        </button>
       </div>
     </div>
   );

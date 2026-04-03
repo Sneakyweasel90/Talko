@@ -6,58 +6,76 @@ import config from "../../config";
 import InvitePanel from "./InvitePanel";
 import styles from "./AdminPanel.module.css";
 
-  function AfkSettingsPanel({ token }: { token: string }) {
-    const [minutes, setMinutes] = useState<number>(10);
-    const [saving, setSaving] = useState(false);
-    const [msg, setMsg] = useState<string | null>(null);
+function AfkSettingsPanel({ token }: { token: string }) {
+  const [minutes, setMinutes] = useState<number>(10);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
-    useEffect(() => {
-      axios.get(`${config.HTTP}/api/admin/afk-timeout`)
-        .then(({ data }) => setMinutes(data.afk_timeout_minutes))
-        .catch(() => {});
-    }, []);
+  useEffect(() => {
+    axios
+      .get(`${config.HTTP}/api/admin/afk-timeout`)
+      .then(({ data }) => setMinutes(data.afk_timeout_minutes))
+      .catch(() => {});
+  }, []);
 
-    const save = async () => {
-      setSaving(true);
-      try {
-        await axios.patch(
-          `${config.HTTP}/api/admin/settings`,
-          { afk_timeout_minutes: minutes },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setMsg("Saved");
-        setTimeout(() => setMsg(null), 2000);
-      } catch (err: unknown) {
-        if (axios.isAxiosError(err)) setMsg(err.response?.data?.error || "Failed");
-        else setMsg("Failed");
-      } finally {
-        setSaving(false);
-      }
-    };
+  const save = async () => {
+    setSaving(true);
+    try {
+      await axios.patch(
+        `${config.HTTP}/api/admin/settings`,
+        { afk_timeout_minutes: minutes },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setMsg("Saved");
+      setTimeout(() => setMsg(null), 2000);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err))
+        setMsg(err.response?.data?.error || "Failed");
+      else setMsg("Failed");
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    return (
-      <div>
-        <div className={styles.generateLabel}>AFK TIMEOUT</div>
-        <div className={styles.expiryRow}>
-          <select
-            className={styles.select}
-            value={String(minutes)}
-            onChange={e => setMinutes(Number(e.target.value))}
-          >
-            {[5, 10, 15, 20, 30, 60].map(m => (
-              <option key={m} value={String(m)}>{m} minutes</option>
-            ))}
-          </select>
-          <button onClick={save} disabled={saving} className={`${styles.btn} ${styles.btnPrimary}`}>
-            {saving ? "..." : "SAVE"}
-          </button>
-          {msg && <span style={{ fontSize: "0.7rem", color: "var(--primary)" }}>{msg}</span>}
-        </div>
+  return (
+    <div>
+      <div className={styles.generateLabel}>AFK TIMEOUT</div>
+      <div className={styles.expiryRow}>
+        <select
+          className={styles.select}
+          value={String(minutes)}
+          onChange={(e) => setMinutes(Number(e.target.value))}
+        >
+          {[5, 10, 15, 20, 30, 60].map((m) => (
+            <option key={m} value={String(m)}>
+              {m} minutes
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={save}
+          disabled={saving}
+          className={`${styles.btn} ${styles.btnPrimary}`}
+        >
+          {saving ? "..." : "SAVE"}
+        </button>
+        {msg && (
+          <span style={{ fontSize: "0.7rem", color: "var(--primary)" }}>
+            {msg}
+          </span>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-export default function AdminPanel({ token, currentUserId }: { token: string; currentUserId: number }) {
+export default function AdminPanel({
+  token,
+  currentUserId,
+}: {
+  token: string;
+  currentUserId: number;
+}) {
   const [adminTab, setAdminTab] = useState<"users" | "invites">("users");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [ownerId, setOwnerId] = useState<number | null>(null);
@@ -86,19 +104,29 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
     }
   }, [token]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const setRole = async (userId: number, role: UserRole) => {
     try {
       await axios.patch(
         `${config.HTTP}/api/admin/users/${userId}/role`,
         { role, customRoleName: customNames[userId] || "Member" },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
-      setUsers(prev => prev.map(u => u.id === userId
-        ? { ...u, role, custom_role_name: role === "custom" ? (customNames[userId] || "Member") : null }
-        : u
-      ));
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId
+            ? {
+                ...u,
+                role,
+                custom_role_name:
+                  role === "custom" ? customNames[userId] || "Member" : null,
+              }
+            : u,
+        ),
+      );
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) alert(err.response?.data?.error || "Failed");
     }
@@ -109,26 +137,32 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
       await axios.patch(
         `${config.HTTP}/api/admin/users/${userId}/role`,
         { role: "custom", customRoleName: customNames[userId] || "Member" },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
-      setUsers(prev => prev.map(u => u.id === userId
-        ? { ...u, custom_role_name: customNames[userId] || "Member" }
-        : u
-      ));
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId
+            ? { ...u, custom_role_name: customNames[userId] || "Member" }
+            : u,
+        ),
+      );
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) alert(err.response?.data?.error || "Failed");
     }
   };
 
   const deleteAccount = async (userId: number, username: string) => {
-    if (!window.confirm(
-      `Permanently delete ${username}'s account?\n\nThis will remove all their data and cannot be undone.`
-    )) return;
+    if (
+      !window.confirm(
+        `Permanently delete ${username}'s account?\n\nThis will remove all their data and cannot be undone.`,
+      )
+    )
+      return;
     try {
       await axios.delete(`${config.HTTP}/api/admin/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUsers(prev => prev.filter(u => u.id !== userId));
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) alert(err.response?.data?.error || "Failed");
     }
@@ -137,7 +171,7 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
   const kick = async (userId: number, username: string) => {
     const input = window.prompt(
       `Kick ${username}? Enter duration in minutes (default 10):`,
-      "10"
+      "10",
     );
     if (input === null) return;
     const durationMinutes = Math.max(1, parseInt(input) || 10);
@@ -146,9 +180,11 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
       await axios.post(
         `${config.HTTP}/api/admin/users/${userId}/kick`,
         { durationMinutes },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
-      alert(`${username} has been kicked for ${durationMinutes} minute${durationMinutes === 1 ? "" : "s"}.`);
+      alert(
+        `${username} has been kicked for ${durationMinutes} minute${durationMinutes === 1 ? "" : "s"}.`,
+      );
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) alert(err.response?.data?.error || "Failed");
     }
@@ -156,15 +192,28 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
 
   const ban = async (userId: number, username: string, isBanned: boolean) => {
     const action = isBanned ? "unban" : "ban";
-    if (!isBanned && !window.confirm(`Ban ${username}? They will be logged out and blocked from logging in.`)) return;
+    if (
+      !isBanned &&
+      !window.confirm(
+        `Ban ${username}? They will be logged out and blocked from logging in.`,
+      )
+    )
+      return;
     try {
-      await axios.post(`${config.HTTP}/api/admin/users/${userId}/${action}`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUsers(prev => prev.map(u => u.id === userId
-        ? { ...u, banned_at: isBanned ? null : new Date().toISOString() }
-        : u
-      ));
+      await axios.post(
+        `${config.HTTP}/api/admin/users/${userId}/${action}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId
+            ? { ...u, banned_at: isBanned ? null : new Date().toISOString() }
+            : u,
+        ),
+      );
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) alert(err.response?.data?.error || "Failed");
     }
@@ -180,13 +229,17 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
     <div>
       {/* Sub-tab bar */}
       <div className={styles.tabBar}>
-        {(["users", "invites", "settings"] as const).map(t => (
+        {(["users", "invites", "settings"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setAdminTab(t)}
             className={`${styles.tab} ${adminTab === t ? styles.active : ""}`}
           >
-            {t === "users" ? "USERS" : t === "invites" ? "INVITE CODES" : "SETTINGS"}
+            {t === "users"
+              ? "USERS"
+              : t === "invites"
+                ? "INVITE CODES"
+                : "SETTINGS"}
           </button>
         ))}
       </div>
@@ -194,14 +247,17 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
       {/* Users sub-tab */}
       {adminTab === "users" && (
         <>
-          {loading && <div className={styles.loadingText}>LOADING USERS...</div>}
+          {loading && (
+            <div className={styles.loadingText}>LOADING USERS...</div>
+          )}
           {error && <div className={styles.errorText}>{error}</div>}
           <div className={styles.userList}>
-            {users.map(u => {
+            {users.map((u) => {
               const isSelf = u.id === currentUserId;
               const isOwner = u.id === ownerId;
               const isAdmin = u.role === "admin";
-              const isProtected = isOwner || (isAdmin && currentUserId !== ownerId);
+              const isProtected =
+                isOwner || (isAdmin && currentUserId !== ownerId);
               const isBanned = !!u.banned_at;
 
               return (
@@ -209,12 +265,25 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
                   key={u.id}
                   className={`${styles.userCard} ${isBanned ? styles.banned : ""}`}
                 >
-                  <div className={`${styles.userRow} ${isProtected || isSelf ? styles.noActions : styles.hasActions}`}>
-                    <Avatar username={u.nickname || u.username} avatar={u.avatar} size={24} />
+                  <div
+                    className={`${styles.userRow} ${isProtected || isSelf ? styles.noActions : styles.hasActions}`}
+                  >
+                    <Avatar
+                      username={u.nickname || u.username}
+                      avatar={u.avatar}
+                      size={24}
+                    />
                     <span className={styles.userName}>
                       {u.nickname || u.username}
-                      {u.nickname && <span className={styles.userNameHint}> @{u.username}</span>}
-                      {isSelf && <span className={styles.userSelfHint}> (you)</span>}
+                      {u.nickname && (
+                        <span className={styles.userNameHint}>
+                          {" "}
+                          @{u.username}
+                        </span>
+                      )}
+                      {isSelf && (
+                        <span className={styles.userSelfHint}> (you)</span>
+                      )}
                     </span>
                     <span
                       className={`${styles.userRole} ${roleColorClass(u.role as UserRole)}`}
@@ -226,7 +295,9 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
 
                   {isProtected && !isSelf && (
                     <div className={styles.protectedNote}>
-                      {isOwner ? "server owner — cannot be modified" : "admin — only owner can modify"}
+                      {isOwner
+                        ? "server owner — cannot be modified"
+                        : "admin — only owner can modify"}
                     </div>
                   )}
 
@@ -234,7 +305,9 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
                     <div className={styles.actions}>
                       <select
                         value={u.role}
-                        onChange={e => setRole(u.id, e.target.value as UserRole)}
+                        onChange={(e) =>
+                          setRole(u.id, e.target.value as UserRole)
+                        }
                         className={styles.roleSelect}
                       >
                         <option value="user">user</option>
@@ -245,9 +318,18 @@ export default function AdminPanel({ token, currentUserId }: { token: string; cu
                       {u.role === "custom" && (
                         <>
                           <input
-                            value={customNames[u.id] ?? u.custom_role_name ?? ""}
-                            onChange={e => setCustomNames(prev => ({ ...prev, [u.id]: e.target.value }))}
-                            onKeyDown={e => e.key === "Enter" && saveCustomName(u.id)}
+                            value={
+                              customNames[u.id] ?? u.custom_role_name ?? ""
+                            }
+                            onChange={(e) =>
+                              setCustomNames((prev) => ({
+                                ...prev,
+                                [u.id]: e.target.value,
+                              }))
+                            }
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && saveCustomName(u.id)
+                            }
                             placeholder="role name"
                             className={styles.customNameInput}
                           />

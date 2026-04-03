@@ -29,12 +29,16 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .title {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -42,7 +46,7 @@
 }
 
 .subtitle {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.7rem;
   color: var(--text-dim);
   text-align: center;
@@ -56,7 +60,7 @@
   border: 1px solid var(--primary-dim);
   border-radius: 4px;
   color: var(--primary);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.75rem;
   padding: 6px 16px;
   cursor: pointer;
@@ -83,10 +87,21 @@
   animation: pulse 1.2s ease-in-out infinite;
 }
 
-.dots span:nth-child(2) { animation-delay: 0.2s; }
-.dots span:nth-child(3) { animation-delay: 0.4s; }
+.dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1); }
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

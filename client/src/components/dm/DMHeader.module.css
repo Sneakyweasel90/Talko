@@ -28,7 +28,7 @@
 }
 
 .displayName {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 700;
   font-size: 0.95rem;
   color: var(--primary);
@@ -38,7 +38,7 @@
 .usernameHint {
   font-size: 0.65rem;
   color: var(--text-dim);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   margin-left: 6px;
 }
 
@@ -52,20 +52,20 @@
 
 .statusLabel {
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   opacity: 0.8;
 }
 
 .statusOffline {
   font-size: 0.6rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   opacity: 0.8;
 }
 
 .statusText {
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   opacity: 0.6;
 }

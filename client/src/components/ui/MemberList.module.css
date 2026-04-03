@@ -30,7 +30,7 @@
   user-select: none;
   writing-mode: vertical-rl;
   letter-spacing: 0.15em;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
 }
 
 /* ── Sliding panel ───────────────────────────────────────────────────────── */
@@ -62,7 +62,7 @@
 }
 
 .headerTitle {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -88,7 +88,7 @@
 
 .onlineLabelText {
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.08em;
   color: var(--text-dim);
 }
@@ -97,7 +97,7 @@
   border-radius: 8px;
   padding: 0 5px;
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   background: var(--primary-glow);
   border: 1px solid var(--primary-dim);
   color: var(--primary);
@@ -114,7 +114,7 @@
   padding: 0.75rem 1rem;
   color: var(--text-dim);
   font-size: 0.65rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   opacity: 0.5;
 }
 
@@ -158,7 +158,7 @@
 
 .memberName {
   font-size: 0.82rem;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -173,7 +173,7 @@
 
 .memberSubText {
   font-size: 0.58rem;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   color: var(--text-dim);
   opacity: 0.6;
   overflow: hidden;

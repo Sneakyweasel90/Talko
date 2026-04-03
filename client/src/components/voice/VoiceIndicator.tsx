@@ -15,7 +15,12 @@ interface Props {
   setMuted: (muted: boolean) => void;
 }
 
-function VolumeSlider({ label, value, onChange, color }: {
+function VolumeSlider({
+  label,
+  value,
+  onChange,
+  color,
+}: {
   label: string;
   value: number;
   onChange: (v: number) => void;
@@ -23,14 +28,16 @@ function VolumeSlider({ label, value, onChange, color }: {
 }) {
   return (
     <div className={styles.sliderWrap}>
-      <span className={styles.sliderLabel} style={{ color }}>{label}</span>
+      <span className={styles.sliderLabel} style={{ color }}>
+        {label}
+      </span>
       <input
         type="range"
         min={0}
         max={2}
         step={0.05}
         value={value}
-        onChange={e => onChange(parseFloat(e.target.value))}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
         className={styles.sliderInput}
         style={{ accentColor: color }}
         title={`${Math.round(value * 100)}%`}
@@ -43,22 +50,39 @@ function VolumeSlider({ label, value, onChange, color }: {
 }
 
 export default function VoiceIndicator({
-  inVoice, voiceChannel, participants,
-  participantVolumes, selfVolume,
-  leaveVoice, setMuted,
-  setParticipantVolume, setSelfVolume, setAllParticipantsDeafened
+  inVoice,
+  voiceChannel,
+  participants,
+  participantVolumes,
+  selfVolume,
+  leaveVoice,
+  setMuted,
+  setParticipantVolume,
+  setSelfVolume,
+  setAllParticipantsDeafened,
 }: Props) {
   const { theme } = useTheme();
   const {
-    isMuted, isDeafened, isPttActive, mode,
-    muteKey, pttKey, assigningKey,
-    toggleMute, toggleDeafen, toggleMode,
-    setAssigningKey, resetControls,
+    isMuted,
+    isDeafened,
+    isPttActive,
+    mode,
+    muteKey,
+    pttKey,
+    assigningKey,
+    toggleMute,
+    toggleDeafen,
+    toggleMode,
+    setAssigningKey,
+    resetControls,
   } = useVoiceControls(setMuted);
 
   if (!inVoice) return null;
 
-  const handleLeave = () => { resetControls(); leaveVoice(); };
+  const handleLeave = () => {
+    resetControls();
+    leaveVoice();
+  };
 
   const handleToggleDeafen = () => {
     const next = !isDeafened;
@@ -72,7 +96,9 @@ export default function VoiceIndicator({
       <div className={styles.channelRow}>
         <span className={styles.channelLabel}>🔊 {voiceChannel}</span>
         {mode === "ptt" && (
-          <span className={`${styles.pttBadge} ${isPttActive ? styles.active : ""}`}>
+          <span
+            className={`${styles.pttBadge} ${isPttActive ? styles.active : ""}`}
+          >
             {isPttActive ? "● TRANSMITTING" : `PTT: ${pttKey}`}
           </span>
         )}
@@ -94,7 +120,9 @@ export default function VoiceIndicator({
         {/* Deafen */}
         <button
           onClick={handleToggleDeafen}
-          title={isDeafened ? "Undeafen" : "Deafen (mutes mic + all incoming audio)"}
+          title={
+            isDeafened ? "Undeafen" : "Deafen (mutes mic + all incoming audio)"
+          }
           className={`${styles.btn} ${isDeafened ? styles.btnDeafened : styles.btnDefault}`}
         >
           {isDeafened ? "🔕 DEAFENED" : "🔔 DEAFEN"}
@@ -103,7 +131,9 @@ export default function VoiceIndicator({
         {/* Mode toggle */}
         <button
           onClick={toggleMode}
-          title={mode === "open" ? "Switch to Push to Talk" : "Switch to Open Mic"}
+          title={
+            mode === "open" ? "Switch to Push to Talk" : "Switch to Open Mic"
+          }
           className={`${styles.btn} ${styles.btnDefault}`}
         >
           {mode === "open" ? "PTT" : "OPEN MIC"}
@@ -112,17 +142,23 @@ export default function VoiceIndicator({
         {/* Mute keybind */}
         {mode === "open" && (
           <button
-            onClick={() => setAssigningKey(assigningKey === "mute" ? null : "mute")}
+            onClick={() =>
+              setAssigningKey(assigningKey === "mute" ? null : "mute")
+            }
             className={`${styles.btn} ${assigningKey === "mute" ? styles.btnActive : styles.btnDefault}`}
           >
-            {assigningKey === "mute" ? "PRESS A KEY..." : `MUTE KEY: ${muteKey}`}
+            {assigningKey === "mute"
+              ? "PRESS A KEY..."
+              : `MUTE KEY: ${muteKey}`}
           </button>
         )}
 
         {/* PTT keybind */}
         {mode === "ptt" && (
           <button
-            onClick={() => setAssigningKey(assigningKey === "ptt" ? null : "ptt")}
+            onClick={() =>
+              setAssigningKey(assigningKey === "ptt" ? null : "ptt")
+            }
             className={`${styles.btn} ${assigningKey === "ptt" ? styles.btnActive : styles.btnDefault}`}
           >
             {assigningKey === "ptt" ? "PRESS A KEY..." : `PTT KEY: ${pttKey}`}
@@ -130,14 +166,19 @@ export default function VoiceIndicator({
         )}
 
         {/* Disconnect */}
-        <button onClick={handleLeave} className={`${styles.btn} ${styles.btnDisconnect}`}>
+        <button
+          onClick={handleLeave}
+          className={`${styles.btn} ${styles.btnDisconnect}`}
+        >
           DISCONNECT
         </button>
       </div>
 
       {/* Volume sliders */}
       {participants.length > 0 && (
-        <div className={`${styles.slidersRow} ${isDeafened ? styles.deafened : ""}`}>
+        <div
+          className={`${styles.slidersRow} ${isDeafened ? styles.deafened : ""}`}
+        >
           <VolumeSlider
             label="YOU"
             value={selfVolume}

@@ -12,7 +12,14 @@ interface Props {
   onOpenDM?: (userId: number) => void;
 }
 
-export default function UserPopover({ userId, username, isSelf, onClose, anchorEl, onOpenDM }: Props) {
+export default function UserPopover({
+  userId,
+  username,
+  isSelf,
+  onClose,
+  anchorEl,
+  onOpenDM,
+}: Props) {
   const { setLocalNickname, nicknames } = useLocalNicknames();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -51,7 +58,6 @@ export default function UserPopover({ userId, username, isSelf, onClose, anchorE
 
   return (
     <div ref={ref} className={styles.popover} style={{ top, left }}>
-
       {/* User header */}
       <div className={styles.userHeader}>
         <Avatar username={displayedAs} size={36} />
@@ -77,8 +83,11 @@ export default function UserPopover({ userId, username, isSelf, onClose, anchorE
               autoFocus
               className={styles.nicknameInput}
               value={value}
-              onChange={e => setValue(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") onClose(); }}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") save();
+                if (e.key === "Escape") onClose();
+              }}
               placeholder="Only visible to you..."
               maxLength={50}
             />
@@ -92,7 +101,9 @@ export default function UserPopover({ userId, username, isSelf, onClose, anchorE
             </button>
           )}
           {msg && (
-            <div className={msg.ok ? styles.msgOk : styles.msgErr}>{msg.text}</div>
+            <div className={msg.ok ? styles.msgOk : styles.msgErr}>
+              {msg.text}
+            </div>
           )}
         </>
       )}

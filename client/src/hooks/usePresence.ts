@@ -3,7 +3,9 @@ import type { OnlineUser } from "../types";
 
 export function usePresence() {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [voiceOccupancy, setVoiceOccupancy] = useState<Record<string, string[]>>({});
+  const [voiceOccupancy, setVoiceOccupancy] = useState<
+    Record<string, string[]>
+  >({});
   const [avatarMap, setAvatarMap] = useState<Record<number, string | null>>({});
 
   const handlePresenceMessage = useCallback((data: any) => {
@@ -42,9 +44,18 @@ export function usePresence() {
     return false;
   }, []);
 
-  const updateAvatarMap = useCallback((userId: number, avatar: string | null) => {
-    setAvatarMap((prev) => ({ ...prev, [userId]: avatar }));
-  }, []);
+  const updateAvatarMap = useCallback(
+    (userId: number, avatar: string | null) => {
+      setAvatarMap((prev) => ({ ...prev, [userId]: avatar }));
+    },
+    [],
+  );
 
-  return { onlineUsers, voiceOccupancy, avatarMap, handlePresenceMessage, updateAvatarMap };
+  return {
+    onlineUsers,
+    voiceOccupancy,
+    avatarMap,
+    handlePresenceMessage,
+    updateAvatarMap,
+  };
 }

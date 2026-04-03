@@ -15,8 +15,11 @@ export function useAfkDetector(
 
   useEffect(() => {
     const events = ["mousemove", "mousedown", "keydown", "touchstart", "wheel"];
-    events.forEach(e => window.addEventListener(e, resetActivity, { passive: true }));
-    return () => events.forEach(e => window.removeEventListener(e, resetActivity));
+    events.forEach((e) =>
+      window.addEventListener(e, resetActivity, { passive: true }),
+    );
+    return () =>
+      events.forEach((e) => window.removeEventListener(e, resetActivity));
   }, [resetActivity]);
 
   useEffect(() => {
@@ -31,10 +34,14 @@ export function useAfkDetector(
       if (isElectron) {
         const idleSecs = await (window as any).electronAPI.getIdleTime();
         idle = idleSecs * 1000;
-        console.log(`[AFK] Electron idle: ${idleSecs}s, timeout: ${afkTimeoutMinutes * 60}s, inVoice: ${inVoice}, channel: ${voiceChannel}`);
+        console.log(
+          `[AFK] Electron idle: ${idleSecs}s, timeout: ${afkTimeoutMinutes * 60}s, inVoice: ${inVoice}, channel: ${voiceChannel}`,
+        );
       } else {
         idle = Date.now() - lastActivityRef.current;
-        console.log(`[AFK] Browser idle: ${Math.round(idle/1000)}s, timeout: ${afkTimeoutMinutes * 60}s`);
+        console.log(
+          `[AFK] Browser idle: ${Math.round(idle / 1000)}s, timeout: ${afkTimeoutMinutes * 60}s`,
+        );
       }
       if (idle >= AFK_TIMEOUT_MS) {
         console.log(`[AFK] Triggering joinAfk`);

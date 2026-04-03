@@ -16,8 +16,10 @@ function playJoinSound(ctx: AudioContext) {
   osc1.connect(gain);
   osc2.connect(gain);
   gain.connect(ctx.destination);
-  osc1.start(now); osc1.stop(now + 0.14);
-  osc2.start(now + 0.12); osc2.stop(now + 0.38);
+  osc1.start(now);
+  osc1.stop(now + 0.14);
+  osc2.start(now + 0.12);
+  osc2.stop(now + 0.38);
 }
 
 function playLeaveSound(ctx: AudioContext) {
@@ -36,8 +38,10 @@ function playLeaveSound(ctx: AudioContext) {
   osc1.connect(gain);
   osc2.connect(gain);
   gain.connect(ctx.destination);
-  osc1.start(now); osc1.stop(now + 0.14);
-  osc2.start(now + 0.12); osc2.stop(now + 0.38);
+  osc1.start(now);
+  osc1.stop(now + 0.14);
+  osc2.start(now + 0.12);
+  osc2.stop(now + 0.38);
 }
 
 function playMuteSound(ctx: AudioContext) {
@@ -52,7 +56,8 @@ function playMuteSound(ctx: AudioContext) {
   gain.gain.linearRampToValueAtTime(0, now + 0.15);
   osc.connect(gain);
   gain.connect(ctx.destination);
-  osc.start(now); osc.stop(now + 0.15);
+  osc.start(now);
+  osc.stop(now + 0.15);
 }
 
 function playUnmuteSound(ctx: AudioContext) {
@@ -67,7 +72,8 @@ function playUnmuteSound(ctx: AudioContext) {
   gain.gain.linearRampToValueAtTime(0, now + 0.15);
   osc.connect(gain);
   gain.connect(ctx.destination);
-  osc.start(now); osc.stop(now + 0.15);
+  osc.start(now);
+  osc.stop(now + 0.15);
 }
 
 function playDeafenSound(ctx: AudioContext) {
@@ -86,8 +92,10 @@ function playDeafenSound(ctx: AudioContext) {
   osc1.connect(gain);
   osc2.connect(gain);
   gain.connect(ctx.destination);
-  osc1.start(now); osc1.stop(now + 0.12);
-  osc2.start(now + 0.1); osc2.stop(now + 0.28);
+  osc1.start(now);
+  osc1.stop(now + 0.12);
+  osc2.start(now + 0.1);
+  osc2.stop(now + 0.28);
 }
 
 function playUndeafenSound(ctx: AudioContext) {
@@ -106,8 +114,10 @@ function playUndeafenSound(ctx: AudioContext) {
   osc1.connect(gain);
   osc2.connect(gain);
   gain.connect(ctx.destination);
-  osc1.start(now); osc1.stop(now + 0.12);
-  osc2.start(now + 0.1); osc2.stop(now + 0.28);
+  osc1.start(now);
+  osc1.stop(now + 0.12);
+  osc2.start(now + 0.1);
+  osc2.stop(now + 0.28);
 }
 
 export function useVoiceSounds() {
@@ -122,28 +132,59 @@ export function useVoiceSounds() {
   }, []);
 
   const playJoin = useCallback(() => {
-    try { playJoinSound(getCtx()); } catch (e) { console.warn("Could not play join sound:", e); }
+    try {
+      playJoinSound(getCtx());
+    } catch (e) {
+      console.warn("Could not play join sound:", e);
+    }
   }, [getCtx]);
 
   const playLeave = useCallback(() => {
-    try { playLeaveSound(getCtx()); } catch (e) { console.warn("Could not play leave sound:", e); }
+    try {
+      playLeaveSound(getCtx());
+    } catch (e) {
+      console.warn("Could not play leave sound:", e);
+    }
   }, [getCtx]);
 
   const playMute = useCallback(() => {
-    try { playMuteSound(getCtx()); } catch (e) { console.warn(e); }
+    try {
+      playMuteSound(getCtx());
+    } catch (e) {
+      console.warn(e);
+    }
   }, [getCtx]);
 
   const playUnmute = useCallback(() => {
-    try { playUnmuteSound(getCtx()); } catch (e) { console.warn(e); }
+    try {
+      playUnmuteSound(getCtx());
+    } catch (e) {
+      console.warn(e);
+    }
   }, [getCtx]);
 
   const playDeafen = useCallback(() => {
-    try { playDeafenSound(getCtx()); } catch (e) { console.warn(e); }
+    try {
+      playDeafenSound(getCtx());
+    } catch (e) {
+      console.warn(e);
+    }
   }, [getCtx]);
 
   const playUndeafen = useCallback(() => {
-    try { playUndeafenSound(getCtx()); } catch (e) { console.warn(e); }
+    try {
+      playUndeafenSound(getCtx());
+    } catch (e) {
+      console.warn(e);
+    }
   }, [getCtx]);
 
-  return { playJoin, playLeave, playMute, playUnmute, playDeafen, playUndeafen };
+  return {
+    playJoin,
+    playLeave,
+    playMute,
+    playUnmute,
+    playDeafen,
+    playUndeafen,
+  };
 }

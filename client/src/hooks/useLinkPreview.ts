@@ -13,11 +13,14 @@ export function useLinkPreview(url: string | null) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!url) { setPreview(null); return; }
+    if (!url) {
+      setPreview(null);
+      return;
+    }
     setLoading(true);
     fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}`)
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         if (data.status === "success") {
           setPreview({
             url,

@@ -12,10 +12,15 @@ router.post("/token", requireAuth, async (req, res) => {
   const at = new AccessToken(
     process.env.LIVEKIT_API_KEY,
     process.env.LIVEKIT_API_SECRET,
-    { identity: String(req.user.id), name: req.user.username }
+    { identity: String(req.user.id), name: req.user.username },
   );
 
-  at.addGrant({ roomJoin: true, room: channelId, canPublish: true, canSubscribe: true });
+  at.addGrant({
+    roomJoin: true,
+    room: channelId,
+    canPublish: true,
+    canSubscribe: true,
+  });
 
   res.json({ token: await at.toJwt(), url: process.env.LIVEKIT_URL });
 });

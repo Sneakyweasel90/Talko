@@ -8,7 +8,9 @@ const router = express.Router();
 router.get("/", requireAuth, async (req, res) => {
   const { q, channel, limit = 30 } = req.query;
   if (!q || String(q).trim().length < 2)
-    return res.status(400).json({ error: "Query must be at least 2 characters" });
+    return res
+      .status(400)
+      .json({ error: "Query must be at least 2 characters" });
 
   const safeLimit = Math.min(Number(limit) || 30, 100);
 
@@ -85,7 +87,7 @@ router.get("/context", requireAuth, async (req, res) => {
         LIMIT $3
       )
       ORDER BY id ASC`,
-      [channel, id, n]
+      [channel, id, n],
     );
 
     res.json(rows);

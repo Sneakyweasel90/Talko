@@ -3,7 +3,8 @@ import PinnedMessages from "../overlays/PinnedMessages";
 import styles from "./ChannelHeader.module.css";
 
 interface Props {
-  channel: string;
+  channel: number | null;
+  channelName: string;
   onlineCount: number;
   token: string;
   isAdmin: boolean;
@@ -12,18 +13,18 @@ interface Props {
 
 export default function ChannelHeader({
   channel,
+  channelName,
   onlineCount,
   token,
   isAdmin,
   onUnpin,
 }: Props) {
   const [showPins, setShowPins] = useState(false);
-
   return (
     <>
       <div className={styles.header}>
         <span className={styles.hash}>#</span>
-        <span className={styles.channelName}>{channel}</span>
+        <span className={styles.channelName}>{channelName}</span>
         <div className={styles.divider} />
         <button
           className={styles.pinBtn}
@@ -37,10 +38,9 @@ export default function ChannelHeader({
           {onlineCount} online
         </span>
       </div>
-
       {showPins && (
         <PinnedMessages
-          channel={channel}
+          channel={String(channel ?? "")}
           token={token}
           isAdmin={isAdmin}
           onClose={() => setShowPins(false)}

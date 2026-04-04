@@ -8,7 +8,11 @@ export function useWebSocket(
   onReconnect?: () => void,
 ) {
   const ws = useRef<WebSocket | null>(null);
-  const currentChannelRef = useRef<string | null>(null);
+  // Store both channelId and communityId for reconnect
+  const currentJoinRef = useRef<{
+    channelId: number | string;
+    communityId: number | null;
+  } | null>(null);
   const intentionalClose = useRef(false);
   const onMessageRef = useRef(onMessage);
   const onReconnectRef = useRef(onReconnect);
@@ -40,19 +44,24 @@ export function useWebSocket(
 
     ws.current.onopen = () => {
       setStatus("connected");
-      console.log("Talco connected");
-      if (currentChannelRef.current) {
+      console.log("Talko connected");
+
+      // Rejoin current channel on reconnect
+      if (currentJoinRef.current) {
         ws.current!.send(
           JSON.stringify({
             type: "join",
-            channelId: currentChannelRef.current,
+            channelId: currentJoinRef.current.channelId,
+            communityId: currentJoinRef.current.communityId,
           }),
         );
       }
+
       if (!isFirstConnect.current) {
         onReconnectRef.current?.();
       }
       isFirstConnect.current = false;
+
       heartbeatInterval = setInterval(() => {
         if (ws.current?.readyState === WebSocket.OPEN) {
           ws.current.send(JSON.stringify({ type: "ping" }));
@@ -87,7 +96,10 @@ export function useWebSocket(
 
   const send = useCallback((data: ClientMessage) => {
     if (data.type === "join") {
-      currentChannelRef.current = data.channelId;
+      currentJoinRef.current = {
+        channelId: data.channelId,
+        communityId: (data as any).communityId ?? null,
+      };
     }
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(data));

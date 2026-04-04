@@ -22,3 +22,5 @@ export function verifyWsToken(token) {
     return null;
   }
 }
+
+export const authenticateToken = requireAuth;

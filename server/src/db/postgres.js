@@ -19,19 +19,22 @@ export async function initDB() {
 
     CREATE TABLE IF NOT EXISTS channels (
       id SERIAL PRIMARY KEY,
-      name VARCHAR(50) UNIQUE NOT NULL,
+      name VARCHAR(50) NOT NULL,
       type VARCHAR(10) NOT NULL DEFAULT 'text',
       created_by INT REFERENCES users(id),
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS messages (
-      id SERIAL PRIMARY KEY,
-      channel_id VARCHAR(100) NOT NULL,
-      user_id INT REFERENCES users(id),
-      username VARCHAR(50),
-      content TEXT NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      id            SERIAL PRIMARY KEY,
+      channel_id    VARCHAR(100) NOT NULL,
+      channel_db_id INTEGER REFERENCES channels(id) ON DELETE CASCADE,
+      user_id       INT REFERENCES users(id),
+      username      VARCHAR(50),
+      content       TEXT NOT NULL,
+      reply_to_id   INT REFERENCES messages(id) ON DELETE SET NULL,
+      edited_at     TIMESTAMPTZ,
+      created_at    TIMESTAMPTZ DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS reactions (
@@ -58,7 +61,7 @@ export async function initDB() {
     INSERT INTO server_settings (key, value) VALUES ('afk_timeout_minutes', '10')
       ON CONFLICT (key) DO NOTHING;
 
-    CREATE INDEX IF NOT EXISTS idx_messages_channel_id ON messages(channel_id, id DESC);
+    CREATE INDEX IF NOT EXISTS idx_messages_channel_db_id ON messages(channel_db_id, id DESC);
     CREATE INDEX IF NOT EXISTS idx_messages_content_search ON messages USING gin(to_tsvector('english', content));
     CREATE INDEX IF NOT EXISTS idx_reactions_message ON reactions(message_id);
 
@@ -92,8 +95,8 @@ export async function initDB() {
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_at TIMESTAMPTZ;`,
   );
   await pool.query(
-    `ALTER TABLE users ADD COLUMN IF NOT EXISTS kicked_until TIMESTAMPTZ NULL`
-  )
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS kicked_until TIMESTAMPTZ NULL`,
+  );
 
   // DM tables
   await pool.query(`
@@ -113,14 +116,6 @@ export async function initDB() {
       PRIMARY KEY (user_id, dm_channel_id)
     );
   `);
-
-  // Messages table additions
-  await pool.query(
-    `ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INT REFERENCES messages(id) ON DELETE SET NULL;`,
-  );
-  await pool.query(
-    `ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ;`,
-  );
 
   // ── Invite tokens table ──────────────────────────────────────────────────────
   // Replaces the static INVITE_CODE env var with admin-generated single-use tokens.
@@ -166,29 +161,111 @@ export async function initDB() {
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS channel_last_read (
-      user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-      channel_name VARCHAR(100) NOT NULL,
+      user_id     INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+      channel_id  INTEGER REFERENCES channels(id) ON DELETE CASCADE NOT NULL,
       last_read_at TIMESTAMPTZ DEFAULT NOW(),
-      PRIMARY KEY (user_id, channel_name)
+      PRIMARY KEY (user_id, channel_id)
     );
   `);
   await pool.query(
     `CREATE INDEX IF NOT EXISTS idx_channel_last_read ON channel_last_read(user_id);`,
   );
 
+  await pool.query(
+    `ALTER TABLE channels ADD COLUMN IF NOT EXISTS is_afk BOOLEAN DEFAULT FALSE`,
+  );
+  await pool.query(
+    `UPDATE channels SET is_afk = TRUE WHERE name = 'voice-afk'`,
+  );
+
+  // Communities
   await pool.query(`
-    INSERT INTO channels (name, type) VALUES
-      ('general', 'text'),
-      ('random', 'text'),
-      ('yakking', 'text'),
-      ('voice-general', 'voice'),
-      ('voice-chill', 'voice'),
-      ('voice-afk', 'voice')
-    ON CONFLICT (name) DO NOTHING;
+  CREATE TABLE IF NOT EXISTS communities (
+    id           SERIAL PRIMARY KEY,
+    name         VARCHAR(100) NOT NULL,
+    description  TEXT,
+    icon         TEXT,
+    banner       TEXT,
+    owner_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    is_public    BOOLEAN DEFAULT false,
+    created_at   TIMESTAMPTZ DEFAULT NOW()
+  );
+`);
+
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS community_roles (
+    id           SERIAL PRIMARY KEY,
+    community_id INTEGER REFERENCES communities(id) ON DELETE CASCADE,
+    name         VARCHAR(50) NOT NULL,
+    color        VARCHAR(7) DEFAULT '#99aab5',
+    position     INTEGER DEFAULT 0,
+    is_default   BOOLEAN DEFAULT false,
+    permissions  JSONB DEFAULT '{"view_channel":true,"send_messages":true,"manage_messages":false,"kick_members":false,"ban_members":false,"manage_channels":false,"manage_community":false,"join_voice":true,"mute_members":false}'
+  );
+`);
+
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS community_members (
+    id           SERIAL PRIMARY KEY,
+    community_id INTEGER REFERENCES communities(id) ON DELETE CASCADE,
+    user_id      INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    nickname     VARCHAR(50),
+    joined_at    TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(community_id, user_id)
+  );
+`);
+
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS member_roles (
+    member_id INTEGER REFERENCES community_members(id) ON DELETE CASCADE,
+    role_id   INTEGER REFERENCES community_roles(id) ON DELETE CASCADE,
+    PRIMARY KEY (member_id, role_id)
+  );
+`);
+
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS categories (
+    id           SERIAL PRIMARY KEY,
+    community_id INTEGER REFERENCES communities(id) ON DELETE CASCADE,
+    name         VARCHAR(100) NOT NULL,
+    position     INTEGER DEFAULT 0
+  );
+`);
+
+  await pool.query(`
+  ALTER TABLE channels
+    ADD COLUMN IF NOT EXISTS community_id INTEGER REFERENCES communities(id) ON DELETE CASCADE,
+    ADD COLUMN IF NOT EXISTS category_id  INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS position     INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS topic        TEXT,
+    ADD COLUMN IF NOT EXISTS is_private   BOOLEAN DEFAULT false;
+`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS channel_role_access (
+      channel_id INTEGER REFERENCES channels(id) ON DELETE CASCADE,
+      role_id    INTEGER REFERENCES community_roles(id) ON DELETE CASCADE,
+      PRIMARY KEY (channel_id, role_id)
+    );
   `);
 
-  await pool.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS is_afk BOOLEAN DEFAULT FALSE`);
-  await pool.query(`UPDATE channels SET is_afk = TRUE WHERE name = 'voice-afk'`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS community_invites (
+      id           SERIAL PRIMARY KEY,
+      community_id INTEGER REFERENCES communities(id) ON DELETE CASCADE,
+      code         VARCHAR(20) UNIQUE NOT NULL,
+      created_by   INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      max_uses     INTEGER DEFAULT NULL,
+      uses         INTEGER DEFAULT 0,
+      expires_at   TIMESTAMPTZ DEFAULT NULL,
+      created_at   TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
+  // Set is_afk on voice-afk
+  await pool.query(`
+    UPDATE channels SET is_afk = TRUE WHERE name = 'voice-afk' AND is_afk = FALSE;
+  `);
 
   console.log("DB tables ready");
 }

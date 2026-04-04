@@ -2,19 +2,30 @@ import { WebSocketServer, WebSocket } from "ws";
 import { verifyWsToken } from "../middleware/auth.js";
 import db from "../db/postgres.js";
 import redis from "../redis/redisClient.js";
-import { handleJoin, handleLoadMore, handleSendMessage, handleEditMessage, handleDeleteMessage, handleTyping } from "./handlers/message.handler.js";
+import {
+  handleJoin,
+  handleLoadMore,
+  handleSendMessage,
+  handleEditMessage,
+  handleDeleteMessage,
+  handleTyping,
+} from "./handlers/message.handler.js";
 import { handleVoiceJoin, handleVoiceLeave } from "./handlers/voice.handler.js";
 import { handleReact } from "./handlers/reaction.handler.js";
 import { handlePin, handleUnpin } from "./handlers/pin.handler.js";
-import { handleSetStatus, handleAvatarUpdate, handlePing } from "./handlers/presence.handler.js";
+import {
+  handleSetStatus,
+  handleAvatarUpdate,
+  handlePing,
+} from "./handlers/presence.handler.js";
 
 const channels = new Map();
 
 const RATE_LIMITS = {
   message: { max: 20, windowSec: 10 },
-  react:   { max: 30, windowSec: 10 },
-  edit:    { max: 10, windowSec: 10 },
-  typing:  { max: 15, windowSec: 10 },
+  react: { max: 30, windowSec: 10 },
+  edit: { max: 10, windowSec: 10 },
+  typing: { max: 15, windowSec: 10 },
   default: { max: 20, windowSec: 10 },
 };
 
@@ -60,12 +71,36 @@ function broadcastDM(channelId, data, wss) {
 }
 
 let wssInstance = null;
-export function getWss() { return wssInstance; }
+export function getWss() {
+  return wssInstance;
+}
+
+async function broadcastToCommunity(
+  communityId,
+  event,
+  data,
+  excludeUserId = null,
+) {
+  const wss = getWss();
+  wss.clients.forEach((client) => {
+    if (
+      client.readyState === 1 &&
+      client.communityIds?.includes(parseInt(communityId)) &&
+      client.userId !== excludeUserId
+    ) {
+      client.send(JSON.stringify({ type: event, ...data }));
+    }
+  });
+}
 
 async function broadcastPresence(wss) {
   const liveUserIds = new Set();
   for (const client of wss.clients) {
-    if (client.readyState === WebSocket.OPEN && !client._yakk_closed && client.user?.id) {
+    if (
+      client.readyState === WebSocket.OPEN &&
+      !client._yakk_closed &&
+      client.user?.id
+    ) {
       liveUserIds.add(String(client.user.id));
     }
   }
@@ -85,7 +120,7 @@ async function broadcastPresence(wss) {
 
   const { rows } = await db.query(
     `SELECT id, COALESCE(nickname, username) AS username FROM users WHERE id = ANY($1::int[])`,
-    [[...liveUserIds].map(Number)]
+    [[...liveUserIds].map(Number)],
   );
 
   const statusMap = {};
@@ -97,7 +132,7 @@ async function broadcastPresence(wss) {
       };
     }
   }
-  const usersWithStatus = rows.map(u => ({
+  const usersWithStatus = rows.map((u) => ({
     ...u,
     status: statusMap[u.id]?.status ?? "online",
     statusText: statusMap[u.id]?.statusText ?? null,
@@ -114,7 +149,7 @@ function getVoiceState() {
   for (const [key, clients] of channels.entries()) {
     if (!key.startsWith("voice:")) continue;
     const channelId = key.replace("voice:", "");
-    const names = [...clients].map(c => c.user?.username).filter(Boolean);
+    const names = [...clients].map((c) => c.user?.username).filter(Boolean);
     if (names.length > 0) state[channelId] = names;
   }
   return state;
@@ -126,47 +161,112 @@ export async function initWebSocket(server) {
   wssInstance = wss;
 
   wss.on("connection", async (ws, req) => {
-    const token = new URL(req.url, "http://localhost:4000").searchParams.get("token");
+    const token = new URL(req.url, "http://localhost:4000").searchParams.get(
+      "token",
+    );
     const user = verifyWsToken(token);
-    if (!user) { ws.close(1008, "Unauthorized"); return; }
+    if (!user) {
+      ws.close(1008, "Unauthorized");
+      return;
+    }
 
     const { rows: nickRow } = await db.query(
-      `SELECT nickname FROM users WHERE id = $1`, [user.id]
+      `SELECT nickname FROM users WHERE id = $1`,
+      [user.id],
     );
-    ws.user = { ...user, nickname: nickRow[0]?.nickname || null, status: "online", statusText: null };
+    ws.user = {
+      ...user,
+      nickname: nickRow[0]?.nickname || null,
+      status: "online",
+      statusText: null,
+    };
     ws.channels = new Set();
+
+    ws.channels = new Set();
+
+    const { rows: communityRows } = await db.query(
+      `SELECT community_id FROM community_members WHERE user_id = $1`,
+      [user.id],
+    );
+    ws.communityIds = communityRows.map((r) => r.community_id);
+    ws.userId = user.id;
 
     await redis.sAdd("online_users", String(user.id));
     await broadcastPresence(wss);
 
     ws.on("message", async (raw) => {
       let msg;
-      try { msg = JSON.parse(raw); } catch { return; }
+      try {
+        msg = JSON.parse(raw);
+      } catch {
+        return;
+      }
 
-      const ctx = { ws, msg, user, channels, broadcast, broadcastAll, broadcastDM, broadcastPresence, wss, isRateLimited };
+      const ctx = {
+        ws,
+        msg,
+        user,
+        channels,
+        broadcast,
+        broadcastAll,
+        broadcastDM,
+        broadcastPresence,
+        wss,
+        isRateLimited,
+      };
 
       switch (msg.type) {
-        case "join":              await handleJoin(ctx); break;
-        case "load_more":         await handleLoadMore(ctx); break;
-        case "message":           await handleSendMessage(ctx); break;
-        case "edit_message":      await handleEditMessage(ctx); break;
-        case "delete_message":    await handleDeleteMessage(ctx); break;
-        case "typing":            await handleTyping(ctx); break;
-        case "voice_join":        handleVoiceJoin(ctx); break;
-        case "voice_leave":       handleVoiceLeave(ctx); break;
-        case "react":             await handleReact(ctx); break;
-        case "pin_message":       await handlePin(ctx); break;
-        case "unpin_message":     await handleUnpin(ctx); break;
-        case "set_status":        await handleSetStatus(ctx); break;
-        case "avatar_update":     handleAvatarUpdate(ctx); break;
-        case "ping":              handlePing(ctx); break;
+        case "join":
+          await handleJoin(ctx);
+          break;
+        case "load_more":
+          await handleLoadMore(ctx);
+          break;
+        case "message":
+          await handleSendMessage(ctx);
+          break;
+        case "edit_message":
+          await handleEditMessage(ctx);
+          break;
+        case "delete_message":
+          await handleDeleteMessage(ctx);
+          break;
+        case "typing":
+          await handleTyping(ctx);
+          break;
+        case "voice_join":
+          handleVoiceJoin(ctx);
+          break;
+        case "voice_leave":
+          handleVoiceLeave(ctx);
+          break;
+        case "react":
+          await handleReact(ctx);
+          break;
+        case "pin_message":
+          await handlePin(ctx);
+          break;
+        case "unpin_message":
+          await handleUnpin(ctx);
+          break;
+        case "set_status":
+          await handleSetStatus(ctx);
+          break;
+        case "avatar_update":
+          handleAvatarUpdate(ctx);
+          break;
+        case "ping":
+          handlePing(ctx);
+          break;
       }
 
       // Send voice state after join
       if (msg.type === "join") {
         const voiceState = getVoiceState();
         if (Object.keys(voiceState).length > 0) {
-          ws.send(JSON.stringify({ type: "voice_state", channels: voiceState }));
+          ws.send(
+            JSON.stringify({ type: "voice_state", channels: voiceState }),
+          );
         }
       }
     });
@@ -177,7 +277,12 @@ export async function initWebSocket(server) {
       if (ws.voiceChannel) {
         const channelId = ws.voiceChannel;
         channels.get(`voice:${channelId}`)?.delete(ws);
-        broadcastAll(wss, { type: "voice_presence_update", channelId, username: user.username, action: "leave" });
+        broadcastAll(wss, {
+          type: "voice_presence_update",
+          channelId,
+          username: user.username,
+          action: "leave",
+        });
       }
       await redis.sRem("online_users", String(user.id));
       await broadcastPresence(wss);

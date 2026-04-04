@@ -8,7 +8,7 @@ async function getReactions(messageId) {
      WHERE r.message_id = $1
      GROUP BY r.emoji
      ORDER BY MIN(r.created_at)`,
-    [messageId]
+    [messageId],
   );
   return rows;
 }
@@ -20,26 +20,26 @@ export async function handleReact({ msg, user, broadcast, isRateLimited }) {
 
   const { rows: msgRows } = await db.query(
     `SELECT channel_id FROM messages WHERE id = $1`,
-    [messageId]
+    [messageId],
   );
   if (!msgRows[0]) return;
   const channelId = msgRows[0].channel_id;
 
   const { rows: existing } = await db.query(
     `SELECT id FROM reactions WHERE message_id = $1 AND user_id = $2 AND emoji = $3`,
-    [messageId, user.id, emoji]
+    [messageId, user.id, emoji],
   );
 
   if (existing.length > 0) {
     await db.query(
       `DELETE FROM reactions WHERE message_id = $1 AND user_id = $2 AND emoji = $3`,
-      [messageId, user.id, emoji]
+      [messageId, user.id, emoji],
     );
   } else {
     await db.query(
       `INSERT INTO reactions (message_id, user_id, emoji) VALUES ($1, $2, $3)
        ON CONFLICT (message_id, user_id, emoji) DO NOTHING`,
-      [messageId, user.id, emoji]
+      [messageId, user.id, emoji],
     );
   }
 

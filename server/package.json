@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@vitest/ui": "^1.6.1",
+    "prettier": "3.8.1",
     "supertest": "^7.2.2",
     "vitest": "^1.6.1"
   }

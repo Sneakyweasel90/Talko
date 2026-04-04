@@ -8,7 +8,11 @@ export async function handleSetStatus({ ws, msg, broadcastPresence, wss }) {
 
 export function handleAvatarUpdate({ msg, user, broadcastAll, wss }) {
   const { avatar } = msg;
-  broadcastAll(wss, { type: "avatar_update", userId: user.id, avatar: avatar || null });
+  broadcastAll(wss, {
+    type: "avatar_update",
+    userId: user.id,
+    avatar: avatar || null,
+  });
 }
 
 export function handlePing({ ws }) {

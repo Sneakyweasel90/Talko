@@ -5,7 +5,8 @@ import GifPicker from "../overlays/GifPicker";
 
 interface Props {
   send: (msg: object) => void;
-  channel: string;
+  channel: number | string | null;
+  communityId: number | null;
   replyTo: GroupedMessage | null;
   onCancelReply: () => void;
   allUsers?: { id: number; username: string }[];
@@ -45,6 +46,7 @@ async function compressImage(file: File): Promise<string> {
 export default function MessageInput({
   send,
   channel,
+  communityId,
   replyTo,
   onCancelReply,
   allUsers = [],
@@ -147,7 +149,7 @@ export default function MessageInput({
     setText(val);
     parseMention(val, e.target.selectionStart ?? val.length);
     if (!typingRef.current) {
-      send({ type: "typing", channelId: channel });
+      send({ type: "typing", channelId: channel, communityId });
       typingRef.current = true;
       setTimeout(() => {
         typingRef.current = false;
@@ -178,6 +180,7 @@ export default function MessageInput({
       send({
         type: "message",
         channelId: channel,
+        communityId,
         content: `[img]${imagePreview}`,
         replyToId: replyTo?.id ?? null,
       });
@@ -187,6 +190,7 @@ export default function MessageInput({
       send({
         type: "message",
         channelId: channel,
+        communityId,
         content: text.trim(),
         replyToId: replyTo?.id ?? null,
       });
@@ -368,9 +372,7 @@ export default function MessageInput({
             ref={inputRef}
             className={styles.textInput}
             placeholder={
-              replyTo
-                ? `reply to ${replyTo.username}...`
-                : `transmit to #${channel}...`
+              replyTo ? `reply to ${replyTo.username}...` : `transmit...`
             }
             value={text}
             onChange={handleChange}

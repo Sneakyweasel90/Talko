@@ -7,8 +7,8 @@ import type { OnlineUser, DMConversation, UserStatus } from "../../types";
 import styles from "./Sidebar.module.css";
 
 interface Props {
-  channel: string;
-  setChannel: (c: string) => void;
+  channel: number | null;
+  setChannel: (id: number, name: string) => void;
   unreadCounts: Record<string, number>;
   voiceChannel: string | null;
   joinVoice: (c: string) => void;
@@ -54,6 +54,7 @@ interface Props {
   onRegisterRefetchChannels?: (fn: () => void) => void;
   mutedChannels: Set<string>;
   onToggleMute: (channel: string) => void;
+  communityId: number | null;
 }
 
 export default function Sidebar({
@@ -104,6 +105,7 @@ export default function Sidebar({
   onRegisterRefetchChannels,
   mutedChannels,
   onToggleMute,
+  communityId,
 }: Props) {
   const { theme } = useTheme();
   const {
@@ -121,7 +123,13 @@ export default function Sidebar({
     cancelCreate,
     afkChannel,
     refetch,
-  } = useChannels(token);
+  } = useChannels(token, communityId);
+
+  useEffect(() => {
+    if (channel === null && textChannels.length > 0) {
+      setChannel(textChannels[0].id, textChannels[0].name);
+    }
+  }, [textChannels, channel]);
 
   useEffect(() => {
     onTextChannelNamesChange?.(textChannels.map((c) => c.name));

@@ -14,14 +14,16 @@ function dmChannelId(a, b) {
 router.post("/open", requireAuth, async (req, res) => {
   const myId = req.user.id;
   const { userId } = req.body;
-  if (!userId || userId === myId) return res.status(400).json({ error: "Invalid user" });
+  if (!userId || userId === myId)
+    return res.status(400).json({ error: "Invalid user" });
 
   const otherId = parseInt(userId);
   if (isNaN(otherId)) return res.status(400).json({ error: "Invalid user id" });
 
   // Verify other user exists
   const { rows: userRows } = await db.query(
-    `SELECT id, username, nickname, avatar FROM users WHERE id = $1`, [otherId]
+    `SELECT id, username, nickname, avatar FROM users WHERE id = $1`,
+    [otherId],
   );
   if (!userRows[0]) return res.status(404).json({ error: "User not found" });
 
@@ -33,7 +35,7 @@ router.post("/open", requireAuth, async (req, res) => {
   await db.query(
     `INSERT INTO dm_conversations (user1_id, user2_id) VALUES ($1, $2)
      ON CONFLICT (user1_id, user2_id) DO NOTHING`,
-    [u1, u2]
+    [u1, u2],
   );
 
   res.json({
@@ -67,11 +69,11 @@ router.get("/conversations", requireAuth, async (req, res) => {
      JOIN users u ON u.id = CASE WHEN dc.user1_id = $1 THEN dc.user2_id ELSE dc.user1_id END
      WHERE dc.user1_id = $1 OR dc.user2_id = $1
      ORDER BY last_message_at DESC NULLS LAST`,
-    [myId]
+    [myId],
   );
 
   // Add channel_id to each row
-  const conversations = rows.map(r => ({
+  const conversations = rows.map((r) => ({
     ...r,
     channelId: dmChannelId(myId, r.other_user_id),
   }));
@@ -82,13 +84,14 @@ router.get("/conversations", requireAuth, async (req, res) => {
 // POST /api/dm/read — mark a DM channel as read
 router.post("/read", requireAuth, async (req, res) => {
   const { channelId } = req.body;
-  if (!channelId?.startsWith("dm:")) return res.status(400).json({ error: "Invalid channel" });
+  if (!channelId?.startsWith("dm:"))
+    return res.status(400).json({ error: "Invalid channel" });
 
   await db.query(
     `INSERT INTO dm_last_read (user_id, dm_channel_id, last_read_at)
      VALUES ($1, $2, NOW())
      ON CONFLICT (user_id, dm_channel_id) DO UPDATE SET last_read_at = NOW()`,
-    [req.user.id, channelId]
+    [req.user.id, channelId],
   );
 
   res.json({ ok: true });

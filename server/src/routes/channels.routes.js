@@ -8,21 +8,21 @@ const router = express.Router();
 // GET all channels
 router.get("/", requireAuth, async (req, res) => {
   const { rows } = await db.query(
-    `SELECT id, name, type, created_by, created_at, is_afk FROM channels ORDER BY type, name`
+    `SELECT id, name, type, created_by, created_at, is_afk FROM channels ORDER BY type, name`,
   );
   res.json(rows);
 });
 
 // POST /api/channels/read — mark a text channel as read
 router.post("/read", requireAuth, async (req, res) => {
-  const { channelName } = req.body;
-  if (!channelName) return res.status(400).json({ error: "Missing channelName" });
+  const { channelId } = req.body;
+  if (!channelId) return res.status(400).json({ error: "Missing channelId" });
 
   await db.query(
-    `INSERT INTO channel_last_read (user_id, channel_name, last_read_at)
+    `INSERT INTO channel_last_read (user_id, channel_id, last_read_at)
      VALUES ($1, $2, NOW())
-     ON CONFLICT (user_id, channel_name) DO UPDATE SET last_read_at = NOW()`,
-    [req.user.id, channelName]
+     ON CONFLICT (user_id, channel_id) DO UPDATE SET last_read_at = NOW()`,
+    [req.user.id, channelId],
   );
   res.json({ ok: true });
 });
@@ -37,21 +37,22 @@ router.get("/:name/pins", requireAuth, async (req, res) => {
      LEFT JOIN users u ON u.id = pm.pinned_by
      WHERE pm.channel_name = $1
      ORDER BY pm.pinned_at DESC`,
-    [req.params.name]
+    [req.params.name],
   );
   res.json(rows);
 });
 
 // POST /api/channels/:name/pins — pin a message (admin only)
 router.post("/:name/pins", requireAuth, async (req, res) => {
-  if (req.user.role !== "admin") return res.status(403).json({ error: "Admins only" });
+  if (req.user.role !== "admin")
+    return res.status(403).json({ error: "Admins only" });
   const { messageId } = req.body;
   if (!messageId) return res.status(400).json({ error: "Missing messageId" });
   try {
     await db.query(
       `INSERT INTO pinned_messages (channel_name, message_id, pinned_by)
        VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-      [req.params.name, messageId, req.user.id]
+      [req.params.name, messageId, req.user.id],
     );
     res.json({ ok: true });
   } catch {
@@ -61,10 +62,11 @@ router.post("/:name/pins", requireAuth, async (req, res) => {
 
 // DELETE /api/channels/:name/pins/:messageId — unpin (admin only)
 router.delete("/:name/pins/:messageId", requireAuth, async (req, res) => {
-  if (req.user.role !== "admin") return res.status(403).json({ error: "Admins only" });
+  if (req.user.role !== "admin")
+    return res.status(403).json({ error: "Admins only" });
   await db.query(
     `DELETE FROM pinned_messages WHERE channel_name = $1 AND message_id = $2`,
-    [req.params.name, req.params.messageId]
+    [req.params.name, req.params.messageId],
   );
   res.json({ ok: true });
 });
@@ -74,41 +76,54 @@ router.post("/", requireAuth, async (req, res) => {
   const { name, type = "text" } = req.body;
   if (!name) return res.status(400).json({ error: "Channel name required" });
 
-  const clean = name.toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 50);
-  const finalName = type === "voice" ? `voice-${clean.replace(/^voice-/, "")}` : clean;
+  const clean = name
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .slice(0, 50);
+  const finalName =
+    type === "voice" ? `voice-${clean.replace(/^voice-/, "")}` : clean;
 
   try {
     const { rows } = await db.query(
       `INSERT INTO channels (name, type, created_by) VALUES ($1, $2, $3) RETURNING *`,
-      [finalName, type, req.user.id]
+      [finalName, type, req.user.id],
     );
-      const wss = getWss();
-      if (wss) {
-        for (const client of wss.clients) {
-          if (client.readyState === 1) client.send(JSON.stringify({ type: "channel_created" }));
-        }
+    const wss = getWss();
+    if (wss) {
+      for (const client of wss.clients) {
+        if (client.readyState === 1)
+          client.send(JSON.stringify({ type: "channel_created" }));
       }
+    }
     res.status(201).json(rows[0]);
   } catch (err) {
-    if (err.code === "23505") return res.status(400).json({ error: "Channel already exists" });
+    if (err.code === "23505")
+      return res.status(400).json({ error: "Channel already exists" });
     res.status(500).json({ error: "Server error" });
   }
 });
 
-
-
 // DELETE a channel (only creator or admin can delete — for now just creator)
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { rows } = await db.query(
-    `SELECT * FROM channels WHERE id = $1`, [req.params.id]
-  );
+  const { rows } = await db.query(`SELECT * FROM channels WHERE id = $1`, [
+    req.params.id,
+  ]);
   const ch = rows[0];
   if (!ch) return res.status(404).json({ error: "Not found" });
   if (ch.created_by !== req.user.id)
-    return res.status(403).json({ error: "Only the channel creator can delete it" });
+    return res
+      .status(403)
+      .json({ error: "Only the channel creator can delete it" });
 
-  const defaults = ["general", "random", "yakking", "voice-general", "voice-chill"];
-  if (ch.is_afk) return res.status(403).json({ error: "Cannot delete the AFK channel" });
+  const defaults = [
+    "general",
+    "random",
+    "yakking",
+    "voice-general",
+    "voice-chill",
+  ];
+  if (ch.is_afk)
+    return res.status(403).json({ error: "Cannot delete the AFK channel" });
   if (defaults.includes(ch.name))
     return res.status(403).json({ error: "Cannot delete default channels" });
 
@@ -117,14 +132,12 @@ router.delete("/:id", requireAuth, async (req, res) => {
   const wss = getWss();
   if (wss) {
     for (const client of wss.clients) {
-      if (client.readyState === 1) client.send(JSON.stringify({ type: "channel_deleted" }));
+      if (client.readyState === 1)
+        client.send(JSON.stringify({ type: "channel_deleted" }));
     }
   }
 
   res.json({ ok: true });
 });
-
-
-
 
 export default router;

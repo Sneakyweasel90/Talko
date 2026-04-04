@@ -47,7 +47,7 @@ function CreateChannelInput({
 interface ChannelListProps {
   textChannels: Channel[];
   voiceChannels: Channel[];
-  activeChannel: string;
+  activeChannel: number | null; // now an ID
   voiceChannel: string | null;
   participants: string[];
   username: string;
@@ -55,9 +55,9 @@ interface ChannelListProps {
   creating: boolean;
   showCreateText: boolean;
   showCreateVoice: boolean;
-  unreadCounts: Record<string, number>;
+  unreadCounts: Record<string, number>; // keyed by channel id as string
   voiceOccupancy: Record<string, string[]>;
-  onSelectChannel: (name: string) => void;
+  onSelectChannel: (id: number, name: string) => void;
   onJoinVoice: (name: string) => void;
   onLeaveVoice: () => void;
   onDeleteChannel: (id: number, e: React.MouseEvent) => void;
@@ -110,6 +110,7 @@ export default function ChannelList({
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
+    channelId: number;
     channelName: string;
   } | null>(null);
 
@@ -150,20 +151,21 @@ export default function ChannelList({
       )}
 
       {textChannels.map((ch) => {
-        const isActive = ch.name === activeChannel;
+        const isActive = ch.id === activeChannel;
         const muted = mutedChannels.has(ch.name);
-        const unread = muted ? 0 : (unreadCounts[ch.name] ?? 0);
+        const unread = muted ? 0 : (unreadCounts[String(ch.id)] ?? 0);
         const hasUnread = unread > 0 && !isActive;
-        const hasMention = !muted && mentionedChannels.has(ch.name);
+        const hasMention = !muted && mentionedChannels.has(String(ch.id));
         return (
           <div
             key={ch.id}
-            onClick={() => onSelectChannel(ch.name)}
+            onClick={() => onSelectChannel(ch.id, ch.name)}
             onContextMenu={(e) => {
               e.preventDefault();
               setContextMenu({
                 x: e.clientX,
                 y: e.clientY,
+                channelId: ch.id,
                 channelName: ch.name,
               });
             }}
@@ -338,6 +340,7 @@ export default function ChannelList({
           </div>
         );
       })}
+
       {contextMenu && (
         <div
           className={styles.contextMenu}

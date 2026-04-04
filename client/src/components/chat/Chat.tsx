@@ -25,12 +25,15 @@ import styles from "./Chat.module.css";
 import { useDMState } from "../../hooks/useDMState";
 import { usePopover } from "../../hooks/usePopover";
 import { useMutedChannels } from "../../hooks/useMutedChannels";
+import { useCommunities } from "../../hooks/useCommunities";
+import CommunitySwitcher from "../community/CommunitySwitcher";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();
   const { resolve, load, nicknames } = useLocalNicknames();
+  const { mutedChannels, toggleMute } = useMutedChannels(user!.token);
   const { unreadCounts, handleUnreadMessage, markChannelRead } =
-    useUnreadChannels(user!.token);
+    useUnreadChannels(user!.token, mutedChannels);
   const {
     onlineUsers,
     voiceOccupancy,
@@ -39,8 +42,17 @@ export default function Chat() {
     updateAvatarMap,
   } = usePresence();
   const { popover, openPopover, closePopover } = usePopover();
+  const {
+    communities,
+    activeCommunityId,
+    activeCommunity,
+    switchCommunity,
+    addCommunity,
+    removeCommunity,
+  } = useCommunities(user!.token);
 
-  const [channel, setChannel] = useState("general");
+  const [channel, setChannel] = useState<number | null>(null);
+  const [channelName, setChannelName] = useState<string>("");
   const [showSearch, setShowSearch] = useState(false);
   const [pickerMsgId, setPickerMsgId] = useState<number | null>(null);
   const [hoveredMsgId, setHoveredMsgId] = useState<number | null>(null);
@@ -53,11 +65,18 @@ export default function Chat() {
   );
 
   const textChannelNamesRef = useRef<string[]>([]);
-  const currentChannelRef = useRef(channel);
+  const currentChannelRef = useRef<number | string | null>(null);
   const userRef = useRef(user);
   const sendRef = useRef<(data: object) => void>(() => {});
   const sendViaRef = useCallback((data: object) => sendRef.current(data), []);
-  const { mutedChannels, toggleMute } = useMutedChannels(user!.token);
+
+  const handleSwitchCommunity = useCallback(
+    (id: number) => {
+      switchCommunity(id);
+      setChannel(null);
+    },
+    [switchCommunity],
+  );
 
   useEffect(() => {
     userRef.current = user;
@@ -103,6 +122,7 @@ export default function Chat() {
     clearMention,
   } = useMessages({
     channel,
+    communityId: activeCommunityId,
     send: sendViaRef,
     currentUserId: user!.id,
     currentChannelRef,
@@ -155,10 +175,11 @@ export default function Chat() {
   });
 
   const handleSelectChannel = useCallback(
-    (name: string) => {
-      setChannel(name);
-      markChannelRead(name);
-      clearMention(name);
+    (id: number, name: string) => {
+      setChannel(id);
+      setChannelName(name);
+      markChannelRead(String(id));
+      clearMention(String(id));
     },
     [markChannelRead, clearMention],
   );
@@ -218,6 +239,14 @@ export default function Chat() {
     <div className={styles.root}>
       <TitleBar />
       <div className={styles.body}>
+        <CommunitySwitcher
+          communities={communities}
+          activeCommunityId={activeCommunityId}
+          onSwitch={handleSwitchCommunity}
+          onCommunityCreated={addCommunity}
+          onCommunityRemoved={removeCommunity}
+          userId={user!.id}
+        />
         <ResizableSidebar>
           <Sidebar
             mentionedChannels={mentionedChannels}
@@ -278,6 +307,7 @@ export default function Chat() {
             activeSpeakers={new Set()}
             mutedChannels={mutedChannels}
             onToggleMute={toggleMute}
+            communityId={activeCommunityId}
           />
         </ResizableSidebar>
 
@@ -291,6 +321,8 @@ export default function Chat() {
             send({ type: "unpin_message", messageId, channelId: channel })
           }
           channel={channel}
+          channelName={channelName}
+          communityId={activeCommunityId}
           activeTab={activeTab}
           activeDMConv={activeDMConv}
           onlineUsers={onlineUsers}
@@ -369,8 +401,8 @@ export default function Chat() {
       {showSearch && (
         <SearchOverlay
           token={user!.token}
-          currentChannel={channel}
-          onJumpTo={(channelId) => setChannel(channelId)}
+          currentChannel={String(channel ?? "")}
+          onJumpTo={(channelId) => setChannel(Number(channelId))}
           onClose={() => setShowSearch(false)}
         />
       )}

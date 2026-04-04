@@ -9,7 +9,9 @@ import styles from "./ChatMain.module.css";
 import { useTheme } from "../../context/ThemeContext";
 
 interface Props {
-  channel: string;
+  channel: number | null;
+  channelName: string;
+  communityId: number | null;
   activeTab: "channels" | "dms";
   activeDMConv: DMConversation | null;
   onlineUsers: OnlineUser[];
@@ -45,6 +47,7 @@ interface Props {
 
 export default function ChatMain({
   channel,
+  channelName,
   activeTab,
   activeDMConv,
   onlineUsers,
@@ -76,6 +79,7 @@ export default function ChatMain({
   replyTo,
   onCancelReply,
   allUsers,
+  communityId,
 }: Props) {
   const { chatBg, chatBgOpacity } = useTheme();
   return (
@@ -99,6 +103,7 @@ export default function ChatMain({
           token={token}
           isAdmin={isAdmin}
           onUnpin={onUnpin}
+          channelName={channelName}
         />
       )}
 
@@ -136,6 +141,7 @@ export default function ChatMain({
         channel={
           activeTab === "dms" && activeDMConv ? activeDMConv.channelId : channel
         }
+        communityId={communityId}
         replyTo={replyTo}
         onCancelReply={onCancelReply}
         onlineUsers={onlineUsers}

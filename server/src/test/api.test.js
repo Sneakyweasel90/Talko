@@ -27,47 +27,39 @@ describe("Auth API", () => {
   });
 
   it("rejects registration with invalid invite code", async () => {
-    const res = await request(app)
-      .post("/api/auth/register")
-      .send({
-        username: "testuser123",
-        password: "password123",
-        inviteCode: "BADINVITE",
-      });
+    const res = await request(app).post("/api/auth/register").send({
+      username: "testuser123",
+      password: "password123",
+      inviteCode: "BADINVITE",
+    });
     expect(res.status).toBe(403);
     expect(res.body.error).toMatch(/invalid/i);
   });
 
   it("rejects registration with short password", async () => {
-    const res = await request(app)
-      .post("/api/auth/register")
-      .send({
-        username: "testuser123",
-        password: "123",
-        inviteCode: process.env.INVITE_CODE,
-      });
+    const res = await request(app).post("/api/auth/register").send({
+      username: "testuser123",
+      password: "123",
+      inviteCode: process.env.INVITE_CODE,
+    });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/6 characters/i);
   });
 
   it("rejects registration with invalid username", async () => {
-    const res = await request(app)
-      .post("/api/auth/register")
-      .send({
-        username: "ab",
-        password: "password123",
-        inviteCode: process.env.INVITE_CODE,
-      });
+    const res = await request(app).post("/api/auth/register").send({
+      username: "ab",
+      password: "password123",
+      inviteCode: process.env.INVITE_CODE,
+    });
     expect(res.status).toBe(400);
   });
 
   it("logs in with valid credentials", async () => {
-    const res = await request(app)
-      .post("/api/auth/login")
-      .send({
-        username: process.env.TEST_ADMIN_USER,
-        password: process.env.TEST_ADMIN_PASS,
-      });
+    const res = await request(app).post("/api/auth/login").send({
+      username: process.env.TEST_ADMIN_USER,
+      password: process.env.TEST_ADMIN_PASS,
+    });
 
     if (res.status === 200) {
       adminToken = res.body.token;

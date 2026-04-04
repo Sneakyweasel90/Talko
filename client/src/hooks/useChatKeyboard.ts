@@ -5,7 +5,7 @@ interface UseChatKeyboardOptions {
   textChannelNamesRef: React.MutableRefObject<string[]>;
   currentChannelRef: React.MutableRefObject<string>;
   onOpenSearch: () => void;
-  onSelectChannel: (name: string) => void;
+  onSelectChannel: (id: number) => void;
 }
 
 export function useChatKeyboard({

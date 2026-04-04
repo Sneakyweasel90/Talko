@@ -9,16 +9,17 @@ export function useUnreadChannels(token: string, mutedChannels: Set<string>) {
     (data: {
       type: string;
       counts?: Record<string, number>;
-      channelName?: string;
+      channelId?: number;
     }) => {
       if (data.type === "channel_unread_counts" && data.counts) {
         setUnreadCounts(data.counts);
       }
-      if (data.type === "channel_unread_increment" && data.channelName) {
-        if (mutedChannels.has(data.channelName)) return;
+      if (data.type === "channel_unread_increment" && data.channelId) {
+        const key = String(data.channelId);
+        if (mutedChannels.has(key)) return;
         setUnreadCounts((prev) => ({
           ...prev,
-          [data.channelName!]: (prev[data.channelName!] ?? 0) + 1,
+          [key]: (prev[key] ?? 0) + 1,
         }));
       }
     },
@@ -26,17 +27,18 @@ export function useUnreadChannels(token: string, mutedChannels: Set<string>) {
   );
 
   const markChannelRead = useCallback(
-    async (channelName: string) => {
+    async (channelId: string) => {
+      const key = String(channelId);
       setUnreadCounts((prev) => {
-        if (!prev[channelName]) return prev;
+        if (!prev[key]) return prev;
         const next = { ...prev };
-        delete next[channelName];
+        delete next[key];
         return next;
       });
       try {
         await axios.post(
           `${config.HTTP}/api/channels/read`,
-          { channelName },
+          { channelId: Number(channelId) },
           { headers: { Authorization: `Bearer ${token}` } },
         );
       } catch {

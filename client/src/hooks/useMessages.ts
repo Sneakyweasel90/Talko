@@ -2,10 +2,11 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import type { Message, GroupedMessage, ServerMessage } from "../types";
 
 interface UseMessagesOptions {
-  channel: string;
+  channel: number | string | null; // number for regular channels, "dm:xxx" for DMs
+  communityId: number | null;
   send: (msg: object) => void;
   currentUserId: number;
-  currentChannelRef: React.MutableRefObject<string>;
+  currentChannelRef: React.MutableRefObject<number | string | null>;
   userRef: React.MutableRefObject<{
     id: number;
     username: string;
@@ -16,6 +17,7 @@ interface UseMessagesOptions {
 
 export function useMessages({
   channel,
+  communityId,
   send,
   currentUserId,
   currentChannelRef,
@@ -77,14 +79,15 @@ export function useMessages({
       }
 
       if (data.type === "mention") {
-        if (mutedChannels.has(data.channelId)) return;
-        setMentionedChannels((prev) => new Set([...prev, data.channelId]));
-        const isDM = data.channelId.startsWith("dm:");
+        if (mutedChannels.has(String(data.channelId))) return;
+        setMentionedChannels(
+          (prev) => new Set([...prev, String(data.channelId)]),
+        );
+        const isDM = String(data.channelId).startsWith("dm:");
         const title = isDM
           ? `${data.senderName} mentioned you in a DM`
-          : `${data.senderName} mentioned you in #${data.channelId}`;
+          : `${data.senderName} mentioned you in a channel`;
         window.electronAPI?.notify(title, data.content);
-        // Also trigger browser notification for web users
         if (
           typeof Notification !== "undefined" &&
           Notification.permission === "granted"
@@ -95,16 +98,18 @@ export function useMessages({
       }
 
       if (data.type === "message") {
-        if (data.message.channel_id === currentChannelRef.current) {
+        const msgChannelId =
+          data.message.channel_db_id ?? data.message.channel_id;
+        const current = currentChannelRef.current;
+        if (msgChannelId == current) {
+          // == intentional: number vs string coercion
           setMessages((prev) => {
             if (prev.find((m) => m.id === data.message.id)) return prev;
             return [...prev, data.message];
           });
-        }
-        // Non-mention messages in other channels — keep existing notify for DMs only
-        else if (
+        } else if (
           data.message.user_id !== currentUserId &&
-          data.message.channel_id.startsWith("dm:")
+          String(data.message.channel_id).startsWith("dm:")
         ) {
           window.electronAPI?.notify(
             `DM from ${data.message.username}`,
@@ -156,13 +161,16 @@ export function useMessages({
 
   // Reset and rejoin when channel changes
   useEffect(() => {
+    if (channel === null) return;
     setMessages([]);
     setHasMore(false);
     setOldestId(null);
     jumpToBottomRef.current = true;
-    const t = setTimeout(() => send({ type: "join", channelId: channel }), 300);
+    const t = setTimeout(() => {
+      send({ type: "join", channelId: channel, communityId });
+    }, 300);
     return () => clearTimeout(t);
-  }, [channel, send]);
+  }, [channel, communityId, send]);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -192,36 +200,39 @@ export function useMessages({
     if (!el) return;
     if (el.scrollTop < 80 && hasMore && !loadingMore && oldestId !== null) {
       setLoadingMore(true);
-      send({ type: "load_more", channelId: channel, beforeId: oldestId });
+      send({
+        type: "load_more",
+        channelId: channel,
+        communityId,
+        beforeId: oldestId,
+      });
     }
-  }, [hasMore, loadingMore, oldestId, channel, send]);
+  }, [hasMore, loadingMore, oldestId, channel, communityId, send]);
 
   const handleReact = useCallback(
     (messageId: number, emoji: string) => {
-      send({ type: "react", messageId, emoji });
+      send({ type: "react", messageId, emoji, communityId });
     },
-    [send],
+    [send, communityId],
   );
 
   const handleEdit = useCallback(
     (messageId: number, content: string) => {
-      send({ type: "edit_message", messageId, content });
+      send({ type: "edit_message", messageId, content, communityId });
     },
-    [send],
+    [send, communityId],
   );
 
   const handleDelete = useCallback(
     (messageId: number) => {
-      send({ type: "delete_message", messageId });
+      send({ type: "delete_message", messageId, communityId });
     },
-    [send],
+    [send, communityId],
   );
 
   const groupedMessages: GroupedMessage[] = messages.reduce<GroupedMessage[]>(
-    (acc, msg, i) => {
-      const prev = messages[i - 1];
-      const isGrouped = false;
-      acc.push({ ...msg, isGrouped });
+    (acc, msg) => {
+      acc.push({ ...msg, isGrouped: false });
       return acc;
     },
     [],

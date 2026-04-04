@@ -27,6 +27,7 @@ import { usePopover } from "../../hooks/usePopover";
 import { useMutedChannels } from "../../hooks/useMutedChannels";
 import CommunitySwitcher from "../community/CommunitySwitcher";
 import { useCommunities } from "../../hooks/useCommunities";
+import WelcomeScreen from "../community/WelcomeScreen";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();
@@ -44,6 +45,7 @@ export default function Chat() {
   const { popover, openPopover, closePopover } = usePopover();
   const {
     communities,
+    loading,
     activeCommunityId,
     activeCommunity,
     switchCommunity,
@@ -238,129 +240,136 @@ export default function Chat() {
   return (
     <div className={styles.root}>
       <TitleBar />
-      <div className={styles.body}>
-        <CommunitySwitcher
-          communities={communities}
-          activeCommunityId={activeCommunityId}
-          onSwitch={handleSwitchCommunity}
+      {loading ? null : communities.length === 0 ? (
+        <WelcomeScreen
+          username={user!.nickname ?? user!.username}
           onCommunityCreated={addCommunity}
-          onCommunityRemoved={removeCommunity}
-          userId={user!.id}
         />
-        <ResizableSidebar>
-          <Sidebar
-            mentionedChannels={mentionedChannels}
-            isScreenSharing={voice.isScreenSharing}
-            onStartScreenShare={voice.startScreenShare}
-            onStopScreenShare={voice.stopScreenShare}
-            joinAfk={voice.joinAfk}
-            inVoice={voice.inVoice}
-            setMuted={voice.setMuted}
-            setAllParticipantsDeafened={voice.setAllParticipantsDeafened}
-            channel={channel}
-            setChannel={handleSelectChannel}
-            unreadCounts={unreadCounts}
-            voiceChannel={voice.voiceChannel}
-            participants={voice.participants}
-            joinVoice={voice.joinVoice}
-            leaveVoice={voice.leaveVoice}
-            logout={handleLogout}
-            username={user!.username}
-            nickname={user!.nickname ?? null}
+      ) : (
+        <div className={styles.body}>
+          <CommunitySwitcher
+            communities={communities}
+            activeCommunityId={activeCommunityId}
+            onSwitch={handleSwitchCommunity}
+            onCommunityCreated={addCommunity}
+            onCommunityRemoved={removeCommunity}
             userId={user!.id}
-            token={user!.token}
-            onlineUsers={onlineUsers}
-            onSearchOpen={() => setShowSearch(true)}
-            role={user!.role ?? "user"}
-            customRoleName={user!.customRoleName ?? null}
-            avatar={user!.avatar ?? null}
-            onNicknameChange={updateNickname}
-            onAvatarChange={(avatar) => {
-              updateAvatar(avatar);
-              if (user?.id) updateAvatarMap(user.id, avatar);
-            }}
-            voiceOccupancy={voiceOccupancy}
-            dmConversations={dmConversations}
-            dmLoading={false}
-            activeDMChannel={activeDMConv?.channelId ?? null}
-            totalUnread={totalUnread}
-            activeTab={activeTab}
-            onTabChange={(tab) => {
-              setActiveTab(tab);
-              if (tab === "channels") handleTabToChannels(channel);
-              if (tab === "dms") handleTabToDMs(channel);
-            }}
-            onSelectDM={(conv) => {
-              setActiveDMConv(conv);
-              handleSelectDM(conv);
-            }}
-            onTextChannelNamesChange={(names) => {
-              textChannelNamesRef.current = names;
-            }}
-            currentStatus={myStatus}
-            currentStatusText={myStatusText}
-            onStatusChange={handleStatusChange}
-            participantVolumes={voice.participantVolumes}
-            selfVolume={voice.selfVolume}
-            setParticipantVolume={voice.setParticipantVolume}
-            setSelfVolume={voice.setSelfVolume}
-            activeSpeakers={new Set()}
-            mutedChannels={mutedChannels}
-            onToggleMute={toggleMute}
-            communityId={activeCommunityId}
           />
-        </ResizableSidebar>
+          <ResizableSidebar>
+            <Sidebar
+              mentionedChannels={mentionedChannels}
+              isScreenSharing={voice.isScreenSharing}
+              onStartScreenShare={voice.startScreenShare}
+              onStopScreenShare={voice.stopScreenShare}
+              joinAfk={voice.joinAfk}
+              inVoice={voice.inVoice}
+              setMuted={voice.setMuted}
+              setAllParticipantsDeafened={voice.setAllParticipantsDeafened}
+              channel={channel}
+              setChannel={handleSelectChannel}
+              unreadCounts={unreadCounts}
+              voiceChannel={voice.voiceChannel}
+              participants={voice.participants}
+              joinVoice={voice.joinVoice}
+              leaveVoice={voice.leaveVoice}
+              logout={handleLogout}
+              username={user!.username}
+              nickname={user!.nickname ?? null}
+              userId={user!.id}
+              token={user!.token}
+              onlineUsers={onlineUsers}
+              onSearchOpen={() => setShowSearch(true)}
+              role={user!.role ?? "user"}
+              customRoleName={user!.customRoleName ?? null}
+              avatar={user!.avatar ?? null}
+              onNicknameChange={updateNickname}
+              onAvatarChange={(avatar) => {
+                updateAvatar(avatar);
+                if (user?.id) updateAvatarMap(user.id, avatar);
+              }}
+              voiceOccupancy={voiceOccupancy}
+              dmConversations={dmConversations}
+              dmLoading={false}
+              activeDMChannel={activeDMConv?.channelId ?? null}
+              totalUnread={totalUnread}
+              activeTab={activeTab}
+              onTabChange={(tab) => {
+                setActiveTab(tab);
+                if (tab === "channels") handleTabToChannels(channel);
+                if (tab === "dms") handleTabToDMs(channel);
+              }}
+              onSelectDM={(conv) => {
+                setActiveDMConv(conv);
+                handleSelectDM(conv);
+              }}
+              onTextChannelNamesChange={(names) => {
+                textChannelNamesRef.current = names;
+              }}
+              currentStatus={myStatus}
+              currentStatusText={myStatusText}
+              onStatusChange={handleStatusChange}
+              participantVolumes={voice.participantVolumes}
+              selfVolume={voice.selfVolume}
+              setParticipantVolume={voice.setParticipantVolume}
+              setSelfVolume={voice.setSelfVolume}
+              activeSpeakers={new Set()}
+              mutedChannels={mutedChannels}
+              onToggleMute={toggleMute}
+              communityId={activeCommunityId}
+            />
+          </ResizableSidebar>
 
-        <ChatMain
-          token={user!.token}
-          isAdmin={user!.role === "admin"}
-          onPin={(messageId) =>
-            send({ type: "pin_message", messageId, channelId: channel })
-          }
-          onUnpin={(messageId) =>
-            send({ type: "unpin_message", messageId, channelId: channel })
-          }
-          channel={channel}
-          channelName={channelName}
-          communityId={activeCommunityId}
-          activeTab={activeTab}
-          activeDMConv={activeDMConv}
-          onlineUsers={onlineUsers}
-          messagesContainerRef={messagesContainerRef}
-          bottomRef={bottomRef}
-          groupedMessages={groupedMessages}
-          loadingMore={loadingMore}
-          hasMore={hasMore}
-          hoveredMsgId={hoveredMsgId}
-          pickerMsgId={pickerMsgId}
-          currentUsername={
-            userRef.current!.nickname || userRef.current!.username
-          }
-          currentUserId={user!.id}
-          avatarMap={avatarMap}
-          onScroll={handleScroll}
-          onHover={setHoveredMsgId}
-          onPickerToggle={setPickerMsgId}
-          onReact={handleReact}
-          onReply={setReplyTo}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onUsernameClick={openPopover}
-          resolveNickname={resolveNickname}
-          typers={typers}
-          send={send}
-          replyTo={replyTo}
-          onCancelReply={() => setReplyTo(null)}
-          allUsers={allUsers}
-        />
+          <ChatMain
+            token={user!.token}
+            isAdmin={user!.role === "admin"}
+            onPin={(messageId) =>
+              send({ type: "pin_message", messageId, channelId: channel })
+            }
+            onUnpin={(messageId) =>
+              send({ type: "unpin_message", messageId, channelId: channel })
+            }
+            channel={channel}
+            channelName={channelName}
+            communityId={activeCommunityId}
+            activeTab={activeTab}
+            activeDMConv={activeDMConv}
+            onlineUsers={onlineUsers}
+            messagesContainerRef={messagesContainerRef}
+            bottomRef={bottomRef}
+            groupedMessages={groupedMessages}
+            loadingMore={loadingMore}
+            hasMore={hasMore}
+            hoveredMsgId={hoveredMsgId}
+            pickerMsgId={pickerMsgId}
+            currentUsername={
+              userRef.current!.nickname || userRef.current!.username
+            }
+            currentUserId={user!.id}
+            avatarMap={avatarMap}
+            onScroll={handleScroll}
+            onHover={setHoveredMsgId}
+            onPickerToggle={setPickerMsgId}
+            onReact={handleReact}
+            onReply={setReplyTo}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onUsernameClick={openPopover}
+            resolveNickname={resolveNickname}
+            typers={typers}
+            send={send}
+            replyTo={replyTo}
+            onCancelReply={() => setReplyTo(null)}
+            allUsers={allUsers}
+          />
 
-        <MemberList
-          onlineUsers={onlineUsers}
-          allUsers={allUsers}
-          currentUserId={user!.id}
-          onUserClick={openPopover}
-        />
-      </div>
+          <MemberList
+            onlineUsers={onlineUsers}
+            allUsers={allUsers}
+            currentUserId={user!.id}
+            onUserClick={openPopover}
+          />
+        </div>
+      )}
 
       {popover && (
         <UserPopover

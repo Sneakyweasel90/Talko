@@ -8,13 +8,18 @@ import { Community } from "../../hooks/useCommunities";
 interface Props {
   onClose: () => void;
   onCreated: (community: Community) => void;
+  initialView?: "choice" | "create" | "join";
 }
 
 type View = "choice" | "create" | "join";
 
-export default function CreateCommunityModal({ onClose, onCreated }: Props) {
+export default function CreateCommunityModal({
+  onClose,
+  onCreated,
+  initialView,
+}: Props) {
   const { user } = useAuth();
-  const [view, setView] = useState<View>("choice");
+  const [view, setView] = useState<View>(initialView ?? "choice");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [inviteCode, setInviteCode] = useState("");

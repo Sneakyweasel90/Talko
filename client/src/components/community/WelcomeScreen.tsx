@@ -9,7 +9,11 @@ interface Props {
   onLogout: () => void;
 }
 
-export default function WelcomeScreen({ username, onCommunityCreated }: Props) {
+export default function WelcomeScreen({
+  username,
+  onCommunityCreated,
+  onLogout,
+}: Props) {
   const [showModal, setShowModal] = useState(false);
   const [modalView, setModalView] = useState<"create" | "join">("create");
 

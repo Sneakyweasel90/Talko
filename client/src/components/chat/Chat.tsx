@@ -244,6 +244,7 @@ export default function Chat() {
         <WelcomeScreen
           username={user!.nickname ?? user!.username}
           onCommunityCreated={addCommunity}
+          onLogout={handleLogout}
         />
       ) : (
         <div className={styles.body}>

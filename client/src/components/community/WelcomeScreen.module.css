@@ -78,3 +78,17 @@
   color: rgba(255, 255, 255, 0.4);
   line-height: 1.5;
 }
+
+.logoutBtn {
+  margin-top: 24px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.logoutBtn:hover {
+  color: rgba(255, 255, 255, 0.7);
+}

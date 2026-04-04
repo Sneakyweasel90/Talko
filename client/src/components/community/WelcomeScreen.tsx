@@ -6,6 +6,7 @@ import styles from "./WelcomeScreen.module.css";
 interface Props {
   username: string;
   onCommunityCreated: (community: Community) => void;
+  onLogout: () => void;
 }
 
 export default function WelcomeScreen({ username, onCommunityCreated }: Props) {
@@ -44,6 +45,9 @@ export default function WelcomeScreen({ username, onCommunityCreated }: Props) {
               setShowModal(true);
             }}
           >
+            <button className={styles.logoutBtn} onClick={onLogout}>
+              Sign out
+            </button>
             <div className={styles.actionIcon}>⊕</div>
             <div className={styles.actionTitle}>Join a Community</div>
             <div className={styles.actionDesc}>

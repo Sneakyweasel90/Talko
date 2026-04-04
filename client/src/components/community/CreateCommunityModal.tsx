@@ -3,7 +3,7 @@ import axios from "axios";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./CreateCommunityModal.module.css";
-import { Community } from "../../hooks/UseCommunities";
+import { Community } from "../../hooks/useCommunities";
 
 interface Props {
   onClose: () => void;

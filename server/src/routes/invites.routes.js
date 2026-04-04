@@ -57,7 +57,7 @@ router.get("/:code", async (req, res) => {
 router.post("/:code/join", async (req, res) => {
   const userId = req.user.id;
 
-  const client = await db.getClient();
+  const client = await db.connect();
   try {
     await client.query("BEGIN");
 

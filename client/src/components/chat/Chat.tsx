@@ -25,8 +25,8 @@ import styles from "./Chat.module.css";
 import { useDMState } from "../../hooks/useDMState";
 import { usePopover } from "../../hooks/usePopover";
 import { useMutedChannels } from "../../hooks/useMutedChannels";
-import { useCommunities } from "../../hooks/useCommunities";
 import CommunitySwitcher from "../community/CommunitySwitcher";
+import { useCommunities } from "../../hooks/useCommunities";
 
 export default function Chat() {
   const { user, logout, updateNickname, updateAvatar } = useAuth();

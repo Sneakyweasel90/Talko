@@ -5,6 +5,7 @@ import ChannelList from "./ChannelList";
 import SidebarFooter from "./SidebarFooter";
 import type { OnlineUser, DMConversation, UserStatus } from "../../types";
 import styles from "./Sidebar.module.css";
+import InviteButton from "./InviteButton";
 
 interface Props {
   channel: number | null;
@@ -158,6 +159,8 @@ export default function Sidebar({
         <span className={styles.searchLabel}>SEARCH</span>
         <span className={styles.searchShortcut}>ctrl+k</span>
       </div>
+
+      <InviteButton communityId={communityId} token={token} />
 
       {/* Channel list */}
       {activeTab === "channels" && (

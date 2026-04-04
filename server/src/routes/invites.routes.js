@@ -171,27 +171,23 @@ router.post("/communities/:id/invites", requireMember, async (req, res) => {
 });
 
 // ─── List invites for a community ────────────────────────────────────────────
-router.get(
-  "/communities/:id/invites",
-  requirePermission("manage_community"),
-  async (req, res) => {
-    try {
-      const result = await db.query(
-        `SELECT ci.*, u.username as created_by_username
+router.get("/communities/:id/invites", requireMember, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT ci.*, u.username as created_by_username
        FROM community_invites ci
        LEFT JOIN users u ON u.id = ci.created_by
        WHERE ci.community_id = $1
        ORDER BY ci.created_at DESC`,
-        [req.params.id],
-      );
+      [req.params.id],
+    );
 
-      res.json(result.rows);
-    } catch (err) {
-      console.error("List invites error:", err);
-      res.status(500).json({ error: "Server error" });
-    }
-  },
-);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("List invites error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 // ─── Delete an invite ─────────────────────────────────────────────────────────
 router.delete(

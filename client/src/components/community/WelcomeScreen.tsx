@@ -49,9 +49,6 @@ export default function WelcomeScreen({
               setShowModal(true);
             }}
           >
-            <button className={styles.logoutBtn} onClick={onLogout}>
-              Sign out
-            </button>
             <div className={styles.actionIcon}>⊕</div>
             <div className={styles.actionTitle}>Join a Community</div>
             <div className={styles.actionDesc}>
@@ -59,6 +56,10 @@ export default function WelcomeScreen({
             </div>
           </div>
         </div>
+
+        <button className={styles.logoutBtn} onClick={onLogout}>
+          Sign out
+        </button>
       </div>
 
       {showModal && (

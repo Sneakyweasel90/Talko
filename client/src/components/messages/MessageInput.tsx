@@ -110,6 +110,14 @@ export default function MessageInput({
     };
   }, []);
 
+  const gifPickerWasOpen = useRef(false);
+  useEffect(() => {
+    if (gifPickerWasOpen.current && !showGifPicker) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+    gifPickerWasOpen.current = showGifPicker;
+  }, [showGifPicker]);
+
   const parseMention = (val: string, cursorPos: number) => {
     const slice = val.slice(0, cursorPos);
     const atIdx = slice.lastIndexOf("@");
@@ -347,6 +355,7 @@ export default function MessageInput({
                 const f = e.target.files?.[0];
                 if (f) handleFile(f);
                 e.target.value = "";
+                setTimeout(() => inputRef.current?.focus(), 50);
               }}
             />
             <button

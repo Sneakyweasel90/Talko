@@ -24,7 +24,6 @@ router.get("/", async (req, res) => {
          u.id as user_id,
          u.username,
          u.avatar,
-         u.status,
          COALESCE(
            json_agg(
              json_build_object('id', cr.id, 'name', cr.name, 'color', cr.color)

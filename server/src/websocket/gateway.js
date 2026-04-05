@@ -111,9 +111,10 @@ async function broadcastPresence(wss) {
   for (const id of liveUserIds) await redis.sAdd("online_users", id);
 
   if (liveUserIds.size === 0) {
-    const payload = JSON.stringify({ type: "presence", users: [] });
     for (const client of wss.clients) {
-      if (client.readyState === WebSocket.OPEN) client.send(payload);
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ type: "presence", users: [] }));
+      }
     }
     return;
   }
@@ -138,9 +139,32 @@ async function broadcastPresence(wss) {
     statusText: statusMap[u.id]?.statusText ?? null,
   }));
 
-  const payload = JSON.stringify({ type: "presence", users: usersWithStatus });
+  const userCommunityMap = new Map();
   for (const client of wss.clients) {
-    if (client.readyState === WebSocket.OPEN) client.send(payload);
+    if (
+      client.readyState === WebSocket.OPEN &&
+      client.user?.id &&
+      client.communityIds
+    ) {
+      userCommunityMap.set(client.user.id, new Set(client.communityIds));
+    }
+  }
+
+  for (const client of wss.clients) {
+    if (client.readyState !== WebSocket.OPEN) continue;
+
+    const clientCommunities = new Set(client.communityIds ?? []);
+
+    const filtered = usersWithStatus.filter((u) => {
+      const theirCommunities = userCommunityMap.get(u.id);
+      if (!theirCommunities) return false;
+      for (const cId of theirCommunities) {
+        if (clientCommunities.has(cId)) return true;
+      }
+      return false;
+    });
+
+    client.send(JSON.stringify({ type: "presence", users: filtered }));
   }
 }
 

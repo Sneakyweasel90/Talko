@@ -72,6 +72,8 @@ export default function Chat() {
   const sendRef = useRef<(data: object) => void>(() => {});
   const sendViaRef = useCallback((data: object) => sendRef.current(data), []);
 
+  const lastFetchedCommunityRef = useRef<number | null>(null);
+
   const handleSwitchCommunity = useCallback(
     (id: number) => {
       switchCommunity(id);
@@ -88,7 +90,7 @@ export default function Chat() {
   }, [channel]);
   useEffect(() => {
     if (user?.token) load(user.token);
-  }, []); // eslint-disable-line
+  }, []);
 
   const resolveNickname = useCallback(
     (userId: number, serverDisplayName: string): string => {
@@ -96,7 +98,7 @@ export default function Chat() {
         return userRef.current?.nickname || serverDisplayName;
       return resolve(userId, serverDisplayName);
     },
-    [resolve, nicknames], // eslint-disable-line
+    [resolve, nicknames],
   );
 
   const {
@@ -225,17 +227,23 @@ export default function Chat() {
         }
       })
       .catch(() => {});
-  }, []); // eslint-disable-line
+  }, []);
 
   useEffect(() => {
-    if (!user?.token) return;
+    if (!user?.token || !activeCommunityId) return;
+    if (lastFetchedCommunityRef.current === activeCommunityId) return;
+    lastFetchedCommunityRef.current = activeCommunityId;
     axios
-      .get(`${config.HTTP}/api/users/all`, {
+      .get(`${config.HTTP}/api/communities/${activeCommunityId}/members`, {
         headers: { Authorization: `Bearer ${user.token}` },
       })
-      .then(({ data }) => setAllUsers(data))
+      .then(({ data }) =>
+        setAllUsers(
+          data.map((m: any) => ({ id: m.user_id, username: m.username })),
+        ),
+      )
       .catch(() => {});
-  }, []); // eslint-disable-line
+  });
 
   return (
     <div className={styles.root}>

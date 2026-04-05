@@ -20,6 +20,7 @@ import SearchOverlay from "../overlays/SearchOverlay";
 import UserPopover from "../overlays/UserPopover";
 import ScreenShareViewer from "../voice/ScreenShareViewer";
 import ScreenPickerModal from "../voice/ScreenPickerModal";
+import ConnectionModal from "../overlays/ConnectionModal";
 import type { GroupedMessage, UserStatus } from "../../types";
 import styles from "./Chat.module.css";
 import { useDMState } from "../../hooks/useDMState";
@@ -134,30 +135,33 @@ export default function Chat() {
     mutedChannels,
   });
 
-  const { send, disconnect } = useWebSocket(user!.token, (data) => {
-    if (handlePresenceMessage(data)) return;
-    if (
-      data.type === "channel_unread_counts" ||
-      data.type === "channel_unread_increment"
-    ) {
-      handleUnreadMessage(data);
-      return;
-    }
-    if (
-      data.type === "message" &&
-      typeof data.message?.channel_id === "string" &&
-      data.message.channel_id.startsWith("dm:")
-    ) {
-      onDMMessage(
-        data.message.channel_id,
-        data.message.content,
-        data.message.user_id,
-        data.message.created_at,
-      );
-      return;
-    }
-    handleMessage(data);
-  });
+  const { send, disconnect, status, reconnect } = useWebSocket(
+    user!.token,
+    (data) => {
+      if (handlePresenceMessage(data)) return;
+      if (
+        data.type === "channel_unread_counts" ||
+        data.type === "channel_unread_increment"
+      ) {
+        handleUnreadMessage(data);
+        return;
+      }
+      if (
+        data.type === "message" &&
+        typeof data.message?.channel_id === "string" &&
+        data.message.channel_id.startsWith("dm:")
+      ) {
+        onDMMessage(
+          data.message.channel_id,
+          data.message.content,
+          data.message.user_id,
+          data.message.created_at,
+        );
+        return;
+      }
+      handleMessage(data);
+    },
+  );
 
   sendRef.current = send;
 
@@ -248,6 +252,7 @@ export default function Chat() {
   return (
     <div className={styles.root}>
       <TitleBar />
+      <ConnectionModal status={status} onRetry={reconnect} />
       {loading ? null : communities.length === 0 ? (
         <WelcomeScreen
           username={user!.nickname ?? user!.username}

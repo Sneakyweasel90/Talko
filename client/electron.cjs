@@ -117,9 +117,10 @@ function createWindow() {
     win.loadFile(path.join(__dirname, "dist/index.html"));
   }
 
+  // Allow media (microphone/camera) and notifications. Everything else denied.
   win.webContents.session.setPermissionRequestHandler(
     (wc, permission, callback) => {
-      callback(permission === "media");
+      callback(permission === "media" || permission === "notifications");
     },
   );
   win.webContents.setWindowOpenHandler(({ url }) => {

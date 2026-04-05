@@ -150,11 +150,4 @@ router.put("/:targetId/local-nickname", requireAuth, async (req, res) => {
   res.json({ ok: true, targetId, nickname: nickname || null });
 });
 
-router.get("/all", requireAuth, async (req, res) => {
-  const { rows } = await db.query(
-    `SELECT id, COALESCE(nickname, username) AS username FROM users WHERE banned_at IS NULL ORDER BY username ASC`,
-  );
-  res.json(rows);
-});
-
 export default router;

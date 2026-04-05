@@ -82,8 +82,13 @@ function initIpc(getWin, log) {
 
   ipcMain.on("notify", (event, { title, body }) => {
     const win = getWin();
-    if (win && !win.isFocused() && Notification.isSupported()) {
+    // Only notify when the window is not focused — no isSupported() check
+    // since that can return false on some Linux configs even when it works fine.
+    if (!win || win.isFocused()) return;
+    try {
       new Notification({ title, body, silent: false }).show();
+    } catch (e) {
+      log("Notification error: " + e.message);
     }
   });
 

@@ -139,6 +139,7 @@ async function broadcastPresence(wss) {
     statusText: statusMap[u.id]?.statusText ?? null,
   }));
 
+  // Send each client only users who share at least one community with them
   const userCommunityMap = new Map();
   for (const client of wss.clients) {
     if (
@@ -284,14 +285,10 @@ export async function initWebSocket(server) {
           break;
       }
 
-      // Send voice state after join
       if (msg.type === "join") {
-        const voiceState = getVoiceState();
-        if (Object.keys(voiceState).length > 0) {
-          ws.send(
-            JSON.stringify({ type: "voice_state", channels: voiceState }),
-          );
-        }
+        ws.send(
+          JSON.stringify({ type: "voice_state", channels: getVoiceState() }),
+        );
       }
     });
 

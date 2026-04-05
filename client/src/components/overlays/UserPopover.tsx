@@ -1,7 +1,15 @@
 import { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import { useLocalNicknames } from "../../context/LocalNicknameContext";
 import Avatar from "../ui/Avatar";
+import config from "../../config";
 import styles from "./UserPopover.module.css";
+
+interface MutualCommunity {
+  id: number;
+  name: string;
+  icon: string | null;
+}
 
 interface Props {
   userId: number;
@@ -9,6 +17,7 @@ interface Props {
   isSelf: boolean;
   onClose: () => void;
   anchorEl: HTMLElement;
+  token: string;
   onOpenDM?: (userId: number) => void;
 }
 
@@ -18,6 +27,7 @@ export default function UserPopover({
   isSelf,
   onClose,
   anchorEl,
+  token,
   onOpenDM,
 }: Props) {
   const { setLocalNickname, nicknames } = useLocalNicknames();
@@ -27,9 +37,12 @@ export default function UserPopover({
   const [value, setValue] = useState(existing);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [mutualCommunities, setMutualCommunities] = useState<MutualCommunity[]>(
+    [],
+  );
 
   const rect = anchorEl.getBoundingClientRect();
-  const top = Math.min(rect.bottom + 6, window.innerHeight - 220);
+  const top = Math.min(rect.bottom + 6, window.innerHeight - 280);
   const left = Math.min(rect.left, window.innerWidth - 240);
 
   useEffect(() => {
@@ -39,6 +52,17 @@ export default function UserPopover({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
+
+  // Fetch mutual communities when popover opens (skip for self)
+  useEffect(() => {
+    if (isSelf) return;
+    axios
+      .get(`${config.HTTP}/api/users/${userId}/mutual-communities`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(({ data }) => setMutualCommunities(data))
+      .catch(() => {});
+  }, [userId, token, isSelf]);
 
   const save = async () => {
     setSaving(true);
@@ -72,6 +96,38 @@ export default function UserPopover({
         <button className={styles.dmBtn} onClick={() => onOpenDM(userId)}>
           ◈ MESSAGE
         </button>
+      )}
+
+      {/* Mutual communities */}
+      {!isSelf && (
+        <div className={styles.mutualSection}>
+          <div className={styles.mutualLabel}>
+            MUTUAL SERVERS{" "}
+            {mutualCommunities.length > 0 && `— ${mutualCommunities.length}`}
+          </div>
+          {mutualCommunities.length === 0 ? (
+            <div className={styles.mutualEmpty}>no mutual servers</div>
+          ) : (
+            <div className={styles.mutualList}>
+              {mutualCommunities.map((c) => (
+                <div key={c.id} className={styles.mutualItem}>
+                  {c.icon ? (
+                    <img
+                      src={c.icon}
+                      alt={c.name}
+                      className={styles.mutualIcon}
+                    />
+                  ) : (
+                    <div className={styles.mutualIconFallback}>
+                      {c.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <span className={styles.mutualName}>{c.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Local nickname */}

@@ -57,6 +57,69 @@
   background: var(--primary-dim);
 }
 
+/* ── Mutual communities ──────────────────────────────────────────────────── */
+.mutualSection {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.mutualLabel {
+  color: var(--text-dim);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+}
+
+.mutualEmpty {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+.mutualList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.mutualItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mutualIcon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.mutualIconFallback {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--primary-glow);
+  border: 1px solid var(--primary-dim);
+  color: var(--primary);
+  font-size: 0.55rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mutualName {
+  font-size: 0.75rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ── Nickname section ────────────────────────────────────────────────────── */
 .nicknameLabel {
   color: var(--text-dim);

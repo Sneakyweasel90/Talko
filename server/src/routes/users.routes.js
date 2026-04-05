@@ -24,6 +24,28 @@ router.get("/:userId/public-key", requireAuth, async (req, res) => {
   res.json({ publicKey: rows[0].public_key });
 });
 
+// GET /api/users/:userId/mutual-communities
+// Returns communities shared between the requesting user and the target user.
+router.get("/:userId/mutual-communities", requireAuth, async (req, res) => {
+  const targetId = parseInt(req.params.userId);
+  if (isNaN(targetId))
+    return res.status(400).json({ error: "Invalid user id" });
+  try {
+    const { rows } = await db.query(
+      `SELECT c.id, c.name, c.icon
+       FROM communities c
+       JOIN community_members cm1 ON cm1.community_id = c.id AND cm1.user_id = $1
+       JOIN community_members cm2 ON cm2.community_id = c.id AND cm2.user_id = $2
+       ORDER BY c.name ASC`,
+      [targetId, req.user.id],
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Mutual communities error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // GET all user avatars — used by client to populate avatarMap for message display
 router.get("/avatars", requireAuth, async (req, res) => {
   const { rows } = await db.query(`SELECT id, avatar FROM users`);

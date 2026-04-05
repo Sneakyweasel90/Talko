@@ -90,7 +90,7 @@ export default function Chat() {
   }, [channel]);
   useEffect(() => {
     if (user?.token) load(user.token);
-  }, []);
+  }, []); // eslint-disable-line
 
   const resolveNickname = useCallback(
     (userId: number, serverDisplayName: string): string => {
@@ -98,7 +98,7 @@ export default function Chat() {
         return userRef.current?.nickname || serverDisplayName;
       return resolve(userId, serverDisplayName);
     },
-    [resolve, nicknames],
+    [resolve, nicknames], // eslint-disable-line
   );
 
   const {
@@ -227,7 +227,7 @@ export default function Chat() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, []); // eslint-disable-line
 
   useEffect(() => {
     if (!user?.token || !activeCommunityId) return;
@@ -386,6 +386,7 @@ export default function Chat() {
           username={popover.username}
           isSelf={popover.userId === user!.id}
           anchorEl={popover.el}
+          token={user!.token}
           onClose={closePopover}
           onOpenDM={async (userId) => {
             closePopover();

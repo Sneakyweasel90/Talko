@@ -77,6 +77,7 @@ export default function MessageInput({
       send({
         type: "message",
         channelId: channel,
+        communityId,
         content: `[gif]${gifUrl}`,
         replyToId: replyTo?.id ?? null,
       });

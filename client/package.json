@@ -1,7 +1,7 @@
 {
   "name": "talko",
   "private": true,
-  "version": "2.0.3",
+  "version": "2.0.4",
   "type": "module",
   "main": "electron.cjs",
   "scripts": {
@@ -62,6 +62,7 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.1",
     "react-syntax-highlighter": "^16.1.1",
+    "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1",
     "uiohook-napi": "^1.5.4"
   },

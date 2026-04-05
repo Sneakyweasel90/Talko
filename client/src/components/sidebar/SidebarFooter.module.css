@@ -309,3 +309,19 @@
   font-family: "Share Tech Mono", monospace;
   opacity: 0.6;
 }
+
+.adminBtn {
+  background: none;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 3px 7px;
+  border-radius: 2px;
+  transition: all 0.15s;
+  color: var(--text-dim);
+}
+
+.adminBtn:hover {
+  color: var(--primary);
+  border-color: var(--primary-dim);
+}

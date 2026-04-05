@@ -72,8 +72,12 @@ export default function Chat() {
   const userRef = useRef(user);
   const sendRef = useRef<(data: object) => void>(() => {});
   const sendViaRef = useCallback((data: object) => sendRef.current(data), []);
-
   const lastFetchedCommunityRef = useRef<number | null>(null);
+
+  // Ref so the WS callback (defined before `voice`) can safely call voice methods.
+  const voiceRef = useRef<{ inVoice: boolean; leaveVoice: () => void } | null>(
+    null,
+  );
 
   const handleSwitchCommunity = useCallback(
     (id: number) => {
@@ -159,6 +163,12 @@ export default function Chat() {
         );
         return;
       }
+      // When an admin deletes a community, leave voice if in it and remove from UI.
+      if (data.type === "community_deleted") {
+        if (voiceRef.current?.inVoice) voiceRef.current.leaveVoice();
+        removeCommunity(data.communityId);
+        return;
+      }
       handleMessage(data);
     },
   );
@@ -166,6 +176,9 @@ export default function Chat() {
   sendRef.current = send;
 
   const voice = useVoice(user!.token, send);
+
+  // Keep voiceRef in sync so the WS callback above can access voice state.
+  voiceRef.current = { inVoice: voice.inVoice, leaveVoice: voice.leaveVoice };
 
   const {
     activeDMConv,

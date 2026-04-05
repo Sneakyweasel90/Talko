@@ -12,6 +12,7 @@ import type {
 } from "../../types";
 import styles from "./SidebarFooter.module.css";
 import VoicePanel from "../voice/VoicePanel";
+import { useNavigate } from "react-router-dom";
 
 const STATUS_COLORS: Record<UserStatus, string> = {
   online: "#4ade80",
@@ -141,6 +142,7 @@ export default function SidebarFooter({
   const [showSettings, setShowSettings] = useState(false);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const statusPickerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -274,6 +276,15 @@ export default function SidebarFooter({
             />
             SET STATUS
           </button>
+          {role === "admin" && (
+            <button
+              className={styles.adminBtn}
+              onClick={() => navigate("/superadmin")}
+              title="Admin console"
+            >
+              ⚙
+            </button>
+          )}
           <button className={styles.exitBtn} onClick={onLogout}>
             EXIT
           </button>

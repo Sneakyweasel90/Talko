@@ -3,6 +3,7 @@ import crypto from "crypto";
 import db from "../db/postgres.js";
 import { requireAuth } from "../middleware/auth.js";
 import { getWss } from "../websocket/gateway.js";
+import { logAdminAction } from "../utils/auditLog.js";
 
 const router = express.Router();
 
@@ -91,6 +92,15 @@ router.delete("/users/:id", requireAuth, requireAdmin, async (req, res) => {
   );
   await db.query(`DELETE FROM users WHERE id = $1`, [targetId]);
 
+  await logAdminAction({
+    adminId: req.user.id,
+    adminUsername: req.user.username,
+    action: "delete_user",
+    targetType: "user",
+    targetId,
+    targetName: target.username,
+  });
+
   res.json({ ok: true });
 });
 
@@ -155,6 +165,17 @@ router.post("/users/:id/kick", requireAuth, requireAdmin, async (req, res) => {
   ]);
   await db.query(`DELETE FROM refresh_tokens WHERE user_id = $1`, [targetId]);
   forceDisconnectUser(targetId);
+
+  await logAdminAction({
+    adminId: req.user.id,
+    adminUsername: req.user.username,
+    action: "kick",
+    targetType: "user",
+    targetId,
+    targetName: target.username,
+    metadata: { durationMinutes },
+  });
+
   res.json({ ok: true });
 });
 
@@ -178,6 +199,16 @@ router.post("/users/:id/ban", requireAuth, requireAdmin, async (req, res) => {
   ]);
   await db.query(`DELETE FROM refresh_tokens WHERE user_id = $1`, [targetId]);
   forceDisconnectUser(targetId);
+
+  await logAdminAction({
+    adminId: req.user.id,
+    adminUsername: req.user.username,
+    action: "ban",
+    targetType: "user",
+    targetId,
+    targetName: target.username,
+  });
+
   res.json({ ok: true });
 });
 
@@ -186,10 +217,27 @@ router.post("/users/:id/unban", requireAuth, requireAdmin, async (req, res) => {
   const targetId = parseInt(req.params.id);
   if (isNaN(targetId))
     return res.status(400).json({ error: "Invalid user id" });
+
+  // Get username for the log before updating
+  const { rows: targetRows } = await db.query(
+    `SELECT username FROM users WHERE id = $1`,
+    [targetId],
+  );
+
   await db.query(
     `UPDATE users SET banned_at = NULL, kicked_until = NULL WHERE id = $1`,
     [targetId],
   );
+
+  await logAdminAction({
+    adminId: req.user.id,
+    adminUsername: req.user.username,
+    action: "unban",
+    targetType: "user",
+    targetId,
+    targetName: targetRows[0]?.username ?? String(targetId),
+  });
+
   res.json({ ok: true });
 });
 
@@ -234,10 +282,9 @@ router.get("/afk-timeout", async (req, res) => {
 });
 
 // POST /api/admin/invites — generate a new invite token
-// Body: { note?: string, expiresInHours?: number }  (omit expiresInHours for no expiry)
 router.post("/invites", requireAuth, requireAdmin, async (req, res) => {
   const { note, expiresInHours } = req.body;
-  const token = crypto.randomBytes(24).toString("hex"); // 48-char hex token
+  const token = crypto.randomBytes(24).toString("hex");
   const expiresAt = expiresInHours
     ? new Date(Date.now() + expiresInHours * 60 * 60 * 1000)
     : null;

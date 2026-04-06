@@ -46,6 +46,19 @@ export async function initDB() {
       UNIQUE(message_id, user_id, emoji)
     );
 
+    CREATE TABLE IF NOT EXISTS admin_audit_log (
+      id             SERIAL PRIMARY KEY,
+      admin_id       INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      admin_username VARCHAR(50) NOT NULL,
+      action         VARCHAR(50) NOT NULL,
+      target_type    VARCHAR(20),
+      target_id      INTEGER,
+      target_name    VARCHAR(200),
+      metadata       JSONB,
+      created_at     TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_audit_log_created ON admin_audit_log(created_at DESC);
+
     CREATE TABLE IF NOT EXISTS refresh_tokens (
       id SERIAL PRIMARY KEY,
       user_id INT REFERENCES users(id) ON DELETE CASCADE,

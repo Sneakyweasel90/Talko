@@ -70,8 +70,10 @@ jobs:
           name: linux-build
           path: ./artifacts
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Create Codeberg Release
+        uses: actions/forgejo-release@v2
         with:
-          files: ./artifacts/*
-          generate_release_notes: true
+          direction: upload
+          token: ${{ secrets.FORGEJO_TOKEN }}
+          tag: ${{ github.ref_name }}
+          release-dir: ./artifacts

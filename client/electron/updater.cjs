@@ -4,7 +4,8 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const GITHUB_REPO = "Sneakyweasel90/Talko";
+//const GITHUB_REPO = "Sneakyweasel/Talko";
+const CODEBERG_REPO = "Sneakyweasel/Talko";
 
 function isNewerVersion(latest, current) {
   const latestParts = latest.replace(/^v/, "").split(".").map(Number);
@@ -35,11 +36,10 @@ function getDownloadFileName() {
 function getLatestRelease() {
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: "api.github.com",
-      path: `/repos/${GITHUB_REPO}/releases/latest`,
+      hostname: "codeberg.com",
+      path: `/api/v1/repos/${CODEBERG_REPO}/releases?limit=1`,
       headers: {
         "User-Agent": "Talko-App",
-        Accept: "application/vnd.github+json",
       },
     };
     https
@@ -48,8 +48,11 @@ function getLatestRelease() {
         res.on("data", (chunk) => (data += chunk));
         res.on("end", () => {
           try {
-            const parsed = JSON.parse(data);
-            resolve({ tag_name: parsed.tag_name, assets: parsed.assets || [] });
+            const latest = Array.isArray(parsed) ? parsed[0] : parsed;
+            resolve({
+              tag_name: latest?.tag_name,
+              assets: latest?.assets || [],
+            });
           } catch (e) {
             reject(new Error("Failed to parse release data: " + e.message));
           }
@@ -216,7 +219,7 @@ async function checkForUpdates(app, createProgressWindow, progressWinRef, log) {
             .then(({ response: r }) => {
               if (r === 0)
                 shell.openExternal(
-                  `https://github.com/Sneakyweasel90/Talko/releases`,
+                  `https://codeberg.org/Sneakyweasel/Talko/releases`,
                 );
             });
           app.quit();
